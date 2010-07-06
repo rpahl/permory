@@ -24,7 +24,8 @@ project permory
 alias /libs : bfs bpop bio bsys zlib ;
 exe permory  
     : src/permory.cpp /libs
-    : <link>static <runtime-link>static #<dll-path>/usr/local/lib #requirements
+    : <link>static <runtime-link>static 
+    #<dll-path>/usr/local/lib #requirements
     : #default-build
     : #usage-requirements
     ;
