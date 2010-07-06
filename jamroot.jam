@@ -1,0 +1,33 @@
+# Copyright (c) 2010 Roman Pahl
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
+
+project permory ;
+
+import os ;
+echo "Operating system:" [ os.name ] ;
+
+# used libraries
+include site-config.jam ;
+
+# symbolic name that is used in permory/test/jamfile.jam
+use-project /io : src/io ; 
+
+build-project test ;
+#build-project src/io ;
+
+project permory 
+    : requirements <include>src 
+    : #usage-requirements <include>. 
+    ;
+
+alias /libs : bfs bpop bio bsys zlib ;
+exe permory  
+    : src/permory.cpp /libs
+    : <link>static <runtime-link>static 
+    #<dll-path>/usr/local/lib #requirements
+    : #default-build
+    : #usage-requirements
+    ;
+
+
