@@ -1,6 +1,6 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 #ifndef permory_permutation_booster_hpp
 #define permory_permutation_booster_hpp
@@ -12,15 +12,14 @@
 #include <boost/circular_buffer.hpp>
 
 #include "config.hpp"
-#include "helper/bitset.hpp" 
-#include "helper/matrix.hpp" 
-#include "helper/recode.hpp"
-#include "helper/vector.hpp" 
+#include "detail/bitset.hpp" 
+#include "detail/matrix.hpp" 
+#include "detail/recode.hpp"
+#include "detail/vector.hpp" 
 #include "locusdata.hpp"
 #include "permutation/perm_matrix.hpp"
 
-namespace Permory 
-{
+namespace Permory { namespace permutation {
     // Helper class
     class Bitset_with_count { 
         public:
@@ -157,7 +156,7 @@ namespace Permory
         if (usePAM || useGIT || noBAR) {
             if (usePAM && !isBufferEmpty) { 
                 *result = resultBuf_[imin];   //memorize previous results
-                permMatrix_->pam(dummy.bs, dataBuf_[imin].bs, *result);
+                permMatrix_->rem(dummy.bs, dataBuf_[imin].bs, *result);
             }
             else {
                 *result = 0;
@@ -172,6 +171,7 @@ namespace Permory
         resultBuf_.push_back(*result);            
     }
 
+} // namespace permutation
 } // namespace Permory
 
 #endif // include guard

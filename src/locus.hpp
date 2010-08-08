@@ -1,8 +1,6 @@
-
-
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 #ifndef permory_locus_hpp
 #define permory_locus_hpp
@@ -11,6 +9,7 @@
 #include <vector>
 
 #include "config.hpp"
+#include "individual.hpp"
 
 namespace Permory 
 {
@@ -21,43 +20,49 @@ namespace Permory
             enum Chr {
                 none=0, chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, 
                 chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, 
-                chr17, chr18, chr19, chr20, chr21, chr22, X, Y};
-
-            // Members
-            size_t id;     //unique id
-            string name;     //rs-id or other Locus identifier
-            Chr chr;            //chr1-chr22, X, Y or na if undefined
-            size_t bp;          //base pair position in bp units
-            double cm;          // cM map position
-            std::vector<string> allele;
-            std::vector<Permory::Individual>* individuals; 
+                chr17, chr18, chr19, chr20, chr21, chr22, X, Y, XY, MT};
+            std::vector<Permory::Individual>* individuals_; 
 
             // Ctor
             Locus(
                     size_t id,
-                    string name="",
-                    Chr chr=none
+                    std::string name="", 
+                    Chr chr=none,
+                    size_t bp = 0,
+                    double cm = 0.0
                  ) 
-                : id(id), name(name) 
-            {
-                //this->individuals = 0;
-            }
+                : id_(id), name_(name), chr_(chr), bp_(bp), cm_(cm),
+                individuals_(0)
+            { }
 
-            // Inspector 
-            bool operator<(size_t i) const { return id < i; }
+            // Inspection 
+            size_t id() const { return id_; }
+            std::string name() const { return name_; }
+            Chr chr() const { return chr_; }
+            size_t bp() const { return bp_; }
+            double cm() const { return cm_; }
+            bool operator<(size_t i) const { return id_ < i; }
             bool operator<(double d) const { return tsMax_ < d; }
             bool operator<(const Locus& x) const { 
-                return (chr < x.chr || (chr == x.chr && bp < x.bp) );
+                return (chr_ < x.chr() || (chr_ == x.chr() && bp_ < x.bp()) );
             }
-            bool operator==(const Locus& x) const { return ( id == x.id ); }
+            bool operator==(const Locus& x) const { return ( id_ == x.id() ); }
+            std::vector<double> test_stats() const { return ts_; }
+            double tmax() const { return tsMax_; }
 
-            // Modifier
+            // Modification
             template<int K, int L> void add_test_stat(
                     std::vector<double>::const_iterator start,
                     std::vector<double>::const_iterator end);
         private:
-            std::vector<double> ts_;    //test statistics
-            double tsMax_;              //max(ts_)
+            size_t id_;     //unique id
+            string name_;     //rs-id or other Locus identifier
+            Chr chr_;            //chr1-chr22, X, Y or na if undefined
+            size_t bp_;          //base pair position in bp units
+            double cm_;          //cM map position
+
+            std::vector<double> ts_;    //test statistics for the locus
+            double tsMax_;              //max of ts_
     };
 
     // ========================================================================

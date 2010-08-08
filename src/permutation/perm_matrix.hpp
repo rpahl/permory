@@ -1,7 +1,6 @@
-
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 #ifndef permory_permutation_perm_matrix_hpp
 #define permory_permutation_perm_matrix_hpp
@@ -14,25 +13,25 @@
 #include "config.hpp"
 #include "permutation/perm.hpp"
 
-namespace Permory 
-{
+namespace Permory { namespace permutation {
     typedef boost::dynamic_bitset<> bitset_t;
 
     // Stores permutations and provides fast methods for counting
     // allele/genotype frequencies in these permutations
     template<class T> class Perm_matrix {
         public:
+            // Ctor
             Perm_matrix(
                     const size_t nperm,
                     const Permutation& p, 
                     const std::vector<T>& trait,
                     bool useBitmat=true); 
-            // Inspector
+            // Inspection
             size_t nperm() const { return tpermMat_.ncol(); }
             size_t nsubject() const { return tpermMat_.nrow(); }
             bool hasBitmat() const { return hasBitmat_; }
 
-            // Modifier
+            // Modification
             void reshuffle(const size_t, const Permutation&);
 
             // Conversion
@@ -40,8 +39,8 @@ namespace Permory
             void bar(const bitset_t&, std::valarray<T>&);
             // genotype indexing
             void git(const std::vector<int>&, std::valarray<T>&);
-            // partial memoization
-            void pam(
+            // reconstruction memoization
+            void rem(
                     const bitset_t& b,   //dummy-coded data
                     const bitset_t& bb,  //a bitset similar to b
                     std::valarray<T>& res); //results are written into res
@@ -115,7 +114,7 @@ namespace Permory
         }
     }
 
-    template<class T> inline void Perm_matrix<T>::pam(
+    template<class T> inline void Perm_matrix<T>::rem(
             const bitset_t& b,   //dummy-coded data
             const bitset_t& bb,  //a bitset similar to b
             std::valarray<T>& res) 
@@ -139,6 +138,7 @@ namespace Permory
             pos = b1.find_next(pos);
         }
     }
+} // namespace permutation
 } // namespace Permory
 
 #endif // include guard

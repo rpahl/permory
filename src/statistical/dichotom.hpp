@@ -1,9 +1,9 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
-#ifndef permory_analyze_dichotom_hpp
-#define permory_analyze_dichotom_hpp
+#ifndef permory_dichotom_hpp
+#define permory_dichotom_hpp
 
 #include <algorithm>
 #include <numeric>
@@ -15,18 +15,20 @@
 
 #include "config.hpp"
 #include "contab.hpp"
-#include "helper/recode.hpp" //dummy_code(), index_code()
-#include "helper/functors.hpp" //pair_comp_2nd
+#include "detail/recode.hpp" //dummy_code(), index_code()
+#include "detail/functors.hpp" //pair_comp_2nd
 #include "locus.hpp"
 #include "locusdata.hpp"
 #include "parameter.hpp"
 #include "permutation/booster.hpp"
 #include "permutation/perm.hpp"
-#include "statistical/algorithms.hpp"
+#include "statistical/detail.hpp"
 #include "statistical/testpool.hpp"
 
-namespace Permory {
-    template<int K, int L, class T = unsigned short int> class Dichotom_analyzer {
+namespace Permory { namespace stat {
+
+    // Analyze genotype data with binary/dichotomous trait
+    template<int K, int L, class T = unsigned short int> class Dichotom {
         public:
             // Iterator pass through
             typedef typename std::vector<double>::const_iterator 
@@ -34,13 +36,13 @@ namespace Permory {
             const_iterator tmax_begin() const { return tMax_.begin(); }
             const_iterator tmax_end() const { return tMax_.end(); }
 
-            Dichotom_analyzer(
+            Dichotom(
                     const char*,                    //char coded tests
                     const Parameter&, 
                     const std::vector<bool>& trait, //dichotomous trait
                     const Permutation* pp=0);
 
-            // Inspector
+            // Inspection
             size_t size() const { return testPool_.size(); }
 
             // Test locus that is associated with the data
@@ -68,9 +70,9 @@ namespace Permory {
             Bitset2 dummy_[L+1];
     };
     // ========================================================================
-    // Dichotom_analyzer implementations
+    // Dichotom implementations
     template<int K, int L, class T> inline 
-        Dichotom_analyzer<K, L, T>::Dichotom_analyzer(
+        Dichotom<K, L, T>::Dichotom(
                 const char* tests, 
                 const Parameter& par,
                 const std::vector<bool>& trait,
@@ -100,7 +102,7 @@ namespace Permory {
             }
         }
     template<int K, int L, class T> template<class D> inline void 
-        Dichotom_analyzer<K, L, T>::do_permutation(
+        Dichotom<K, L, T>::do_permutation(
                 const Locus_data<D>& d, const std::map<D, int>& m)
         {
             std::pair<D, int> pairs_[L+1];
@@ -138,7 +140,7 @@ namespace Permory {
         }
 
     template<int K, int L, class T> template<class D> inline void 
-        Dichotom_analyzer<K, L, T>::permutation_test(
+        Dichotom<K, L, T>::permutation_test(
                 const Locus_data<D>& d) 
         {
             assert (trait_.size() == d.size());
@@ -167,7 +169,7 @@ namespace Permory {
         }
 
     template<int K, int L, class T> template<class D> inline 
-        boost::shared_ptr<Locus> Dichotom_analyzer<K, L, T>::locus_test(
+        boost::shared_ptr<Locus> Dichotom<K, L, T>::locus_test(
                 const Locus_data<D>& d)
         {
             std::map<D, int> m = d.unique_with_counts();
@@ -198,6 +200,7 @@ namespace Permory {
             return loc;
         }
 
+} // namespace stat
 } // namespace Permory
 
 #endif // include guard

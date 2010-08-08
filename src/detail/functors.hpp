@@ -1,15 +1,15 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
-#ifndef permory_helper_functors_hpp
-#define permory_helper_functors_hpp
+#ifndef permory_detail_functors_hpp
+#define permory_detail_functors_hpp
 
-#include "config.hpp"
 #include <functional>
 
-namespace Permory 
-{
+#include "config.hpp"
+
+namespace Permory { namespace detail {
     // Predicates
     // ========================================================================
     // Compares two pairs only based on their second argument
@@ -35,6 +35,8 @@ namespace Permory
 
     // Operators
     // =======================================================================
+    
+} // namespace detail
 } // namespace Permory
 
 #endif // include guard

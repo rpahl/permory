@@ -1,6 +1,6 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 #ifndef permory_snp_data_hpp
 #define permory_snp_data_hpp
@@ -9,28 +9,25 @@
 
 #include "config.hpp"
 #include "discretedata.hpp"
-#include "helper/tokenizer.hpp" //copy_token
-#include "helper/functors.hpp" //pair_comp_2nd
+#include "detail/functors.hpp" //pair_comp_2nd
 #include "locus.hpp"
 
-namespace Permory 
-{
+namespace Permory {
     template<class T> class Locus_data : public Discrete_data<T> {
         public:
-            typedef typename Discrete_data<T>::elem_type elem_type;
+            typedef T elem_type;
             typedef typename Discrete_data<T>::count_type count_type;
             enum Data_type {haplotype, genotype};
 
             // Ctor
             explicit Locus_data(
                     const std::vector<T>&, 
-                    const T&, boost::shared_ptr<Locus>, Data_type);
+                    const T&, 
+                    boost::shared_ptr<Locus>, 
+                    Data_type);
             explicit Locus_data(
                     typename std::vector<T>::const_iterator, //start
                     typename std::vector<T>::const_iterator, //end
-                    const T&, boost::shared_ptr<Locus>, Data_type);
-            explicit Locus_data(
-                    Tokenizer&, 
                     const T&, boost::shared_ptr<Locus>, Data_type);
 
             // Inspectors
@@ -50,7 +47,7 @@ namespace Permory
             void set_minor(const T&); 
             void set_major(const T&); 
             boost::shared_ptr<Locus> get_locus() { return loc_; }
-            
+
             // Conversions
             Locus_data<int> make_genotypic(int a=2) const;
 
@@ -82,22 +79,15 @@ namespace Permory
     {
         init();
     }
-    template<class T> inline Locus_data<T>::Locus_data(
-            Tokenizer& tok, 
-            const T& undef, boost::shared_ptr<Locus> loc, Data_type dt)
-        : Discrete_data<T>(tok), undef_(undef), loc_(loc), type_(dt)
-    {
-        init();
-    }
     template<class T> inline void Locus_data<T>::init()
     {
         // determine minor and major allele:
         std::map<elem_type, count_type> m = this->unique_with_counts();
         m.erase(undef_); //undefined is not allowed
         minor_ =  (*min_element(m.begin(), m.end(), 
-                    comp_second<std::pair<T, int> >())).first;
+                    detail::comp_second<std::pair<T, int> >())).first;
         major_ =  (*max_element(m.begin(), m.end(), 
-                    comp_second<std::pair<T, int> >())).first;
+                    detail::comp_second<std::pair<T, int> >())).first;
         target_ = minor_; //default target is minor allele
 
         this->add_to_domain(undef_); //make undef_ always a part of domain
@@ -134,13 +124,11 @@ namespace Permory
 
     template<class T> inline void Locus_data<T>::set_target(const T& x) 
     {
-        //bool isElement = m[x] > 0;
         if (x != undef_ && this->isInDomain(x)) {
             target_ = x;
         }
         else {
-            std::cerr << "Error: target allele is undefined.\n";
-            exit(-1);
+            throw(std::domain_error("Target allele is undefined."));
         }
     }
     template<class T> inline void Locus_data<T>::set_minor(const T& x) 
@@ -149,8 +137,7 @@ namespace Permory
             minor_ = x;
         }
         else {
-            std::cerr << "Error: minor allele is undefined.\n";
-            exit(-1);
+            throw(std::domain_error("Minor allele is undefined."));
         }
     }
     template<class T> inline void Locus_data<T>::set_major(const T& x) 
@@ -159,8 +146,7 @@ namespace Permory
             major_ = x;
         }
         else {
-            std::cerr << "Error: major allele is undefined.\n";
-            exit(-1);
+            throw(std::domain_error("Major allele is undefined."));
         }
     }
 

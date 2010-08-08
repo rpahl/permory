@@ -1,17 +1,16 @@
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
-
-/**
- * @author Roman Pahl
- */
-
-#ifndef permory_exception_file_hpp
-#define permory_exception_file_hpp
+#ifndef permory_detail_exception_hpp
+#define permory_detail_exception_hpp
 
 #include <exception>
 #include <stdexcept>
 #include "config.hpp"
 
-namespace Permory {
+namespace Permory { namespace detail {
+
     class File_exception : public std::exception {
         public:
             explicit File_exception(const char* s) : s_(s) {}
@@ -31,6 +30,7 @@ namespace Permory {
     class Math_error {
     };
 
+} //namespace detail
 } //namespace Permory
 
 #endif

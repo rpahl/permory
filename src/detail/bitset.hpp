@@ -1,16 +1,15 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
-#ifndef permory_helper_bitset_hpp
-#define permory_helper_bitset_hpp
+#ifndef permory_detail_bitset_hpp
+#define permory_detail_bitset_hpp
 
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
 #include "config.hpp"
 
-namespace Permory 
-{
+namespace Permory { namespace detail {
 
     template<class T> boost::dynamic_bitset<>
         vector_to_bitset(const T& v)
@@ -32,6 +31,7 @@ namespace Permory
         return v;
     }
 
+} // namespace detail
 } // namespace Permory
 
 #endif // include guard

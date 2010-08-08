@@ -1,12 +1,13 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
+
+#include <cassert>
 
 #include "pvalue.hpp"
-#include <cassert>
+
 using namespace std;
 using namespace Permory;
-
 
 double Permory::quisq(double t, double df)
 {
@@ -20,7 +21,7 @@ std::vector<double> Permory::single_step_pvalues(
 {
     if (!vector_is_sorted(t, true)) { //sorted in decreasing order?
         cerr << "Bad values in function 'Permory::single_step_pvalues': " <<
-            "the given test statistics are not monotonically decreasing!\n";
+            "the test statistics are not monotonically decreasing!\n";
         exit(-1);
     }
 
@@ -45,7 +46,7 @@ std::vector<double> Permory::step_down_pvalues(
 {
     if (!vector_is_sorted(t, true)) { //sorted in decreasing order?
         cerr << "Bad values in function 'Permory::single_step_pvalues': " <<
-            "the given test statistics are not monotonically decreasing!\n";
+            "the test statistics are not monotonically decreasing!\n";
         exit(-1);
     }
     assert (t.size() == m.size());

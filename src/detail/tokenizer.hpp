@@ -1,17 +1,16 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
-#ifndef permory_tool_tokenizer_hpp
-#define permory_tool_tokenizer_hpp
+#ifndef permory_detail_tokenizer_hpp
+#define permory_detail_tokenizer_hpp
 
 #include "config.hpp"
 #include <string.h> //strlen, strtok
 #include <stdlib.h> //realloc
 #include <vector>
 
-namespace Permory 
-{
+namespace Permory { namespace detail {
     // Tokenizer with the primary aim to be efficient
     class Tokenizer {
         public:
@@ -58,6 +57,7 @@ namespace Permory
             std::vector<char> buf_; //local buffer
             const char* delims_;
     };
+} // namespace detail
 } // namespace Permory
 
 #endif

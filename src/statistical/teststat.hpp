@@ -1,19 +1,19 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 #ifndef permory_teststat_hpp
 #define permory_teststat_hpp
 
 #include "config.hpp"
-#include "parameter.hpp"
+#include "detail/parameter.hpp"
 #include "statistical/contab.hpp"
 
-namespace Permory {
+namespace Permory { namespace stat {
+    using detail::Parameter;
+
     template<int K, int L> class Test_stat {
         public: 
-            //class Zero_divide {}; // exception handling
-            //class Negative_variance{}; // exception handling
             virtual ~Test_stat(){}
             virtual double operator()(const Con_tab<K, L>&) const = 0;
     };
@@ -46,29 +46,6 @@ namespace Permory {
 
     // ========================================================================
     // Test_stat implementations
-    inline double Chi_squ::operator()(const Con_tab<2, 2>& ct) const
-    {
-        // Extract data from contingency table
-        double a = double(ct(0, 0)),
-               b = double(ct(0, 1)),
-               c = double(ct(1, 0)),
-               d = double(ct(1, 1));
-        double N = a + b + c + d;
-        double den = (a+b)*(c+d)*(a+c)*(b+d);
-
-        if (den > 0) {
-            double nom = a*d - b*c;
-            nom *= nom;
-            nom *= N;
-            return nom/den;
-        }
-        else {
-            return 0;
-            //if (den == 0) throw Zero_divide(); 
-            //else throw Negative_variance();
-        }
-    }
-
     inline double Trend::operator()(const Con_tab<2, 3>& ct) const
     {
         // Extract data from contingency table
@@ -154,7 +131,30 @@ namespace Permory {
         }
     }
 
+    inline double Chi_squ::operator()(const Con_tab<2, 2>& ct) const
+    {
+        // Extract data from contingency table
+        double a = double(ct(0, 0)),
+               b = double(ct(0, 1)),
+               c = double(ct(1, 0)),
+               d = double(ct(1, 1));
+        double N = a + b + c + d;
+        double den = (a+b)*(c+d)*(a+c)*(b+d);
 
+        if (den > 0) {
+            double nom = a*d - b*c;
+            nom *= nom;
+            nom *= N;
+            return nom/den;
+        }
+        else {
+            return 0;
+            //if (den == 0) throw Zero_divide(); 
+            //else throw Negative_variance();
+        }
+    }
+
+} // namespace stat
 } // namespace Permory
 
 #endif // include guard

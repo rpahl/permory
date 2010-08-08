@@ -1,6 +1,6 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 #ifndef permory_io_input_filters_hpp
 #define permory_io_input_filters_hpp
@@ -13,9 +13,30 @@
 
 #include "config.hpp"
 
-namespace Permory 
-{
+namespace Permory { namespace io {
     namespace bio = boost::iostreams;
+
+    template<int n> class Skip_input_filter {
+        public:
+            Skip_input_filter() 
+                : cnt_(0), skip_(false) 
+            {}
+            bool operator()(char c) {
+                if (c == ' ' || c == '\t' || c == '\r') { //chars to skip
+                    if (!skip_) { //catch more than one "skip-char" in a row
+                        cnt_++;
+                    }
+                    skip_ = true;
+                }
+                else {
+                    skip_ = false;
+                }
+                return (skip_ || cnt_ < n);
+            }
+        private:
+            int cnt_;
+            bool skip_;
+    };
 
     //
     // Filters out each occurcence of some prespecified delimiter
@@ -132,11 +153,12 @@ namespace Permory
             int chunkCount_;
             bool isChunkComplete_;
     };
+} // namespace io
 } // namespace Permory
 
 #endif
 
-/* Filter example
+/* Boost iostreams filter example
  * const char* fn;
  * char line[4096];
  * in.push(bio::counter()); //count characters

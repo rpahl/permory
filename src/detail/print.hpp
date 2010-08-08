@@ -1,10 +1,9 @@
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
-/**
- * @author Roman Pahl
- */
-
-#ifndef permory_helper_print_hpp
-#define permory_helper_print_hpp
+#ifndef permory_detail_print_hpp
+#define permory_detail_print_hpp
 
 #include <iostream>
 #include <stdlib.h>
@@ -16,13 +15,13 @@
 #include <vector>
 
 #include "config.hpp"
-#include "exception.hpp"
+#include "detail/exception.hpp"
 
 using std::cout;
 using std::endl;
 using std::string;
 
-namespace Permory {
+namespace Permory { namespace detail {
 
     class Print {
         public:
@@ -90,6 +89,7 @@ namespace Permory {
     }
 
 
+} //namespace detail
 } //namespace Permory
 
 #endif

@@ -1,11 +1,9 @@
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
-
-/**
- * @author Roman Pahl
- */
-
-#ifndef permory_helper_matrix_hpp
-#define permory_helper_matrix_hpp
+#ifndef permory_detail_matrix_hpp
+#define permory_detail_matrix_hpp
 
 #include <exception>
 #include <iostream>
@@ -13,7 +11,7 @@
 #include <valarray>
 #include <vector>
 
-namespace Permory {
+namespace Permory { namespace detail {
     template<class T> class Matrix {
         public:
             typedef std::valarray<T> array_t;
@@ -268,6 +266,7 @@ namespace Permory {
         for (size_t i=0; i<nrow(); i++)
             m_[i].resize(d2);
     }
+} //namespace detail
 } //namespace Permory
 
 #endif

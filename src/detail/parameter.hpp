@@ -1,13 +1,13 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
-#ifndef permory_parameter_hpp
-#define permory_parameter_hpp
+#ifndef permory_detail_parameter_hpp
+#define permory_detail_parameter_hpp
+
 #include "config.hpp"
 
-namespace Permory 
-{
+namespace Permory { namespace detail {
     class Parameter {
         public:
             // statistical tests
@@ -20,7 +20,8 @@ namespace Permory
             
             // permutation optimization
             static size_t tail_sz;            //size of tail (PAM method)
-            static bool useBar;                      //bit arithmetics flag
+            static bool useBar;               //bit arithmetics flag
+
     };
 
     // Declare static variables
@@ -36,7 +37,7 @@ namespace Permory
 
     // permutation optimization
     bool Parameter::useBar = true;
-}
-
+} //namespace detail
+} //namespace Permory
 #endif
 

@@ -1,6 +1,6 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 #ifndef permory_permutation_perm_hpp
 #define permory_permutation_perm_hpp
@@ -8,12 +8,12 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
-#include "exception.hpp"
-#include "helper/matrix.hpp"
-#include "helper/vector.hpp"
+#include "detail/exception.hpp"
+#include "detail/matrix.hpp"
+#include "detail/vector.hpp"
 
-namespace Permory 
-{
+namespace Permory { namespace permutation {
+
     class Permutation
     {
         public:

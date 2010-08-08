@@ -4,6 +4,6 @@
 
 #project io ;
 
-#obj file_info : file_info.cpp ;
+#obj file : file.cpp ;
 
 

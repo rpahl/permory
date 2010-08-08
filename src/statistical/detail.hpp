@@ -1,9 +1,9 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
-#ifndef permory_statistical_algorithms_hpp
-#define permory_statistical_algorithms_hpp
+#ifndef permory_statistical_detail_hpp
+#define permory_statistical_detail_hpp
 
 #include <algorithm>
 #include <vector>
@@ -13,7 +13,7 @@
 #include "statistical/testpool.hpp"
 #include "statistical/teststat.hpp"
 
-namespace Permory {
+namespace Permory { namespace stat {
     template<int K, int L> inline typename std::vector<double>::iterator 
         for_each_tab(
             typename std::vector<Con_tab<K, L> >::const_iterator start,
@@ -55,14 +55,14 @@ namespace Permory {
                 { 
                     *result++ = max(*result, (*t)(*i));     //Tmax
                 }
-                // "STL-version" requires the temporary vector v, thus being slower
+                // "STL-version" requires temporary vector v, thus being slower:
                 //for_each_tab<K, L>(tab.begin(), tab.end(), i, v.begin());
                 //transform(v.begin(), v.end(), result, result, op_max<double>());
             }
             return result;
         }
 
-
+} // namespace stat
 } // namespace Permory
 
 #endif // include guard

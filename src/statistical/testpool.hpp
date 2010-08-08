@@ -1,6 +1,6 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 #ifndef permory_testpool_hpp
 #define permory_testpool_hpp
@@ -8,10 +8,10 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 
 #include "config.hpp"
-#include "parameter.hpp"
+#include "detail/parameter.hpp"
 #include "teststat.hpp"
 
-namespace Permory {
+namespace Permory { namespace stat {
     template<int K, int L> class Test_pool {
         public:
             // Iterator pass through
@@ -72,6 +72,7 @@ namespace Permory {
         }
     }
 
+} // namespace stat
 } // namespace Permory
 
 #endif // include guard

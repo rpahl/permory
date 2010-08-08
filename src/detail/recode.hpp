@@ -1,14 +1,15 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
-#ifndef permory_helper_recode_hpp
-#define permory_helper_recode_hpp
+#ifndef permory_detail_recode_hpp
+#define permory_detail_recode_hpp
 
-#include <boost/dynamic_bitset.hpp>
 #include <vector>
 
-namespace Permory 
+#include <boost/dynamic_bitset.hpp>
+
+namespace Permory { namespace detail {
 {
     // Build index code
     template<class T> std::vector<int> index_code(
@@ -56,6 +57,7 @@ namespace Permory
         }
         return v;
     }
+} // namespace detail
 } // namespace Permory
 
 #endif // include guard

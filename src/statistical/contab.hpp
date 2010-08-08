@@ -1,6 +1,6 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 #ifndef permory_contab_hpp
 #define permory_contab_hpp
@@ -8,10 +8,9 @@
 #include <iostream>
 #include <valarray>
 
-#include "exception.hpp"
+#include "detail/exception.hpp"
 
-namespace Permory 
-{
+namespace Permory { namespace stat {
     // Contingency table with R and C being the number of rows and columns, resp
     template<int R, int C> class Con_tab {
         public:
@@ -147,6 +146,7 @@ namespace Permory
 #endif
     }
 
+} // namespace stat
 } // namespace Permory
 
 #endif // include guard

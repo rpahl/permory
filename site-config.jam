@@ -14,18 +14,19 @@ if ( [ os.name ] = LINUX )
     lib zlib : : <name>z ;
 }
 
-#if ( [ os.name ] = NT || [ modules.peek : OS ] in CYGWIN )
-if ( [ os.name ] = NT )
+#if ( [ modules.peek : OS ] in CYGWIN )
+if ( [ os.name ] = CYGWIN )
 {
-    #path-constant BOOST_PATH : [ os.environ BOOST_PATH ] ;
-    #path-constant BOOST_LIB_PATH : [ os.environ BOOST_LIB_PATH ] ;
+    path-constant BOOST_PATH : [ os.environ BOOST_PATH ] ;
+    path-constant BOOST_LIB_PATH : [ os.environ BOOST_LIB_PATH ] ;
     #path-constant BOOST_PATH : /usr/local/include/boost ;
     #path-constant BOOST_LIB_PATH : /usr/local/lib ;
-    lib bfs : : <name>boost_filesystem-1_42 ; #<search>$(BOOST_LIB_PATH:T) ;
-    lib bpop : : <name>boost_program_options-1_42 ; #<search>$(BOOST_LIB_PATH:T) ;
-    lib bio : : <name>boost_iostreams-1_42 ; #<search>$(BOOST_LIB_PATH:T) ;
-    lib bsys : : <name>boost_system-1_42 ; #<search>$(BOOST_LIB_PATH:T) ;
-    lib zlib : : <name>z ; #<search>$(BOOST_LIB_PATH:T) ;
+    
+    lib bfs : : <name>boost_filesystem <search>$(BOOST_LIB_PATH:W) ;
+    lib bpop : : <name>boost_program_options ;
+    lib bio : : <name>boost_iostreams ; 
+    lib bsys : : <name>boost_system ; 
+    lib zlib : : <name>z ; 
 }
 
 # misc stuff

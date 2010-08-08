@@ -1,6 +1,6 @@
-/**
- * @author Roman Pahl
- */
+// Copyright (c) 2010 Roman Pahl
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 #ifndef permory_discretedata_hpp
 #define permory_discretedata_hpp
@@ -14,9 +14,8 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/member.hpp>
 
-#include "helper/algorithm.hpp" //copy_token
-#include "helper/functors.hpp" //predicates
-#include "helper/vector.hpp"
+#include "detail/functors.hpp" //predicates
+#include "detail/vector.hpp"
 
 namespace Permory 
 {
@@ -41,7 +40,6 @@ namespace Permory
             // Ctor
             explicit Discrete_data(const std::vector<T>&);  //direct copy
             explicit Discrete_data(const_iterator, const_iterator);//direct copy
-            explicit Discrete_data(Tokenizer&);//tokenized string
 
             // Inspector
             const T& operator[](const size_t pos) const { return data_[pos]; }
@@ -54,7 +52,6 @@ namespace Permory
             void print(); //for debugging
 
             // Modifier
-            void assign(Tokenizer&);
             template<class Compare> void regroup(const std::vector<int> v);
             void add_to_domain(const std::set<T>& s);
             void add_to_domain(const T& x);
@@ -65,7 +62,7 @@ namespace Permory
             void init();
             std::vector<T> data_;        
             std::map<elem_type, count_type> unique_;//unique elements with counts
-            std::multimap<count_type, elem_type> counts_;//vice versa
+            std::multimap<count_type, elem_type> counts_;//above map vice versa
     };
 
     // ========================================================================
@@ -75,26 +72,12 @@ namespace Permory
     {
         init();
     }
-    template<class T> inline Discrete_data<T>::Discrete_data(const_iterator start, const_iterator end)
-        :data_(start, end)
+    template<class T> inline Discrete_data<T>::Discrete_data(
+            const_iterator start, const_iterator end)
+        : data_(start, end)
     {
         init();
     }
-    template<class T> inline Discrete_data<T>::Discrete_data(Tokenizer& tok) 
-    {
-        copy_token<T>(tok, data_);
-        //data_ = copy_token<T>(tok);
-        init();
-    }
-    template<class T> inline void Discrete_data<T>::assign(Tokenizer& tok) 
-    {
-        unique_.clear();
-        counts_.clear();
-        data_.clear();
-        copy_token<T>(tok, data_);
-        init();
-    }
-
     template<class T> inline void Discrete_data<T>::init() 
     {
         BOOST_FOREACH(T i, this->data_) {
@@ -105,7 +88,6 @@ namespace Permory
             counts_.insert(std::make_pair(i->second, i->first));
     }
 
-
     template<class T> template<class Compare> inline void 
         Discrete_data<T>::regroup(const std::vector<int> v) 
     {
@@ -115,7 +97,7 @@ namespace Permory
     template<class T> inline size_t Discrete_data<T>::data_cardinality() const
     {
         return count_if(unique_.begin(), unique_.end(), 
-                greater_than_second<std::pair<T, int>, int>(0));
+                detail::greater_than_second<std::pair<T, int>, int>(0));
     }
 
     template<class T> inline bool Discrete_data<T>::isInDomain(const T& x) const

@@ -6,14 +6,15 @@
 #include <vector>
 
 #include "config.hpp"
-#include "parameter.hpp"
-#include "statistical/algorithms.hpp"
+#include "detail/parameter.hpp"
+#include "statistical/detail.hpp"
 #include "statistical/contab.hpp"
 #include "statistical/teststat.hpp"
 #include "statistical/testpool.hpp"
 
 using namespace std;
 using namespace Permory;
+using namespace Permory::stat;
 
 int main(int argc, char** argv) 
 {

@@ -17,7 +17,7 @@ build-project test ;
 #build-project src/io ;
 
 project permory 
-    : requirements <include>src 
+    : requirements <include>src <warnings>off
     : #usage-requirements <include>. 
     ;
 

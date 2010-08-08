@@ -2,8 +2,8 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 include site-config.jam ;
-alias /files : /io//output.cpp /io//line_reader.cpp /io//file_info.cpp ;
-alias /libs : bfs bio ;
+alias /files : /io//file.cpp ;
+alias /libs : bfs bio bsys ;
 alias deps : /files /libs ;
 
 project test 
@@ -16,11 +16,10 @@ exe teststat
 
 exe test_io 
     : test_io.cpp deps
-    : <dll-path>/usr/local/lib #requirements
     ;
 
 exe test_io2  
     : test_io2.cpp deps
-    : <dll-path>/usr/local/lib #requirements
+    : #<dll-path>/usr/local/lib #requirements
     ;
 
