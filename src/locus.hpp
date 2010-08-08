@@ -9,19 +9,16 @@
 #include <vector>
 
 #include "config.hpp"
-#include "individual.hpp"
 
 namespace Permory 
 {
-    class Individual; // forward declaration
-
+    // Modelling a genetic locus, for which test statistics are computed
     class Locus {
         public: 
             enum Chr {
                 none=0, chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, 
                 chr9, chr10, chr11, chr12, chr13, chr14, chr15, chr16, 
                 chr17, chr18, chr19, chr20, chr21, chr22, X, Y, XY, MT};
-            std::vector<Permory::Individual>* individuals_; 
 
             // Ctor
             Locus(
@@ -31,8 +28,7 @@ namespace Permory
                     size_t bp = 0,
                     double cm = 0.0
                  ) 
-                : id_(id), name_(name), chr_(chr), bp_(bp), cm_(cm),
-                individuals_(0)
+                : id_(id), name_(name), chr_(chr), bp_(bp), cm_(cm)
             { }
 
             // Inspection 

@@ -13,27 +13,28 @@
 
 namespace Permory 
 {
-    class Locus; // forward declaration
+    // forward declarations
     class Measurement;
 
-    // Information referring to the individual that is not a measurement 
     class Individual { 
         public:
             enum Sex {nosex=0, male, female};
-            std::vector<Locus>* loci_; //genetic loci
 
             // Ctor
             Individual(size_t id, 
                     std::string name="", 
                     Sex sex=nosex) 
-                : id_(id), name_(name), sex_(sex), loci_(0)
+                : id_(id), name_(name), sex_(sex) 
             { }
 
             // Inspection
             size_t id() const { return id_; }
             std::string name() const { return name_; }
             Sex sex() const { return sex_; }
+            const std::vector<Measurement>& measurements() const { return v_; }
             bool operator<(const Individual& i) const { return id_ < i.id(); }
+            bool operator>(const Individual& i) const { return id_ > i.id(); }
+            bool operator==(const Individual& i) const { return id_ == i.id(); }
 
             // Modification
             void add_measurement(const Measurement& m) { v_.push_back(m); }
