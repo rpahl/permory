@@ -12,6 +12,7 @@ if ( [ os.name ] = LINUX )
     lib bio : : <name>boost_iostreams ;
     lib bsys : : <name>boost_system ;
     lib zlib : : <name>z ;
+    lib gsl : : <name>gsl ;
 }
 
 #if ( [ modules.peek : OS ] in CYGWIN )
@@ -27,6 +28,7 @@ if ( [ os.name ] = CYGWIN )
     lib bio : : <name>boost_iostreams ; 
     lib bsys : : <name>boost_system ; 
     lib zlib : : <name>z ; 
+    lib gsl : : <name>gsl ;
 }
 
 # misc stuff

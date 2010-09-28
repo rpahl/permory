@@ -15,47 +15,51 @@
 
 #include "config.hpp"
 #include "contab.hpp"
-#include "detail/recode.hpp" //dummy_code(), index_code()
 #include "detail/functors.hpp" //pair_comp_2nd
-#include "locus.hpp"
+#include "detail/parameter.hpp"
 #include "locusdata.hpp"
-#include "parameter.hpp"
-#include "permutation/booster.hpp"
+#include "permutation/booster.hpp"  //Bitset_with_count,
 #include "permutation/perm.hpp"
 #include "statistical/detail.hpp"
 #include "statistical/testpool.hpp"
 
-namespace Permory { namespace stat {
+namespace Permory { namespace statistic {
+    using namespace permutation;
 
+    //
     // Analyze genotype data with binary/dichotomous trait
-    template<int K, int L, class T = unsigned short int> class Dichotom {
+    //
+    template<uint K, uint L, class T = unsigned short int> class Dichotom {
         public:
+
             // Iterator pass through
-            typedef typename std::vector<double>::const_iterator 
-                const_iterator;
+            typedef typename std::vector<double>::const_iterator const_iterator;
             const_iterator tmax_begin() const { return tMax_.begin(); }
             const_iterator tmax_end() const { return tMax_.end(); }
 
             Dichotom(
-                    const char*,                    //char coded tests
                     const Parameter&, 
                     const std::vector<bool>& trait, //dichotomous trait
-                    const Permutation* pp=0);
+                    const Permutation* pp=0);       //pre-stored permutations
 
             // Inspection
             size_t size() const { return testPool_.size(); }
 
-            // Test locus that is associated with the data
-            template<class D> boost::shared_ptr<Locus> locus_test(
-                    const Locus_data<D>&);
+            // Modification
+            void renew_permutations(
+                    const Permutation* pp,  //creates the permutations
+                    size_t nperm,           //number of permutations
+                    size_t tail_size);      //parameter of the permutation booster
+
+            // Conversion
+            // Compute test statistics for the data
+            template<class D> std::vector<double> test(const Locus_data<D>&);
             // Compute permutation test statistics 
             template<class D> void permutation_test(const Locus_data<D>&);
 
         private:
             // This function does the "permutation work"
-            template<class D> void do_permutation( 
-                    const Locus_data<D>&, 
-                    const std::map<D, int>&);
+            template<class D> void do_permutation(const Locus_data<D>&);
 
             Test_pool<K, L> testPool_;
             T nCases_;
@@ -65,142 +69,167 @@ namespace Permory { namespace stat {
             std::vector<double> tMax_; //max test statistics 
 
             // For caching purpose
-            std::vector<Con_tab<K, L> > tables_; 
-            std::vector<int> index_[L+1];
-            Bitset2 dummy_[L+1];
+            std::vector<Con_tab<K, L> > con_tabs_; 
+            std::vector<int> index_[L+1];   //L+1 integer vectors
+            Bitset_with_count dummy_[L+1];  //L+1 bitsets with cached bit counts
+            bool useBitarithmetic_;
     };
     // ========================================================================
     // Dichotom implementations
-    template<int K, int L, class T> inline 
+    template<uint K, uint L, class T> inline 
         Dichotom<K, L, T>::Dichotom(
-                const char* tests, 
                 const Parameter& par,
                 const std::vector<bool>& trait,
-                const Permutation* pp
-                ) : trait_(trait.begin(), trait.end()), testPool_(tests, par)
+                const Permutation* pp) 
+        : trait_(trait.begin(), trait.end()), testPool_(par),
+        useBitarithmetic_(par.useBar) 
         {
-            if (pp) {
-                size_t n = par.nperm; //number of permutations
-                nCases_ = std::accumulate(trait_.begin(), trait_.end(), 0); 
+            nCases_ = std::accumulate(trait_.begin(), trait_.end(), 0); 
+            bool yesPermutation = (pp != 0);
+            if (yesPermutation) {
+                renew_permutations(pp, par.nperm_block, par.tail_size);
+            }
+        }
 
-                tables_.resize(n);
-                tMax_.resize(n);
-                caseFreqs_.resize(L+1, n); //one extra row to account for missings 
+    template<uint K, uint L, class T> inline 
+        void Dichotom<K, L, T>::renew_permutations(const Permutation* pp, size_t nperm, 
+                size_t tail_size)
+    {
+        con_tabs_.resize(nperm);
+        tMax_.clear();
+        tMax_.resize(nperm);
+        caseFreqs_.resize(L+1, nperm); //one extra row to account for missings 
 
-                // Create and store permutations in matrix
-                boost::shared_ptr<Perm_matrix<T> > pmat(
-                        new Perm_matrix<T>(n, *pp, trait_, par.useBar));
+        // Create and store permutations in matrix
+        boost::shared_ptr<Perm_matrix<T> > pmat(
+                new Perm_matrix<T>(nperm, *pp, trait_, useBitarithmetic_));
 
-                // Prepare accelerated permutation
-                boosters_.reserve(L+1); 
-                for (int i=0; i<L+1; i++) {
-                    boosters_.push_back(new Perm_boost<T>(pmat));
+        // Prepare permutation booster
+        boosters_.clear();
+        boosters_.reserve(L+1); 
+        for (uint i=0; i<L+1; i++) {
+            boosters_.push_back(new Perm_boost<T>(pmat, tail_size));
+        }
+    }
+
+    template<uint K, uint L, class T> template<class D> inline 
+        std::vector<double> Dichotom<K, L, T>::test(const Locus_data<D>& data)
+        {
+            // Create contingency tab and analyze it with each test of the test pool
+            Con_tab<K, L>* tab;
+            if (data.hasMissings()) { //requires extra work to get rid of the missings
+                std::vector<D> dd; dd.reserve(data.size());
+                std::vector<T> tt; tt.reserve(data.size());
+
+                typename Locus_data<D>::const_iterator it = data.begin(); 
+                BOOST_FOREACH(T t, trait_) {
+                    if (*it != data.get_undef()) { //only keep the valid values
+                        dd.push_back(*it);
+                        tt.push_back(t);
+                    }
                 }
+                tab = make_Con_tab<T,D,K,L>(tt.begin(), tt.end(), dd.begin(), dd.end());
             }
             else {
-                //no permutations
+                tab = make_Con_tab<T,D,K,L>(
+                        trait_.begin(), trait_.end(), data.begin(), data.end());
             }
-        }
-    template<int K, int L, class T> template<class D> inline void 
-        Dichotom<K, L, T>::do_permutation(
-                const Locus_data<D>& d, const std::map<D, int>& m)
-        {
-            std::pair<D, int> pairs_[L+1];
-            copy(m.begin(), m.end(), pairs_);
-            std::set<int> nonzero_freq; //permute only alleles with frequency > 0
-            for (int i=0; i<L+1; i++) {
-                D a = pairs_[i].first;       //allelic code
-                int cnt = pairs_[i].second; //number of occurences of this code
-                if (cnt > 0) {
-                    nonzero_freq.insert(i);
-                    index_[i] = index_code<D>(d.begin(), d.end(), a);
-                    dummy_[i] = dummy_code<D>(d.begin(), d.end(), a);
-                    pairs_[i] = boosters_[i].find_most_similar(dummy_[i], cnt);
-                }
-            }
-            size_t max_i = distance(
-                    pairs_, max_element(pairs_, pairs_ + (L+1),
-                        comp_second<std::pair<D, int> >()));
-            caseFreqs_[max_i] = nCases_; //init with marginal sum
-
-            // Permute for each allelic code, but *not* the one with the maximal
-            // frequency, which is derived most efficiently using the marginal sum
-            nonzero_freq.erase(max_i);
-            BOOST_FOREACH(int i, nonzero_freq) {
-                boosters_[i].permute(
-                        index_[i],          //index coded data
-                        dummy_[i],          //dummy coded data
-                        pairs_[i].first,    //allelic code
-                        &caseFreqs_[i]);    //resulting case frequenices
-                caseFreqs_[max_i] -= caseFreqs_[i]; //subtraction from marginal
-            }
-            // add data and result of skipped one to buffer of booster 
-            boosters_[max_i].add_to_buffer(dummy_[max_i]);
-            boosters_[max_i].add_to_buffer(caseFreqs_[max_i]);
+            std::vector<double> v(testPool_.size());
+            for_each_test<K,L>(*tab, testPool_.begin(), testPool_.end(), v.begin());
+            delete tab;
+            return v;
         }
 
-    template<int K, int L, class T> template<class D> inline void 
-        Dichotom<K, L, T>::permutation_test(
-                const Locus_data<D>& d) 
+    template<uint K, uint L, class T> template<class D> inline void 
+        Dichotom<K, L, T>::permutation_test(const Locus_data<D>& data) 
         {
-            assert (trait_.size() == d.size());
-            std::map<D, int> m = d.unique_with_counts();
-            assert (m.size() == L+1);
-            do_permutation(d, m);
+            assert (trait_.size() == data.size());
+            bool yesPermutation = (not boosters_.empty());
+            if (yesPermutation) {
+                do_permutation(data);
+            }
 
             // Fill contingency tables 
-            typename std::map<D, int>::const_iterator mi = m.begin(); 
-            int j = 0; //row index of matrix with case frequency results
-            int c = 0; //column index of contingency table
-            for (mi = m.begin(); mi!=m.end(); mi++) {
-                bool skipThis = mi->first == d.get_undef();
-                if (!skipThis) {
-                    int n = mi->second;      //n = #freqs of cases + controls
-                    for (int i=0; i<tables_.size(); ++i) {  
-                        tables_[i][0][c] = caseFreqs_[j][i];     //cases r[j]
-                        tables_[i][1][c] = n - caseFreqs_[j][i]; //controls s[j]
+            uint j = 0; //row index of matrix with case frequency results
+            uint c = 0; //column index of contingency table
+
+            typename Locus_data<D>::unique_iterator uniques = data.unique_begin();
+            // the unique_iterator is defined in discretedata.hpp:
+            // std::map<elem_type, count_type> unique_;//unique elements with counts
+            //
+            for (uniques; uniques!=data.unique_end(); uniques++) {
+                bool ok = not (uniques->first == data.get_undef());
+                if (ok) {
+                    uint n = uniques->second; //frequency of both (cases + controls)
+                    for (int t=0; t<con_tabs_.size(); ++t) {  
+                        con_tabs_[t][0][c] = caseFreqs_[j][t];     //cases r[j]
+                        con_tabs_[t][1][c] = n - caseFreqs_[j][t]; //controls s[j]
                     }
-                    c++; //always wanted to use that in C++, huh? ;-)
+                    c++; 
                 }
                 j++;
             }
-            for_each_test_and_tab(tables_, testPool_, tMax_.begin());
-            //tables_[0].print();//XXX
+            // For each permutation i (i.e. for each obtained contingency 
+            // table) compute the max over all test statistics, say max(i), and
+            // then update tMax_[i] = max(tMax_[i], max(i))
+            for_each_test_and_tab<K,L>(con_tabs_, testPool_, tMax_.begin());
+            //con_tabs_[0].print();//XXX
         }
 
-    template<int K, int L, class T> template<class D> inline 
-        boost::shared_ptr<Locus> Dichotom<K, L, T>::locus_test(
-                const Locus_data<D>& d)
+    template<uint K, uint L, class T> template<class D> inline void 
+        Dichotom<K, L, T>::do_permutation(const Locus_data<D>& data)
         {
-            std::map<D, int> m = d.unique_with_counts();
-            int nMiss = 0; //number of undefined/missing values
-            if (d.hasMissings()) {
-                nMiss = m[d.get_undef()];
-                m.erase(d.get_undef()); 
+            if (not (data.domain_cardinality() == L+1)) {
+                throw std::runtime_error("Bad domain cardinality in permutation test.");
+            }
+            uint boost_index[L+1]; //see below
+            size_t worst_idx = 0, maxcnt = 0;
+            typename Locus_data<D>::unique_iterator it = data.unique_begin();
+            for (uint i=0; i<L+1; i++) {
+                size_t cnt = (size_t) it->second; //#occurences of the code
+                D a = it->first; //allelic code
+                index_[i].clear();
+                index_[i].reserve(cnt);
+                index_code<D>(index_[i], data.begin(), data.end(), a);
+                dummy_[i] = dummy_code<D>(data.begin(), data.end(), a);
+
+                // Determine index of most similar dummy code in the 
+                // booster's buffer. If the smallest distance between this
+                // dummy code and the most similar one is smaller than 'cnt', 
+                // 'cnt' will contain this distance after the call.
+                boost_index[i] = boosters_[i].find_most_similar(dummy_[i], cnt);
+
+                // Keep track of the worst boostable element, which is the one 
+                // that shows both highest occurences of the code and the 
+                // highest distance to "neighboured" dummy codes
+                if (cnt > maxcnt) { 
+                    maxcnt = cnt;
+                    worst_idx = i;
+                }
+                it++;
             }
 
-            // Create contingency table
-            Con_tab<K, L>* tab;
-            if (d.hasMissings()) { 
-                // exclude missings from analysis
-                std::vector<D> v(nMiss);
-                remove_copy(d.begin(), d.end(), v, d.get_undef());
-                tab = new Con_tab<K, L>(trait_.begin(), trait_.end(), 
-                        v.begin(), v.end());
+            // Permute for each allelic code, except the one that can be least
+            // optimized/boosted for permutation. For this, the frequency is 
+            // simply derived via the marginal sum.
+            caseFreqs_[worst_idx] = nCases_; //init with marginal sum
+            for (uint i=0; i<L+1; i++) {
+                if (i != worst_idx) {
+                    boosters_[i].permute(
+                            index_[i],          //index coded data
+                            dummy_[i],          //dummy coded data
+                            boost_index[i],     //index into booster's buffer
+                            &caseFreqs_[i]);    //resulting case frequenices
+                    caseFreqs_[worst_idx] -= caseFreqs_[i]; 
+                }
             }
-            else {
-                tab = new Con_tab<K, L>(trait_.begin(), trait_.end(), 
-                        d.begin(), d.end());
-            }
-            std::vector<double> v(testPool_.size());
-            for_each_test(*tab, testPool_.begin(), testPool_.end(), v.begin());
-            delete tab;
-            typename boost::shared_ptr<Locus> loc = d.get_locus();
-            loc->add_test_stat<K, L>(v.begin(), v.end());
-            return loc;
+            // Since it was left out, the dummy code and the resulting case 
+            // frequencies of the skipped code are added post hoc "by hand" 
+            // to the buffer of the booster. 
+            boosters_[worst_idx].add_to_buffer(dummy_[worst_idx]);
+            boosters_[worst_idx].add_to_buffer(caseFreqs_[worst_idx]);
         }
-
-} // namespace stat
+} // namespace statistic
 } // namespace Permory
 
 #endif // include guard

@@ -18,7 +18,7 @@ namespace Permory { namespace io {
     class File_handle {
         public:
             // Ctor
-            File_handle(const char* fn) 
+            File_handle(const std::string& fn) 
                 : p_(fn, bfs::native) 
             {}
 
@@ -33,6 +33,28 @@ namespace Permory { namespace io {
         private:
             bfs::path p_;
     };
+
+    // File_handle implementation
+    // ========================================================================
+    inline std::string File_handle::extension(int a) const
+    {
+        // example: hello.txt.gz
+        // file_extension(0) returns "gz"
+        // file_extension(1) returns "txt"
+        // file_extension(2 or greater) returns ""
+        std::string s = (std::string) p_.filename(); 
+        int x = s.find_last_of(".");
+        for (int i=0; i<a; i++) 
+        {
+            if (x > 0)
+                s.erase(x); //remove file extension
+            x = s.find_last_of(".");
+        }
+        if (x > 0)
+            return s.substr(x + 1);
+        else 
+            return "";
+    }
 
 
     // Deprecated

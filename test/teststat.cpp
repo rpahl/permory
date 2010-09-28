@@ -12,12 +12,26 @@
 #include "statistical/teststat.hpp"
 #include "statistical/testpool.hpp"
 
+#include "gwas.hpp";
+
 using namespace std;
 using namespace Permory;
-using namespace Permory::stat;
+using namespace Permory::statistic;
 
 int main(int argc, char** argv) 
 {
+
+    std::vector<Individual> vi;
+    Gwas gwas1(vi);
+    //Locus* loc = new Locus(1, "locus 1");
+    int myints[] = {0,1,1,2,0};
+
+    Locus* pl(new Locus(1, "loc1"));
+    Locus* pl2(new Locus(1, "loc2"));
+
+    PRINT(gwas1.m());
+    return 0;
+
     //void Permory::Test::teststat(int a, int n) { 
     int a = atoi(argv[1]);
     int n = atoi(argv[2]);
@@ -39,8 +53,9 @@ int main(int argc, char** argv)
     //fill_2xL_tabs(v23, vv, ct);
     //for (size_t i=0; i<v23.size(); ++i) v23[i].print(); cout << endl;
     Parameter par;
-    Test_pool<2,3> pool("t", par);
-    
+    par.tests.insert(trend);
+    Test_pool<2,3> pool(par);
+
     double d;
     vector<double> v(v23.size()); 
     if (a == 0) {

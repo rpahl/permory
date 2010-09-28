@@ -13,7 +13,7 @@ include site-config.jam ;
 # symbolic name that is used in permory/test/jamfile.jam
 use-project /io : src/io ; 
 
-build-project test ;
+#build-project test ;
 #build-project src/io ;
 
 project permory 
@@ -21,7 +21,7 @@ project permory
     : #usage-requirements <include>. 
     ;
 
-alias /libs : bfs bpop bio bsys zlib ;
+alias /libs : bfs bpop bio bsys zlib gsl ;
 exe permory  
     : src/permory.cpp /libs
     : <link>static <runtime-link>static 

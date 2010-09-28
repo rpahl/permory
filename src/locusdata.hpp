@@ -7,82 +7,80 @@
 
 #include <numeric>
 
+#include<boost/bind.hpp>
+#include<boost/lexical_cast.hpp>
+
 #include "config.hpp"
+#include "detail/enums.hpp" //Genetic_type
 #include "discretedata.hpp"
-#include "detail/functors.hpp" //pair_comp_2nd
 #include "locus.hpp"
 
 namespace Permory {
+    using namespace detail;
+
     template<class T> class Locus_data : public Discrete_data<T> {
         public:
-            typedef T elem_type;
-            typedef typename Discrete_data<T>::count_type count_type;
-            enum Data_type {haplotype, genotype};
+            typedef T elem_t; //internal type of the data (e.g. int, char)
+            typedef typename Discrete_data<T>::count_t count_t;
 
             // Ctor
             explicit Locus_data(
-                    const std::vector<T>&, 
-                    const T&, 
-                    boost::shared_ptr<Locus>, 
-                    Data_type);
+                    const std::vector<T>&,  //the data
+                    const T&);              //code of undefined/missing value
             explicit Locus_data(
                     typename std::vector<T>::const_iterator, //start
                     typename std::vector<T>::const_iterator, //end
-                    const T&, boost::shared_ptr<Locus>, Data_type);
+                    const T&);
 
             // Inspectors
             T get_major() const { return major_; }
             T get_minor() const { return minor_; }
             T get_target() const { return target_; }
             T get_undef() const { return undef_; }
-            Data_type get_type() const { return type_; }
             bool hasMissings() const { return count_elem(undef_) > 0; }
-            bool isPolymorphic() const;
-            int nValid() const { return this->size() - count_elem(undef_); }
-            int nMiss() const { return count_elem(undef_); }
-            double maf() const; //minor allele frequency
+            bool isPolymorph() const;
+            size_t nValid() const { return this->size() - count_elem(undef_); }
+            size_t nMiss() const { return count_elem(undef_); }
+            double maf(Genetic_type type) const; //minor allele frequency
 
             // Modifiers
             void set_target(const T&); 
             void set_minor(const T&); 
             void set_major(const T&); 
-            boost::shared_ptr<Locus> get_locus() { return loc_; }
 
             // Conversions
-            Locus_data<int> make_genotypic(int a=2) const;
+            // @parameter a says how many alleles to merge
+            Locus_data<uint> merge_alleles_to_genotypes(uint a=2) const;
+            Locus_data<uint> as_numeric() const;
 
         private:
             void init();
-            T major_;    //e.g. major marker
-            T minor_;    //e.g. minor marker
-            T target_;   //e.g. target/risk marker
-            T undef_;    //e.g. undefined/missing code
-            Data_type type_; //haplo- or genotype
-            boost::shared_ptr<Locus> loc_;  
+            T major_;   //e.g. major marker
+            T minor_;   //e.g. minor marker
+            T target_;  //e.g. target/risk marker
+            T undef_;   //e.g. undefined/missing code
     };
 
 
     // ========================================================================
     // Locus_data<T> implementation
     template<class T> inline Locus_data<T>::Locus_data(
-            const std::vector<T>& v, 
-            const T& undef, boost::shared_ptr<Locus> loc, Data_type dt)
-        : Discrete_data<T>(v), undef_(undef), loc_(loc), type_(dt)
+            const std::vector<T>& v, const T& u) 
+        : Discrete_data<T>(v), undef_(u) 
     {
         init();
     }
     template<class T> inline Locus_data<T>::Locus_data(
             typename std::vector<T>::const_iterator start, 
-            typename std::vector<T>::const_iterator end,
-            const T& undef, boost::shared_ptr<Locus> loc, Data_type dt)
-        : Discrete_data<T>(start, end), undef_(undef), loc_(loc), type_(dt)
+            typename std::vector<T>::const_iterator end, const T& u) 
+        : Discrete_data<T>(start, end), undef_(u) 
     {
         init();
     }
     template<class T> inline void Locus_data<T>::init()
     {
         // determine minor and major allele:
-        std::map<elem_type, count_type> m = this->unique_with_counts();
+        std::map<elem_t, count_t> m = this->unique_with_counts();
         m.erase(undef_); //undefined is not allowed
         minor_ =  (*min_element(m.begin(), m.end(), 
                     detail::comp_second<std::pair<T, int> >())).first;
@@ -92,32 +90,44 @@ namespace Permory {
 
         this->add_to_domain(undef_); //make undef_ always a part of domain
     }
-    template<class T> inline bool Locus_data<T>::isPolymorphic() const
+    template<class T> inline bool Locus_data<T>::isPolymorph() const
     {
         return this->data_cardinality() > ( 1 + (size_t) hasMissings() );
     }
 
-    template<class T> inline double Locus_data<T>::maf() const
+    template<class T> inline double Locus_data<T>::maf(Genetic_type type) const
     {
-        if (nValid() == 0)
+        if (nValid() == 0) {
             return 0.0;
-        if (type_ == genotype) {
-            std::map<elem_type, count_type> m = this->unique_with_counts();
+        }
+        if (type == genotype) {
+            // derive maf via genotype
+            std::map<elem_t, count_t> m = this->unique_with_counts();
             m.erase(undef_); //undefined does not count
-            elem_type max_sum = 
-                nValid()*(*max_element(m.begin(), m.end())).first;
 
-            elem_type sum = 0;
-            for(typename Discrete_data<T>::counts_iterator 
-                    i=this->counts_begin(); i!=this->counts_end(); i++) {
-                elem_type e = i->second; //the genotype
-                bool isValid = e != undef_;
-                if (isValid)
-                    sum += e*(i->first); //#alleles = genotype*(#occurrence)
+            // First we need to transform the elements, which could be of type
+            // int but also of type string, char, etc... into numeric type
+            std::vector<count_t> vv; 
+            vv.reserve(m.size());
+            typename std::map<elem_t, count_t>::const_iterator itMap;
+            for (itMap=m.begin(); itMap != m.end(); ++itMap) {
+                vv.push_back(boost::lexical_cast<count_t>(itMap->first));
+            }
+
+            count_t max_sum = nValid()*(*max_element(vv.begin(), vv.end()));
+            count_t sum = 0;
+            typename Discrete_data<T>::unique_iterator it;
+            for (it = this->unique_begin(); it != this->unique_end(); ++it) {
+                elem_t g = it->first;    //the genotype
+                bool isValid = g != undef_;
+                if (isValid) {
+                    //#alleles = genotype*(#occurrence)
+                    sum += boost::lexical_cast<count_t>(g)*it->second; 
+                }
             }
             return double(sum)/double(max_sum);
         }
-        else { //haplotype
+        else { //or via haplotype, which is simple to compute
             return double(count_elem(minor_)) / double(nValid());
         }
     }
@@ -128,7 +138,7 @@ namespace Permory {
             target_ = x;
         }
         else {
-            throw(std::domain_error("Target allele is undefined."));
+            throw(std::domain_error("Bad target allele/marker."));
         }
     }
     template<class T> inline void Locus_data<T>::set_minor(const T& x) 
@@ -137,7 +147,7 @@ namespace Permory {
             minor_ = x;
         }
         else {
-            throw(std::domain_error("Minor allele is undefined."));
+            throw(std::domain_error("Bad minor allele/marker."));
         }
     }
     template<class T> inline void Locus_data<T>::set_major(const T& x) 
@@ -146,29 +156,63 @@ namespace Permory {
             major_ = x;
         }
         else {
-            throw(std::domain_error("Major allele is undefined."));
+            throw(std::domain_error("Bad major allele/marker."));
         }
     }
 
-    template<class T> inline Locus_data<int> Locus_data<T>::make_genotypic(int a) const
+    template<class T> inline Locus_data<uint> 
+        Locus_data<T>::merge_alleles_to_genotypes(uint a) const
     {
-        std::vector<int> v; 
+        std::vector<uint> v; 
         // a=2 (default) means standard 2-allelic genotype
         v.reserve(this->size()/a);
 
         for (typename std::vector<T>::const_iterator it = this->begin(); 
                 it+a-1 < this->end(); it+=a) {
-            if (find(it, it+a, this->undef_) == it+a) { //check for missing
+            bool ok = (find(it, it+a, this->undef_) == it+a);
+            if (ok) { 
                 // genotype is the number of target/risk markers 
-                v.push_back((count_type) count(it, it+a, this->target_));
+                v.push_back((uint) count(it, it+a, this->target_));
             }
             else {
-                // One or more undefined alleles => undefined genotype 
+                // Found one or more undefined alleles => undefined genotype 
                 v.push_back(-1);
             }
         }
-        Locus_data<int> s(v, -1, genotype); //new Locus_data with undef set to -1 
-        return s;
+        Locus_data<uint> ld(v, -1); //new Locus_data with undef set to -1 
+        return ld;
+    }
+    template<class T> inline Locus_data<uint> Locus_data<T>::as_numeric() const
+    {
+        // We transform the values into integers by their position and hence
+        // first need to put the values into a sequence such as vector
+        std::vector<T> uu;
+        uu.reserve(this->domain_cardinality()); 
+        typedef Discrete_data<T> data_t;
+        typedef typename std::map<
+            typename data_t::elem_t, typename data_t::count_t > map_t;
+        std::transform(this->unique_begin(), this->unique_begin(), 
+                std::back_inserter(uu), boost::bind(&map_t::value_type::first,_1) );
+
+        std::vector<uint> v; 
+        v.reserve(this->size());
+
+        typedef typename std::vector<T>::const_iterator vec_iter;
+        vec_iter start = uu.begin();
+        vec_iter end = uu.end();
+        for (vec_iter itData = this->begin(); itData != this->end(); ++itData) {
+            bool ok = *itData != this->undef_;
+            if (ok) {
+                uint dx = std::distance(start, std::find(start, end, *itData));
+                v.push_back(dx);
+            }
+            else {
+                v.push_back(-1);    //undefined
+            }
+        }
+
+        Locus_data<uint> ld(v, -1); //new Locus_data with undef set to -1 
+        return ld;
     }
 } // namespace Permory
 

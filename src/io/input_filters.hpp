@@ -16,6 +16,11 @@
 namespace Permory { namespace io {
     namespace bio = boost::iostreams;
 
+    //
+    // Skips for three special delimiters, namely "empty char", tabulator 
+    // and '\r'. In addition, the first n chunks ("defined" by the delimiters) 
+    // are also skipped.
+    //
     template<int n> class Skip_input_filter {
         public:
             Skip_input_filter() 

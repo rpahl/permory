@@ -36,13 +36,13 @@ namespace Permory { namespace io {
             const_iterator end() const { return buf_.end(); }
 
             //  Ctor and Dtor
-            Line_reader(const File_handle&); 
+            Line_reader(const std::string& fn); 
             ~Line_reader() { in_.reset(); } //close all devices
 
             // Modification
             void next();        //read next line (formatted) into this->buf_
             void next(std::string&); //as above plus get the unformatted string
-            void next_str();    //just return the unformatted string
+            void next_str(std::string& s); //gets just the unformatted string
             void skip();        //skip one line
 
             // Inspection
@@ -52,6 +52,7 @@ namespace Permory { namespace io {
             size_t char_count() const { return charCount_; }
             size_t line_count() const { return lineCount_; }
             size_t word_count() const { return wordCount_; }
+            const File_handle get_file() const { return file_; }
 
         private:
             File_handle file_;
@@ -63,14 +64,14 @@ namespace Permory { namespace io {
             bio::filtering_istream in_;  //chain of filters and input device
     };
 
-    template<class T> inline Line_reader<T>::Line_reader(const File_handle& f) 
-        : file_(f), charCount_(0), lineCount_(0), wordCount_(0) 
+    template<class T> inline Line_reader<T>::Line_reader(const std::string& fn) 
+        : file_(fn), charCount_(0), lineCount_(0), wordCount_(0) 
     {
-        if ( !bfs::is_regular(*file_)) {
+        if (not bfs::is_regular(*file_)) {
             throw File_exception("not a regular file.");
         }
-        if (!bfs::exists(*file_)) { 
-            throw File_exception("not found.");
+        if (not bfs::exists(*file_)) { 
+            throw File_not_found("not found.");
         }
 
         ext_ =  (*file_).extension(); 
@@ -95,6 +96,7 @@ namespace Permory { namespace io {
         std::string s;
         this->next(s);
     }
+
     template<class T> inline void Line_reader<T>::next(std::string& s) 
     {
         getline (in_, s);
@@ -108,14 +110,14 @@ namespace Permory { namespace io {
         wordCount_ += buf_.size();
         lineCount_ += (!buf_.empty());
     }
-    template<class T> inline void Line_reader<T>::next_str()
+
+    template<class T> inline void Line_reader<T>::next_str(std::string& s)
     {
-        std::string s;
         getline (in_, s);
         charCount_ += s.size();
         lineCount_ += (!s.empty());
-        return s;
     }
+
     template<class T> inline void Line_reader<T>::skip()
     {
         std::string s;
@@ -136,7 +138,7 @@ namespace Permory { namespace io {
             const_iterator end() const { return buf_.end(); }
 
             //  Ctor and Dtor
-            Line_reader(const File_handle&); 
+            Line_reader(const std::string& fn); 
             ~Line_reader() { in_.reset(); } //close all devices
 
             // Modification
@@ -149,6 +151,7 @@ namespace Permory { namespace io {
             size_t size() const { return buf_.size(); }
             size_t char_count() const { return charCount_; }
             size_t line_count() const { return lineCount_; }
+            const File_handle get_file() const { return file_; }
 
         private:
             File_handle file_;
@@ -163,8 +166,8 @@ namespace Permory { namespace io {
     };
 
 
-    inline Line_reader<char>::Line_reader(const File_handle& f) 
-        : file_(f), charCount_(0), lineCount_(0)
+    inline Line_reader<char>::Line_reader(const std::string& fn) 
+        : file_(fn), charCount_(0), lineCount_(0)
     {
         buf_.resize(BUFFSIZE);
         ext_ =  (*file_).extension(); // file extension

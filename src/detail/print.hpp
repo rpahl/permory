@@ -41,8 +41,8 @@ namespace Permory { namespace detail {
         //std::copy( v.begin(), v.begin()+len, output );
         std::for_each(v.begin(), v.begin()+len, Print(cout, l, r));
     }
-    template<class InIt> void print_seq( 
-            InIt first, InIt last, 
+    template<class T> void print_seq( 
+            T first, T last, 
             const string l="", const string r=" ")
     {
         std::for_each(first, last, Print(cout, l, r));

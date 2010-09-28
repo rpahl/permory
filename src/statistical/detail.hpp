@@ -13,56 +13,57 @@
 #include "statistical/testpool.hpp"
 #include "statistical/teststat.hpp"
 
-namespace Permory { namespace stat {
+namespace Permory { namespace statistic {
     template<int K, int L> inline typename std::vector<double>::iterator 
         for_each_tab(
             typename std::vector<Con_tab<K, L> >::const_iterator start,
             typename std::vector<Con_tab<K, L> >::const_iterator end,
             const typename Test_pool<K, L>::const_iterator t,
-            typename std::vector<double>::iterator result)
+            typename std::vector<double>::iterator itResult)
     {
         while (start != end) {
-            *result++ = (*t)(*start++);
+            *itResult++ = (*t)(*start++);
         }
-        return result;
+        return itResult;
     }
     template<int K, int L> inline typename std::vector<double>::iterator 
         for_each_test(
             const Con_tab<K, L>& tab,
             typename Test_pool<K, L>::const_iterator start, 
             typename Test_pool<K, L>::const_iterator end, 
-            typename std::vector<double>::iterator result)
+            typename std::vector<double>::iterator itResult)
     {
         while (start != end) {
-            *result++ = (*start++)(tab);
+            *itResult++ = (*start++)(tab);
         }
-        return result;
+        return itResult;
     }
     template<int K, int L> inline typename std::vector<double>::iterator 
         for_each_test_and_tab(
             const typename std::vector<Con_tab<K, L> >& tab,
             const Test_pool<K, L>& pool,
-            typename std::vector<double>::iterator result)
+            typename std::vector<double>::iterator itResult)
         {
             //vector<double> v(tab.size());
-            typename std::vector<double>::iterator result_begin = result;
+            typename std::vector<double>::iterator result_begin = itResult;
             for (typename Test_pool<K, L>::const_iterator 
-                    t = pool.begin(); t!=pool.end(); t++)   
+                    itTest = pool.begin(); itTest!=pool.end(); itTest++)   
             {
-                result = result_begin; //for each test start from beginning
+                itResult = result_begin; //for each test start from beginning
                 for (typename std::vector<Con_tab<K, L> >::const_iterator 
-                        i=tab.begin(); i!=tab.end(); i++)   
+                        itTab=tab.begin(); itTab!=tab.end(); itTab++)   
                 { 
-                    *result++ = max(*result, (*t)(*i));     //Tmax
+                    double d = max(*itResult, (*itTest)(*itTab));
+                    *itResult++ = d;    //Tmax
                 }
-                // "STL-version" requires temporary vector v, thus being slower:
+                // "STL-version" requires temporary vector v, and hence is slower:
                 //for_each_tab<K, L>(tab.begin(), tab.end(), i, v.begin());
-                //transform(v.begin(), v.end(), result, result, op_max<double>());
+                //transform(v.begin(), v.end(), itResult, itResult, op_max<double>());
             }
-            return result;
+            return itResult;
         }
 
-} // namespace stat
+} // namespace statistic
 } // namespace Permory
 
 #endif // include guard

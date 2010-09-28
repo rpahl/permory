@@ -6,120 +6,130 @@
 #define permory_contab_hpp
 
 #include <iostream>
+#include <set>
 #include <valarray>
+#include <vector>
 
 #include "detail/exception.hpp"
-
-namespace Permory { namespace stat {
+namespace Permory { namespace statistic {
     // Contingency table with R and C being the number of rows and columns, resp
-    template<int R, int C> class Con_tab {
+    template<uint R, uint C> class Con_tab {
         public:
-            typedef std::vector<int>::const_iterator int_iter;
+            typedef std::vector<uint>::const_iterator uint_iter;
             // Ctors
             Con_tab(); 
-            Con_tab(int_iter, int_iter, int_iter, int_iter);
+            Con_tab(uint_iter, uint_iter, uint_iter, uint_iter);
 
             // Inspectors
-            int nrow() const { return R; }
-            int ncol() const { return C; }
-            int rowsum(int x) const;
-            int colsum(int x) const;
-            const int& operator()(int r, int c) const { return tab_[r][c]; }
-            int* operator[](int r) { return tab_[r]; }
-            int at(const int r, const int c) const //range checked
-                throw (std::runtime_error);
+            uint nrow() const { return R; }
+            uint ncol() const { return C; }
+            uint rowsum(uint x) const;
+            uint colsum(uint x) const;
+            const uint& operator()(uint r, uint c) const { return tab_[r][c]; }
+            uint* operator[](uint r) { return tab_[r]; }
+            uint at(const uint r, const uint c) const; //range checked
 
             // Modifier
-            void assign(const int r, const int c, const int val) //range checked
-                throw (std::runtime_error); 
+            void assign(const uint r, const uint c, const uint val); //range checked
             // Conversions
             void print() const; 
         private:
-            int tab_ [R] [C]; 
+            uint tab_ [R] [C]; 
     };
 
-    template<int R, int C> inline Con_tab<R, C>::Con_tab()
+    template<uint R, uint C> inline Con_tab<R, C>::Con_tab()
     {
-        for (size_t i=0; i<R; ++i) {
-            for (size_t j=0; j<C; ++j)
+        for (uint i=0; i<R; ++i) {
+            for (uint j=0; j<C; ++j)
                 tab_[i][j] = 0;
         }
     }
-    template<int R, int C> inline Con_tab<R, C>::Con_tab(
-            int_iter start1, int_iter end1, 
-            int_iter start2, int_iter end2)
+    template<uint R, uint C> inline Con_tab<R,C>::Con_tab(
+            uint_iter start1, uint_iter end1, 
+            uint_iter start2, uint_iter end2)
     {
         this->Con_tab(); //need to initialize with 0
 #ifdef NDEBUG
-        while (start1 != end1 && start2 != end2) 
+        while (start1 != end1 && start2 != end2) {
             tab_[*start1++][*start2++]++;
-#else
-        try {
-            while (start1 != end1 && start2 != end2) {
-                int a = this->at(*start1, *start2);
-                tab_.assign(*start1++, *start2++, a+1);
-            }
         }
-        catch (std::exception& e) {
-            std::cerr << e.what() <<  "\n";
-            exit(-1);
+#else
+        while (start1 != end1 && start2 != end2) {
+            uint a = this->at(*start1, *start2);
+            tab_.assign(*start1++, *start2++, a+1);
         }
 #endif
     }
 
+    /*
+       template<class T1, class T2> template<uint R, uint C> inline 
+       Con_tab<R,C>::Con_tab(
+       std::vector<T1>::const_iterator start1,
+       std::vector<T1>::const_iterator end1,
+       std::vector<T2>::const_iterator start2,
+       std::vector<T2>::const_iterator end2,
+       )
+       */
 
-    template<int R, int C> inline int Con_tab<R, C>::rowsum(int x) const 
+    template<uint R, uint C> inline uint Con_tab<R, C>::rowsum(uint x) const 
     {
-        int sum = 0;
-        for (int j=0; j<C; ++j)
+        uint sum = 0;
+        for (uint j=0; j<C; ++j) {
             sum += tab_[x][j];
+        }
         return sum;
     }
 
-    template<int R, int C> inline int Con_tab<R, C>::colsum(int x) const 
+    template<uint R, uint C> inline uint Con_tab<R, C>::colsum(uint x) const 
     {
-        int sum = 0;
-        for (int i=0; i<R; ++i)
+        uint sum = 0;
+        for (uint i=0; i<R; ++i) {
             sum += tab_[i][x];
+        }
         return sum;
     }
 
-    template<int R, int C> inline void Con_tab<R, C>::assign(
-            const int r, 
-            const int c, 
-            const int val) throw (std::runtime_error)
+    template<uint R, uint C> inline void Con_tab<R, C>::assign(
+            const uint r, 
+            const uint c, 
+            const uint val) 
     {
-        if (val < 0) 
+        if (val < 0) {
             throw std::runtime_error("Con_tab: set negative value.");
-        if (!(r >= 0 && r < R && c >= 0 && c < C))
+        }
+        if (!(r >= 0 && r < R && c >= 0 && c < C)) {
             throw std::runtime_error("Con_tab: Out of bounds.");
+        }
         tab_[r][c] = val;
     }
 
-    template<int R, int C> inline int Con_tab<R, C>::at(
-            const int r, const int c) const throw (std::runtime_error)
+    template<uint R, uint C> inline uint Con_tab<R, C>::at(
+            const uint r, const uint c) const 
     {
-        if (r >= 0 && r < R && c >= 0 && c < C)
+        if (r >= 0 && r < R && c >= 0 && c < C) {
             return tab_[r][c];
-        else
+        }
+        else {
             throw std::runtime_error("Con_tab: Out of bounds.");
+        }
     }
 
-    template<int R, int C> inline void Con_tab<R, C>::print() const 
+    template<uint R, uint C> inline void Con_tab<R, C>::print() const 
     {
-        for (int i=0; i<R; ++i) {
-            for (int j=0; j<C; ++j)
+        for (uint i=0; i<R; ++i) {
+            for (uint j=0; j<C; ++j) {
                 std::cout << tab_[i][j] << " ";
+            }
             std::cout << std::endl;
         }
     }
 
     // ========================================================================
     // Non-member functions
-    template<int L> void fill_2xL_tabs(
+    template<uint L> void fill_2xL_tabs(
             std::vector<Con_tab<2, L> >& tabs,
-            const std::vector<std::valarray<int> >& r,
-            const std::vector<std::valarray<int> >& s)
+            const std::vector<std::valarray<uint> >& r,
+            const std::vector<std::valarray<uint> >& s)
     {
 #ifdef NDEBUG
         for (size_t j=0; j<L; ++j) {                //for each column
@@ -140,13 +150,46 @@ namespace Permory { namespace stat {
             }
         }
         catch (std::exception& e) {
-            std::cerr << e.what() <<  "\n";
+            std::cerr << e.what() <<  std::endl;
             exit(-1);
         }
 #endif
     }
 
-} // namespace stat
+    template<class T1, class T2, uint R, uint C> Con_tab<R,C>* make_Con_tab(
+            typename std::vector<T1>::const_iterator start1, 
+            typename std::vector<T1>::const_iterator end1, 
+            typename std::vector<T2>::const_iterator start2, 
+            typename std::vector<T2>::const_iterator end2)
+    {
+        // Filter out only the unique elements
+        std::set<T1> s1(start1, end1);
+        std::set<T2> s2(start2, end2);
+        /* XXX
+        PRINT(s1.size());
+        PRINT(s2.size());
+        detail::print_seq(s1.begin(), s1.end(), "", ",");
+        detail::print_seq(s2.begin(), s2.end(), "", ",");
+        */
+
+        if (s1.size() > R || s2.size() > C) {
+            throw std::out_of_range("Exceeding dimension in contingency table.");
+        }
+        std::vector<T1> v1(s1.begin(), s1.end());
+        std::vector<T2> v2(s2.begin(), s2.end());
+
+        Con_tab<R,C>* ctab = new Con_tab<R,C>(); //initialized with all entries to 0
+        while (start1 != end1 && start2 != end2) {
+            size_t i1 = std::distance(v1.begin(), 
+                    find(v1.begin(), v1.end(), *start1++));
+            size_t i2 = std::distance(v2.begin(), 
+                    find(v2.begin(), v2.end(), *start2++));
+            (*ctab)[i1][i2]++;
+        }
+        return ctab;
+    }
+
+} // namespace statistic
 } // namespace Permory
 
 #endif // include guard

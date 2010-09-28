@@ -5,6 +5,7 @@
 #ifndef permory_locus_hpp
 #define permory_locus_hpp
 
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -22,56 +23,104 @@ namespace Permory
 
             // Ctor
             Locus(
-                    size_t id,
-                    std::string name="", 
-                    Chr chr=none,
-                    size_t bp = 0,
-                    double cm = 0.0
+                    size_t id,              //unique id
+                    std::string rs="",      //rs-id or other Locus identifier
+                    std::string gene="",    //gene the locus belongs to
+                    Chr chr=none,           //chr1-chr22, X, Y or na if undefined
+                    size_t bp = 0,          //base pair position in bp units
+                    double cm = 0.0,        //cM map position
+                    bool isPolymorph=true   //polymorph yes/no
                  ) 
-                : id_(id), name_(name), chr_(chr), bp_(bp), cm_(cm)
+                : id_(id), rs_(rs), gene_(gene), chr_(chr), bp_(bp), cm_(cm),
+                isPolymorph_(isPolymorph), tsMax_(0.0), flag_(false)
             { }
 
             // Inspection 
             size_t id() const { return id_; }
-            std::string name() const { return name_; }
+            bool isPolymorph() const { return isPolymorph_; }
+            bool isFlagged() const { return flag_; }
+            bool hasTeststat() const { return (not ts_.empty()); }
+            const std::string& rs() const { return rs_; }
+            const std::string& gene() const { return gene_; }
             Chr chr() const { return chr_; }
             size_t bp() const { return bp_; }
             double cm() const { return cm_; }
-            bool operator<(size_t i) const { return id_ < i; }
-            bool operator<(double d) const { return tsMax_ < d; }
-            bool operator<(const Locus& x) const { 
-                return (chr_ < x.chr() || (chr_ == x.chr() && bp_ < x.bp()) );
-            }
-            bool operator==(const Locus& x) const { return ( id_ == x.id() ); }
-            std::vector<double> test_stats() const { return ts_; }
             double tmax() const { return tsMax_; }
+            bool operator<(const Locus& x) const;
+            bool operator==(const Locus& x) const; 
+            std::vector<double> test_stats() const { return ts_; }
 
             // Modification
-            template<int K, int L> void add_test_stat(
-                    std::vector<double>::const_iterator start,
-                    std::vector<double>::const_iterator end);
+            void set_flag(bool x) { flag_ = x; }
+            void set_polymorph(bool x) { isPolymorph_ = x; }
+            void set_gene(const std::string& s) { gene_ = s; }
+            void add_test_stats(const std::vector<double>&);
         private:
             size_t id_;     //unique id
-            string name_;     //rs-id or other Locus identifier
-            Chr chr_;            //chr1-chr22, X, Y or na if undefined
-            size_t bp_;          //base pair position in bp units
-            double cm_;          //cM map position
+            string rs_;     //rs-id or other Locus identifier
+            string gene_;   //gene the locus belongs to
+            Chr chr_;       //chr1-chr22, X, Y or na if undefined
+            size_t bp_;     //base pair position in bp units
+            double cm_;     //cM map position
 
             std::vector<double> ts_;    //test statistics for the locus
             double tsMax_;              //max of ts_
+            bool isPolymorph_;          //polymorph yes/no
+            bool flag_;                 //flag this locus
     };
 
+    // Locus implementation
     // ========================================================================
-    // Locus implementations
-    template<int K, int L> inline void Locus::add_test_stat(
-            std::vector<double>::const_iterator start,
-            std::vector<double>::const_iterator end)
+    inline bool Locus::operator<(const Locus& x) const
     {
-        copy (start, end, back_inserter(ts_));
+        if (chr_ != none && bp_ > 0) {
+            if (chr_ == x.chr())
+                return bp_ < x.bp();
+            else
+                return chr_ < x.chr();
+        }
+        else
+            return id_ < x.id();
+    }
+    inline bool Locus::operator==(const Locus& x) const
+    {
+        if (chr_ != none && bp_ > 0) {
+            if (chr_ == x.chr())
+                return bp_ == x.bp();
+            else
+                return chr_ == x.chr();
+        }
+        else
+            return id_ == x.id();
+    }
+    inline void Locus::add_test_stats(const std::vector<double>& v)
+    {
+        copy (v.begin(), v.end(), back_inserter(ts_));
         tsMax_ = std::max(tsMax_, *std::max_element(ts_.begin(), ts_.end()));
     }
 
 
+    Locus::Chr string2chr(const std::string& s)
+    {
+        if(s.empty())
+            return Locus::none;
+        std::istringstream iss(s);
+        int i;
+        iss >> i;
+        if (i >= 1 && i <= 22) {
+            return Locus::Chr(i);
+        }
+        if (s == "X")
+            return Locus::X;
+        else if (s == "Y")
+            return Locus::Y;
+        else if (s == "XY")
+            return Locus::XY;
+        else if (s == "MT")
+            return Locus::MT;
+        else
+            return Locus::none;
+    }
 } // namespace Permory
 
 #endif // include guard

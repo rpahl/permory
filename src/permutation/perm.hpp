@@ -14,8 +14,7 @@
 
 namespace Permory { namespace permutation {
 
-    class Permutation
-    {
+    class Permutation {
         public:
             // Ctor
             explicit Permutation(size_t seed=17061979) : seed_(seed) {
@@ -39,6 +38,7 @@ namespace Permory { namespace permutation {
             size_t seed_;   //random seed
             gsl_rng* rg;    //random generator
     };
+} // namespace permutation
 } // namespace Permory
 
 #endif // include guard

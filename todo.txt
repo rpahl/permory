@@ -1,1 +1,3 @@
 - exception.hpp
+- blocksize in advanced options aufnehmen 
+- pvalue.hpp, line 56 //XXX

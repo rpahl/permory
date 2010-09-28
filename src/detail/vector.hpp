@@ -14,19 +14,19 @@
 namespace Permory { namespace detail {
 
     template<class T> bool 
-        vector_is_sorted(
-            const std::vector<T>& v, 
+        sequence_is_sorted(
+            const T& seq, 
             bool decreasing=false)
     {
-        typename std::vector<T>::const_iterator i;
+        typename T::const_iterator i;
         if (decreasing) {
             //if no value is less than its successor, it is decreasingly sorted 
-            i = adjacent_find(v.begin(), v.end(), std::less<T>());
+            i = adjacent_find(seq.begin(), seq.end(), std::less<typename T::value_type>());
         }
         else { //increasing 
-            i = adjacent_find(v.begin(), v.end(), std::greater<T>());
+            i = adjacent_find(seq.begin(), seq.end(), std::greater<typename T::value_type>());
         }
-        return (i == v.end());
+        return (i == seq.end());
     }
 
     template<class T> std::valarray<T> 
@@ -50,8 +50,8 @@ namespace Permory { namespace detail {
     }
 
     template<class T, class Compare> std::vector<T> regroup(
-            const std::vector<T> v,
-            const std::vector<int> groups) 
+            const std::vector<T> v,     //will be reordered according to groups
+            const std::vector<int> g)   //groups
     {
         // Examples:
         // =========
@@ -63,8 +63,8 @@ namespace Permory { namespace detail {
         //                 5 6 1 2 3 4
         typedef std::map<int, std::vector<int>, Compare> index_map;
         index_map m;
-        for (int i=0; i<groups.size(); i++) {
-            m[groups[i]].push_back(i);
+        for (int i=0; i<g.size(); i++) {
+            m[g[i]].push_back(i);
         }
         std::vector<T> vv; 
         vv.reserve(v.size());

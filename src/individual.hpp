@@ -13,53 +13,110 @@
 
 namespace Permory 
 {
-    // forward declarations
-    class Measurement;
+    // Data record for an individual at a particular experiment/study
+    struct Record {
+            enum Value_type {undefined=0, dichotomous, continous};
 
-    class Individual { 
+            Record(double d=0.0, Value_type type = continous)
+                : val(d), theType(type)
+            {}
+            double operator<(const Record& r) const { return val < r.val; }
+            double operator=(const Record& r) const { return val == r.val; }
+            bool as_dichotom() const { return (val != 0); }
+            bool is_defined() const { return theType != undefined; }
+
+            double val;
+            Value_type theType;
+    };
+
+    //
+    // An individual as part of a clinical trial or association study, etc...
+    //
+    class Individual {
         public:
             enum Sex {nosex=0, male, female};
 
-            // Ctor
-            Individual(size_t id, 
-                    std::string name="", 
-                    Sex sex=nosex) 
-                : id_(id), name_(name), sex_(sex) 
-            { }
+            typedef std::vector<Record>::iterator iterator;
+            typedef std::vector<Record>::const_iterator const_iterator;
+            iterator begin() { return r_.begin(); }
+            iterator end() { return r_.end(); }
+            const_iterator begin() const { return r_.begin(); }
+            const_iterator end() const { return r_.end(); }
+
+            // Ctors
+            Individual(size_t id, std::string name="", Sex sex=nosex, double c=0) 
+                : id_(id), name_(name), sex_(sex), cost_(c) 
+            {}
 
             // Inspection
-            size_t id() const { return id_; }
-            std::string name() const { return name_; }
-            Sex sex() const { return sex_; }
-            const std::vector<Measurement>& measurements() const { return v_; }
             bool operator<(const Individual& i) const { return id_ < i.id(); }
             bool operator>(const Individual& i) const { return id_ > i.id(); }
             bool operator==(const Individual& i) const { return id_ == i.id(); }
+            bool hasRecord() const { return (!r_.empty()); }
+            bool isAffected() const { return hasRecord() && begin()->as_dichotom(); }
+            size_t id() const { return id_; }
+            size_t nrecord() const { return r_.size(); }
+            double costs() const { return cost_; }
+            std::string name() const { return name_; }
+            Sex sex() const { return sex_; }
 
             // Modification
-            void add_measurement(const Measurement& m) { v_.push_back(m); }
+            void set_id(size_t id) { id_ = id; }
+            void add_measurement(Record& r) { r_.push_back(r); }
+            void set_cost(double c) { cost_ = c; }
 
         private:
-            size_t id_;  //individual ID
-            std::string name_;    
+            size_t id_;         //individual ID
+            std::string name_;  //the individual's name
             Sex sex_;
-            std::vector<Measurement> v_;
+            std::vector<Record> r_;
+            double cost_; //for example, cost of recruitment or analysis
     };
 
+    //
+    // Sample of individuals with dichotomous phenotypes consisting of 
+    // (1-r) controls and r cases  
+    std::vector<Individual> case_control_sample(
+            size_t n, double r=0.5, 
+            double c=0) //costs
+    {
+        std::vector<Individual> v;
+        if (r <= 0 || r >= 1)
+            throw std::invalid_argument("The ratio must be in (0,1).");
+        v.reserve(n);
 
-    // Data measured for an individual at a particular experiment/study
-    struct Measurement {
-        Measurement(
-                Individual* i, 
-                bool aff=false, 
-                double phen=0.0)
-            : pi(i), affected(aff), phenotype(phen)
-        {}
+        Record rec0(0.0, Record::dichotomous);
+        Record rec1(1.0, Record::dichotomous);
 
-        bool affected;
-        double phenotype;
-        Individual* pi;
-    };
+        // Fill first (1-r) with controls and rest with cases
+        for (size_t i=0; i<n; i++) {
+            Individual ind(i, "", Individual::nosex, c);
+            if (double(i)/double(n) < r) {
+                ind.add_measurement(rec0);
+            }
+            else {
+                ind.add_measurement(rec1);
+            }
+            v.push_back(ind);
+        }
+        return v;
+    }
+
+    //
+    // Sample of individuals with continuous phenotypes
+    std::vector<Individual> continous_sample(
+            const std::vector<double>& phenotypes, double c=0)
+    {
+        std::vector<Individual> v;
+        v.reserve(phenotypes.size());
+        for (size_t i=0; i<phenotypes.size(); i++) {
+            Individual ind(i, "", Individual::nosex, c);
+            Record rec(phenotypes[i], Record::continous);
+            ind.add_measurement(rec);
+            v.push_back(ind);
+        }
+        return v;
+    }
 
 } // namespace Permory
 
