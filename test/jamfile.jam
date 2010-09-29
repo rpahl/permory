@@ -10,12 +10,8 @@ project test
     : requirements <include>.
     ;
 
-exe teststat 
-    : teststat.cpp deps
-    ;
-
-exe test_io 
-    : test_io.cpp deps
-    ;
+#exe teststat 
+#    : teststat.cpp deps
+#    ;
 
 

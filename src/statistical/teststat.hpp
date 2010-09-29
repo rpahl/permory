@@ -5,12 +5,11 @@
 #ifndef permory_teststat_hpp
 #define permory_teststat_hpp
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "detail/parameter.hpp"
 #include "statistical/contab.hpp"
 
 namespace Permory { namespace statistic {
-    using namespace detail;
 
     template<uint K, uint L> class Test_stat {
         public: 
@@ -71,8 +70,6 @@ namespace Permory { namespace statistic {
         }
         else {
             return 0;
-            //if (den == 0) throw Zero_divide();
-            //else throw Negative_variance();
         }
     }
 
@@ -126,8 +123,6 @@ namespace Permory { namespace statistic {
             return nom/den; 
         else {
             return 0;
-            //if (den == 0) throw Zero_divide();
-            //else throw Negative_variance();
         }
     }
 
@@ -149,8 +144,6 @@ namespace Permory { namespace statistic {
         }
         else {
             return 0;
-            //if (den == 0) throw Zero_divide(); 
-            //else throw Negative_variance();
         }
     }
 

@@ -22,7 +22,7 @@ namespace Permory { namespace detail {
             Matrix(size_t, const array_t&) throw(std::exception); 
             Matrix(Matrix<T>&) throw(std::exception); 
 
-            // Inspector
+            // Inspection
             bool empty() const { return m_.size() > 0; }
             size_t size() const { return nrow()*ncol(); }
             size_t nrow() const { return m_.size(); }
@@ -39,7 +39,7 @@ namespace Permory { namespace detail {
             array_t apply_min(size_t, const std::valarray<size_t>&) const;
             matrix_t transpose(); //not implemented
 
-            // Modifier
+            // Modification
             array_t& operator[](size_t i) { return m_[i]; }
             Matrix<T>& operator=(const T&);
             Matrix<T>& operator=(const array_t&);

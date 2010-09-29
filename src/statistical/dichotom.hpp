@@ -13,14 +13,13 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "contab.hpp"
 #include "detail/functors.hpp" //pair_comp_2nd
 #include "detail/parameter.hpp"
 #include "locusdata.hpp"
 #include "permutation/booster.hpp"  //Bitset_with_count,
 #include "permutation/perm.hpp"
-#include "statistical/detail.hpp"
 #include "statistical/testpool.hpp"
 
 namespace Permory { namespace statistic {

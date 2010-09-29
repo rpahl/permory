@@ -8,7 +8,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "detail/exception.hpp"
 
 

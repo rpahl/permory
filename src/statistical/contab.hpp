@@ -11,8 +11,11 @@
 #include <vector>
 
 #include "detail/exception.hpp"
+
 namespace Permory { namespace statistic {
+    //
     // Contingency table with R and C being the number of rows and columns, resp
+    //
     template<uint R, uint C> class Con_tab {
         public:
             typedef std::vector<uint>::const_iterator uint_iter;
@@ -60,16 +63,6 @@ namespace Permory { namespace statistic {
         }
 #endif
     }
-
-    /*
-       template<class T1, class T2> template<uint R, uint C> inline 
-       Con_tab<R,C>::Con_tab(
-       std::vector<T1>::const_iterator start1,
-       std::vector<T1>::const_iterator end1,
-       std::vector<T2>::const_iterator start2,
-       std::vector<T2>::const_iterator end2,
-       )
-       */
 
     template<uint R, uint C> inline uint Con_tab<R, C>::rowsum(uint x) const 
     {
@@ -197,11 +190,11 @@ namespace Permory { namespace statistic {
         //   0  0 0 0
         //   1  0 0 0
         //
-        // 1. while-loop       2. while-loop       3. while-loop       4. while-loop   
-        // row = 1, col = 0    row = 1, col = 1    row = 0, col = 2    row = 1, col = 2
-        //      A B C               A B C               A B C               A B C
-        //   0  0 0 0            0  0 0 0            0  0 0 1            0  0 0 1
-        //   1  1 0 0            1  1 1 0            1  1 1 0            1  1 1 1      
+        // 1. while-loop   2. while-loop   3. while-loop   4. while-loop   
+        // row=1, col=0    row=1, col=1    row=0, col=2    row=1, col=2
+        //      A B C           A B C           A B C          A B C
+        //   0  0 0 0        0  0 0 0        0  0 0 1       0  0 0 1
+        //   1  1 0 0        1  1 1 0        1  1 1 0       1  1 1 1      
     }
 
 } // namespace statistic

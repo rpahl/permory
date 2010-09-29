@@ -10,7 +10,7 @@
 #include<boost/bind.hpp>
 #include<boost/lexical_cast.hpp>
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "detail/enums.hpp" //Genetic_type
 #include "discretedata.hpp"
 #include "locus.hpp"
@@ -62,8 +62,8 @@ namespace Permory {
     };
 
 
-    // ========================================================================
     // Locus_data<T> implementation
+    // ========================================================================
     template<class T> inline Locus_data<T>::Locus_data(
             const std::vector<T>& v, const T& u) 
         : Discrete_data<T>(v), undef_(u) 

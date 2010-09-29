@@ -7,7 +7,7 @@
 
 #include <exception>
 #include <stdexcept>
-#include "config.hpp"
+#include "detail/config.hpp"
 
 namespace Permory { namespace detail {
 

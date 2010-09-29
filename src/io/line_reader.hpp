@@ -16,7 +16,7 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/stream.hpp>
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "detail/exception.hpp"
 #include "io/file.hpp"
 #include "io/input_filters.hpp"
@@ -64,6 +64,8 @@ namespace Permory { namespace io {
             bio::filtering_istream in_;  //chain of filters and input device
     };
 
+    // Line_reader implementation
+    // ========================================================================
     template<class T> inline Line_reader<T>::Line_reader(const std::string& fn) 
         : file_(fn), charCount_(0), lineCount_(0), wordCount_(0) 
     {

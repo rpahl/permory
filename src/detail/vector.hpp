@@ -53,7 +53,7 @@ namespace Permory { namespace detail {
             const std::vector<T> v,     //will be reordered according to groups
             const std::vector<int> g)   //groups
     {
-        // Examples:
+        // Two examples:
         // =========
         // vector<int> v = 1 2 3 4 5 6
         // vector<int> g = 1 1 0 0 4 4

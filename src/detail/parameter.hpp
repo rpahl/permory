@@ -8,7 +8,7 @@
 #include <set>
 #include <string>
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "detail/enums.hpp" 
 #include "individual.hpp" //Record::Value_type
 

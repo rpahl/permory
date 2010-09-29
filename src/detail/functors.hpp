@@ -7,7 +7,7 @@
 
 #include <functional>
 
-#include "config.hpp"
+#include "detail/config.hpp"
 
 namespace Permory { namespace detail {
     // Predicates

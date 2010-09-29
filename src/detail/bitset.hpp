@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
-#include "config.hpp"
+#include "detail/config.hpp"
 
 namespace Permory { namespace detail {
 

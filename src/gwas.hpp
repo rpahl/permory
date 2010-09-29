@@ -11,15 +11,15 @@
 
 #include <boost/progress.hpp>
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "detail/parameter.hpp"
 #include "individual.hpp"
 #include "locus.hpp"
 #include "locusdata.hpp"
 #include "io/output.hpp"
-#include "io/read_phenotype_data.hpp"
-#include "io/read_locus_data.hpp"
 #include "permutation/perm.hpp"
+#include "read_phenotype_data.hpp"
+#include "read_locus_data.hpp"
 #include "statistical/dichotom.hpp"
 #include "statistical/pvalue.hpp"
 
@@ -120,27 +120,7 @@ namespace Permory
             par->phenotype_data_format = detect_phenotype_data_format(fn);
             myout << verbose << "...Detected file format of trait file: " << 
                 detail::datafile_format_to_string(par->phenotype_data_format) << myendl;
-            io::read_individuals(*par, fn, &v);
-
-            /*
-            //Handle format-specific cases
-            if (par->phenotype_data_format == presto && par->gen_type == genotype) {
-                //Each individual occurs twice (one for each allele). So remove one
-                //individual each and reset the corresponding IDs
-                size_t id = 0;
-                vector<Individual> vv;
-                vv.reserve(v.size());
-                vector<Individual>::const_iterator it = v.begin();
-                for (it; it < v.end(); it++) {
-                    vv.push_back(*it++);    //skip one individual
-                    vv.back().set_id(id++); 
-                }
-                v.swap(vv);
-                par->ncase = count_if(v.begin(), v.end(), 
-                        mem_fun_ref(&Individual::isAffected));
-                par->ncontrol = v.size() - par->ncase;
-            }
-            */
+            read_individuals(*par, fn, &v);
         }
         else {
             // No file so create individuals by specified numbers
@@ -154,8 +134,14 @@ namespace Permory
         return v;
     }
 
-    template<uint K, uint L> void gwas_analysis_dichotom(detail::Parameter* par,
-            io::Out_log& myout)
+    template<uint K, uint L> void analyze_dichotom_haplotype(
+            detail::Parameter* par, io::Out_log& myout)
+    {
+        //TODO
+    }
+
+    template<uint K, uint L> void analyze_dichotom_genotype(
+            detail::Parameter* par, io::Out_log& myout)
     {
         using namespace std;
         using namespace boost;
@@ -176,24 +162,24 @@ namespace Permory
         else {
             myout << normal << "...Created ";
         }
-        myout << study.ncase() << " cases and " << study.ncontrol() << " controls." << 
-            myendl << myendl;
+        myout << study.ncase() << " cases and " << study.ncontrol() << 
+            " controls." << myendl;
 
         //
         // Loci information read in
         //
-        myout << normal << "...Scanning marker data..." << myendl;
-        myout << verbose << "...Detected file formats:\n"; 
+        myout << normal << "...Scanning marker data - please be patient..." << myendl;
         BOOST_FOREACH(string fn, par->fn_marker_data) {
             Datafile_format dff = detect_marker_data_format(fn, par->undef_allele_code);
-            myout << "\t" << fn << " <- " << detail::datafile_format_to_string(dff);
+            myout << verbose << "\t" << fn << " - file format: " << 
+                detail::datafile_format_to_string(dff);
             if (dff == unknown) {
                 par->fn_bad_files.insert(fn);
                 myout << " - will be ignored." << myendl;
                 continue;
             }
             myout << myendl;
-            io::read_loci(dff, fn, study.pointer_to_loci());
+            read_loci(dff, fn, study.pointer_to_loci());
         }
         if (not par->fn_bad_files.empty()) {
             BOOST_FOREACH(std::string s, par->fn_bad_files) {
@@ -206,81 +192,33 @@ namespace Permory
         if (m == 0) {
             throw runtime_error("No marker loci found.");
         }
-        myout << normal << "...Found " << m << " loci." << myendl; 
+        myout << normal << "...Found " << m << " loci." << myendl << myendl; 
 
-        //
-        //  Computation of test statistics of original data
-        //
-        myout << verbose << "..." << "Computing test statistics of the data..." << myendl;
-        scoped_ptr<progress_display> pprogress;
-        bool show_progress = par->verbose;
-        if (show_progress) {
-            pprogress.reset(new progress_display(m));
-        }
+        // Create dichotomous trait/phenotype data
         vector<bool> trait(study.sample_size());
         transform(study.ind_begin(), study.ind_end(), trait.begin(),
                 mem_fun_ref(&Individual::isAffected));
-        statistic::Dichotom<K, L> stat(*par, trait);
-
-        Gwas::iterator itLocus = study.begin(); //points to treated locus
-        size_t m_maf = 0;   //number of markers that fulfill maf criterion
-        size_t m_valid = 0;
-
-        BOOST_FOREACH(string fn, par->fn_marker_data) { 
-            Datafile_format dff = detect_marker_data_format(fn, par->undef_allele_code);
-            io::Locus_data_reader<char> loc_reader(fn, par->undef_allele_code);
-
-            while (loc_reader.hasData()) {
-                Locus_data<char> data(loc_reader.get_next(), par->undef_allele_code);
-                scoped_ptr<Locus_data<uint> > data_ptr;
-                if (dff == permory_data || dff == slide) {   //datafile format
-                    data_ptr.reset(data.as_numeric());
-                }
-                else if (dff == presto || dff == plink_tped) { 
-                    data_ptr.reset(data.merge_alleles_to_genotypes(2));
-                }
-
-                //ensure that all possible genotypes appear in the domain
-                data_ptr->add_to_domain(genotype_domain); 
-
-                bool isPoly = data_ptr->isPolymorph();
-                itLocus->set_polymorph(isPoly); 
-                bool mafOk = (data_ptr->maf(par->gen_type) > par->min_maf);
-                m_maf += mafOk;
-                if (isPoly && mafOk) {
-                    m_valid++;
-                    itLocus->add_test_stats(stat.test(*data_ptr)); 
-                }
-                itLocus++;
-                if (show_progress) {
-                    ++(*pprogress);
-                }
-            }
-        }
-        myout << verbose << myendl;
-
-        size_t m_poly = count_if(study.begin(), study.end(), 
-                mem_fun_ref(&Locus::isPolymorph));
-        myout << normal << "..." << m - m_poly << " loci are non-polymorphic." << myendl; 
-        myout << "..." << m_poly - m_maf << " polymorphic loci have minor " <<
-            "allele frequency lower than " << par->min_maf << myendl;
-        myout << normal << "..." << m_valid << " of " << m << " loci remain " <<
-            "for analysis." << myendl << myendl;
 
         //
-        // Permutation testing
+        //  Compute test statistics of original data and permutation test
         //
-        myout << normal << "..." << "Computing permutation test..." << myendl;
-        deque<double> tmax;
-        permutation::Permutation pp(par->seed);
+        myout << normal << "..." << "Starting analysis ..." << myendl;
+        size_t m_maf = 0;   //number of markers passing maf criterion
+        size_t m_valid = 0; //number of markers passing every filter
+        deque<double> tmax; //permutation Tmax statistics
+        statistic::Dichotom<K, L> stat(*par, trait); //handles the statistic stuff
+        Gwas::iterator itLocus = study.begin(); //points to current locus
+
         size_t perm_todo = par->nperm_total;
-
+        permutation::Permutation pp(par->seed);
         double d = ceil(double(perm_todo)/double(par->nperm_block));
-        show_progress = not par->quiet;
+        scoped_ptr<progress_display> pprogress;
+        bool show_progress = not par->quiet;
         if (show_progress) {
-            pprogress.reset(new progress_display(m*size_t(d)));
+            pprogress.reset(new progress_display(m*size_t(d), std::cout, "","",""));
         }
 
+        bool isFirstRound = true;
         while (perm_todo > 0) {
             size_t nperm = par->nperm_block;
             if (nperm > perm_todo) {
@@ -291,40 +229,61 @@ namespace Permory
 
             BOOST_FOREACH(string fn, par->fn_marker_data) { 
                 Datafile_format dff = detect_marker_data_format(fn, par->undef_allele_code);
-                io::Locus_data_reader<char> loc_reader(fn, par->undef_allele_code);
+                Locus_data_reader<char> loc_reader(fn, par->undef_allele_code);
 
                 while (loc_reader.hasData()) {
                     Locus_data<char> data(loc_reader.get_next(), par->undef_allele_code);
                     scoped_ptr<Locus_data<uint> > data_ptr;
 
-                    if (itLocus->hasTeststat()) {
-                        scoped_ptr<Locus_data<uint> > data_ptr;
-                        if (dff == permory_data || dff == slide) {   //datafile format
-                            data_ptr.reset(data.as_numeric());
-                        }
-                        else if (dff == presto || dff == plink_tped) { 
-                            data_ptr.reset(data.merge_alleles_to_genotypes(2));
-                        }
-                        //ensure that all possible genotypes appear in the domain
-                        data_ptr->add_to_domain(genotype_domain); 
-                        stat.permutation_test(*data_ptr);   
+                    // Re-format data depending on data file format
+                    if (dff == permory_data || dff == slide) {   
+                        data_ptr.reset(data.as_numeric());
                     }
-                    itLocus++;
+                    else if (dff == presto || dff == plink_tped) { 
+                        data_ptr.reset(data.merge_alleles_to_genotypes(2));
+                    }
+                    //ensure that all possible genotypes appear in the domain
+                    data_ptr->add_to_domain(genotype_domain); 
+
+                    // Stuff of the orginal data needs only be processed once
+                    if (isFirstRound) { 
+                        bool isPoly = data_ptr->isPolymorph();
+                        itLocus->set_polymorph(isPoly); 
+                        bool mafOk = (data_ptr->maf(par->gen_type) > par->min_maf);
+                        m_maf += mafOk;
+                        if (isPoly && mafOk) {
+                            m_valid++;
+                            itLocus->add_test_stats(stat.test(*data_ptr)); 
+                        }
+                    }
+                    if (itLocus->hasTeststat() && perm_todo > 0) {
+                        stat.permutation_test(*data_ptr);   //permute and compute
+                    }
                     if (show_progress) {
                         ++(*pprogress);
                     }
+                    itLocus++;
                 }
             }
             perm_todo -= nperm;
             copy(stat.tmax_begin(), stat.tmax_end(), back_inserter(tmax));
+            isFirstRound = false;
         }
+        myout << myendl;
+        size_t m_poly = count_if(study.begin(), study.end(), 
+                mem_fun_ref(&Locus::isPolymorph));
+        myout << normal << "..." << m - m_poly << " loci were non-polymorphic." << myendl; 
+        myout << "..." << m_poly - m_maf << " polymorphic loci had minor " <<
+            "allele frequency lower than " << par->min_maf << myendl;
+        myout << normal << "..." << m_valid << " of " << m << " loci remained " <<
+            "for analysis." << myendl << myendl;
 
         deque<double> t_orig(study.m());
         transform(study.begin(), study.end(), t_orig.begin(), 
                 mem_fun_ref(&Locus::tmax));
         sort(t_orig.begin(), t_orig.end(), greater<double>());
 
-        detail::print_seq(t_orig.begin(), t_orig.end());
+        //detail::print_seq(t_orig.begin(), t_orig.end());
         //cout << endl;
         //detail::print_seq(tmax.begin(), tmax.end());
         cout << endl;
@@ -337,6 +296,18 @@ namespace Permory
         size_t offset = std::min(pvals.size(), size_t(50));
         detail::print_seq(pvals.begin(), pvals.begin()+offset);
         cout << endl;
+    }
+
+    void gwas_analysis(detail::Parameter* par, io::Out_log& myout)
+    {
+        switch (par->gen_type) {
+            case genotype:
+                analyze_dichotom_genotype<2,3>(par, myout);
+                break;
+            case haplotype:
+                analyze_dichotom_haplotype<2,2>(par, myout);
+                break;
+        }
     }
 
 } // namespace Permory

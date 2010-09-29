@@ -5,7 +5,7 @@
 #ifndef permory_io_format_detect_hpp
 #define permory_io_format_detect_hpp
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "detail/enums.hpp" //Datafile_format
 #include "detail/exception.hpp"
 #include "detail/parameter.hpp" 
@@ -23,7 +23,7 @@ namespace Permory { namespace detail {
     //
     // The format detection works very rudimentary and can be easily fooled to
     // given false positives. On the other hand, it should do the job unless
-    // the user attentionally tries to abuse and/or uses non-supported formats.
+    // the user attentionally tries to abuse and/or use non-supported formats.
     //
     Datafile_format detect_marker_data_format(
             const std::string& fn,  //file name

@@ -11,7 +11,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/circular_buffer.hpp>
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "detail/bitset.hpp" 
 #include "detail/matrix.hpp" 
 #include "detail/vector.hpp" 

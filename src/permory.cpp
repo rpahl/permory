@@ -8,13 +8,14 @@
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/variables_map.hpp>
+#include <boost/progress.hpp>
 
+#include "detail/config.hpp"
 #include "detail/parameter.hpp"
 #include "gwas.hpp"
 #include "io/file.hpp"
 #include "io/line_reader.hpp"
 #include "io/output.hpp"
-#include "config.hpp"
 
 using namespace std;
 
@@ -28,7 +29,6 @@ template<class T> ostream& operator<<(ostream& os, const vector<T>& v)
 namespace cls = boost::program_options::command_line_style;
 int main(int ac, char* av[])
 {
-    //TODO: MRU list with boost::serialization (see Example 9 in boost::MultiIndex)
     using namespace std;
     using namespace boost;
     using namespace boost::program_options;
@@ -36,6 +36,7 @@ int main(int ac, char* av[])
     using namespace Permory::detail;
     using namespace Permory::io;
 
+    timer t; //t.restart();
     Parameter par;
     Out_log myout(&par); 
     string config_file;
@@ -310,14 +311,7 @@ int main(int ac, char* av[])
     }    
 
     try {
-        switch (par.gen_type) {
-            case genotype:
-                gwas_analysis_dichotom<2,3>(&par, myout);
-                break;
-            case haplotype:
-                gwas_analysis_dichotom<2,2>(&par, myout);
-                break;
-        }
+        gwas_analysis(&par, myout);
     }
     catch(std::exception& e)
     {
@@ -325,7 +319,7 @@ int main(int ac, char* av[])
         return 1;
     }    
     myout << "...PERMORY finished successful." << myendl;
+    myout << "...Runtime: " << t.elapsed() << " s" << myendl;
     return 0;
-
 }
 

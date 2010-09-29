@@ -10,11 +10,7 @@ echo "Operating system:" [ os.name ] ;
 # used libraries
 include site-config.jam ;
 
-# symbolic name that is used in permory/test/jamfile.jam
-use-project /io : src/io ; 
-
 #build-project test ;
-#build-project src/io ;
 
 project permory 
     : requirements <include>src <warnings>off
@@ -24,7 +20,7 @@ project permory
 alias /libs : bfs bpop bio bsys zlib gsl ;
 exe permory  
     : src/permory.cpp /libs
-    : <link>static <runtime-link>static 
+    : <link>static #<runtime-link>static 
     #<dll-path>/usr/local/lib #requirements
     : #default-build
     : #usage-requirements

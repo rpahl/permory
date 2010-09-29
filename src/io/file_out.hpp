@@ -23,7 +23,7 @@
 #include <boost/iostreams/stream_buffer.hpp>
 #include <boost/iostreams/tee.hpp>
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "detail/exception.hpp"
 #include "io/file.hpp"
 #include "io/output_filters.hpp"

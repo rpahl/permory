@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "locus.hpp"
 
 namespace Permory 

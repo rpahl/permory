@@ -5,13 +5,16 @@
 #ifndef permory_detail_tokenizer_hpp
 #define permory_detail_tokenizer_hpp
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include <string.h> //strlen, strtok
 #include <stdlib.h> //realloc
 #include <vector>
 
 namespace Permory { namespace detail {
-    // Tokenizer with the primary aim to be efficient
+    //
+    // A String tokenizer - efficient but dirty implementation 
+    // (deprecated since version 1.0)
+    //
     class Tokenizer {
         public:
             // Ctor
@@ -19,10 +22,11 @@ namespace Permory { namespace detail {
                 : curr_(0), delims_(delims) { this->assign(source); }
             ~Tokenizer(){}
 
-            // Inspector
+            // Inspection
             bool empty() const { return curr_ == 0; }
+            const char* operator*() const { return curr_; }
 
-            // Modifier
+            // Modification
             void assign(const char* source)
             { 
                 size_t len = strlen(source);
@@ -45,7 +49,6 @@ namespace Permory { namespace detail {
                 return *this;
             }
 
-            const char* operator*() const { return curr_; }
             Tokenizer& next(const char* delims) //alternative delimiters
             {
                 curr_ = strtok(0, delims); 

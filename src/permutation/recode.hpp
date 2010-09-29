@@ -62,7 +62,7 @@ namespace Permory { namespace permutation {
         return b;
     }
 
-    /*
+    /* not used
     boost::dynamic_bitset<> dummy_code(
             std::vector<int>::const_iterator start, 
             std::vector<int>::const_iterator end,

@@ -12,7 +12,7 @@
 
 #include "boost/lexical_cast.hpp"
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "detail/exception.hpp"
 #include "detail/parameter.hpp"
 #include "individual.hpp"
@@ -20,7 +20,7 @@
 #include "io/line_reader.hpp"
 #include "io/input_filters.hpp"
 
-namespace Permory { namespace io {
+namespace Permory { 
 
     //
     // Read individuals from PLINK's *.tfam file. This function is called by
@@ -31,11 +31,13 @@ namespace Permory { namespace io {
             const std::string& fn,  //file name 
             std::vector<Individual>* individuals)
     {
+        using namespace std;
+        using namespace Permory::io;
         size_t id = 0;
         if (not individuals->empty()) 
             id = individuals->back().id() + 1;
 
-        Line_reader<std::string> lr(fn);   
+        Line_reader<string> lr(fn);   
         bool has2 = false;//for auto correction of affection status coding
 
         while (not lr.eof()) {
@@ -43,17 +45,8 @@ namespace Permory { namespace io {
             if (lr.size() < 6) {
                 continue;
             }
-            /*
-            PRINT(lr.size());
-            detail::print_seq(lr.begin(), lr.end());
-            std::cerr << std::endl;
-            detail::print_seq(v.begin(), v.end());
-            exit(0);
-            if (v.size() < 6) {
-                throw std::runtime_error("Less than six entries in PLINK *.tfam file.");
-            }
-            */
-            std::vector<std::string> v(lr.begin(), lr.begin()+6);
+            vector<string> v(lr.begin(), lr.begin()+6);
+
             // Determine sex
             Individual::Sex sex = Individual::nosex;
             int i = boost::lexical_cast<int>(v[4]);
@@ -63,6 +56,7 @@ namespace Permory { namespace io {
             else if (i == 2) {
                 sex = Individual::female;
             }
+
             // Get the phenotype
             i = boost::lexical_cast<int>(v[5]);
             has2 = (i == 2);
@@ -79,7 +73,7 @@ namespace Permory { namespace io {
             // Auto correct affection status as follows:
             //  unaffected: 1 -> 0
             //  affected:   2 -> 1
-            std::vector<Individual>::iterator itInd = individuals->begin();
+            vector<Individual>::iterator itInd = individuals->begin();
             for (itInd; itInd != individuals->end(); ++itInd) {
                 Individual::iterator itRecord = itInd->end()-1; //iterator to last added record
                 if (itRecord->val == 2.0) {
@@ -99,7 +93,9 @@ namespace Permory { namespace io {
     void read_individuals(const Parameter& par, const std::string& fn,      
             std::vector<Individual>* individuals)
     {
-        Line_reader<std::string> lr(fn);   
+        using namespace std;
+        using namespace Permory::io;
+        Line_reader<string> lr(fn);   
         size_t id = 0;
         if (not individuals->empty()) {
             id = individuals->back().id() + 1;
@@ -117,13 +113,14 @@ namespace Permory { namespace io {
                     }
                     if (*lr.begin() == "A") { //"A" indicates affection status data
                         // Ignore the "A" as well as the next entry 
-                        std::vector<std::string> vs(lr.begin()+2, lr.end());  
+                        vector<string> vs(lr.begin()+2, lr.end());  
 
                         for (int i=0; i<vs.size(); i++) {
                             Individual ind(id++);
                             double val = boost::lexical_cast<double>(vs[i]);
                             // Presto uses 1 (unaffected) and 2 (affected), but
-                            // we use 0 (unaffected) and 1 (affected), thus -1
+                            // we use 0 (unaffected) and 1 (affected), thus
+                            // subract 1
                             val--;  
                             Record r(val, par.val_type);
                             ind.add_measurement(r);
@@ -143,7 +140,6 @@ namespace Permory { namespace io {
         }
     }
 
-} // namespace io
 } // namespace Permory
 
 #endif

@@ -19,7 +19,7 @@ namespace Permory { namespace io {
         return os << std::flush; 
     }
 
-    class Out_log {
+    class Out_log : std::ostream {
         public:
             // Ctor
             Out_log(detail::Parameter* par);

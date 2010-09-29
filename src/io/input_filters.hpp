@@ -11,7 +11,7 @@
 #include <boost/iostreams/concepts.hpp>    //multichar_input_filter
 #include <boost/iostreams/operations.hpp>  //get
 
-#include "config.hpp"
+#include "detail/config.hpp"
 
 namespace Permory { namespace io {
     namespace bio = boost::iostreams;

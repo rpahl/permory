@@ -9,7 +9,7 @@
 #include <deque>
 #include <gsl/gsl_cdf.h>
 
-#include "config.hpp"
+#include "detail/config.hpp"
 #include "detail/vector.hpp"
 
 namespace Permory { namespace statistic {

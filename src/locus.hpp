@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "config.hpp"
+#include "detail/config.hpp"
 
 namespace Permory 
 {
@@ -57,8 +57,8 @@ namespace Permory
             void add_test_stats(const std::vector<double>&);
         private:
             size_t id_;     //unique id
-            string rs_;     //rs-id or other Locus identifier
-            string gene_;   //gene the locus belongs to
+            std::string rs_;     //rs-id or other Locus identifier
+            std::string gene_;   //gene the locus belongs to
             Chr chr_;       //chr1-chr22, X, Y or na if undefined
             size_t bp_;     //base pair position in bp units
             double cm_;     //cM map position
