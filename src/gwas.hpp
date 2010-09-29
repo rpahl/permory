@@ -114,14 +114,15 @@ namespace Permory
         vector<Individual> v;
         string fn = par->fn_trait;
         if (not fn.empty()) {
-            myout << normal << ">> Read trait from file `" << par->fn_trait << "'" << myendl;
+            myout << normal << "...Read trait from file `" << par->fn_trait << "'" << myendl;
 
             // Read from file
             par->phenotype_data_format = detect_phenotype_data_format(fn);
-            myout << verbose << ">> Detected file format of trait file: " << 
+            myout << verbose << "...Detected file format of trait file: " << 
                 detail::datafile_format_to_string(par->phenotype_data_format) << myendl;
             io::read_individuals(*par, fn, &v);
 
+            /*
             //Handle format-specific cases
             if (par->phenotype_data_format == presto && par->gen_type == genotype) {
                 //Each individual occurs twice (one for each allele). So remove one
@@ -139,6 +140,7 @@ namespace Permory
                         mem_fun_ref(&Individual::isAffected));
                 par->ncontrol = v.size() - par->ncase;
             }
+            */
         }
         else {
             // No file so create individuals by specified numbers
@@ -146,9 +148,8 @@ namespace Permory
             if (n == 0) {
                 throw runtime_error("Sample size must not be 0");
             }
-            myout << normal << ">> Creating trait by number ..." << myflush;
+            myout << normal << "...Creating trait by number..." << myendl;
             v = case_control_sample(n, double(par->ncase)/double(n)); //individual.hpp
-            myout << " done." << myendl;
         }
         return v;
     }
@@ -159,12 +160,9 @@ namespace Permory
         using namespace std;
         using namespace boost;
         using namespace io;
-        std::set<char> genotype_domain;
-        genotype_domain.insert(par->undef_allele_code);
-        if (L > 2) {
-            for (uint i=0; i<L; i++) {
-                genotype_domain.insert(boost::lexical_cast<char>(i));
-            }
+        std::set<uint> genotype_domain;
+        for (uint i=0; i<L; i++) {
+            genotype_domain.insert(i);
         }
 
         //
@@ -173,31 +171,52 @@ namespace Permory
         vector<Individual> v = create_study_sample(par, myout);
         Gwas study(v); 
         if (not par->fn_trait.empty()) {
-            myout << normal << ">> Found ";
+            myout << normal << "...Found ";
         }
         else {
-            myout << normal << ">> Created ";
+            myout << normal << "...Created ";
         }
-        myout << study.ncase() << " cases and " << study.ncontrol() << " controls." << myendl;
+        myout << study.ncase() << " cases and " << study.ncontrol() << " controls." << 
+            myendl << myendl;
 
         //
         // Loci information read in
         //
+        myout << normal << "...Scanning marker data..." << myendl;
+        myout << verbose << "...Detected file formats:\n"; 
         BOOST_FOREACH(string fn, par->fn_marker_data) {
             Datafile_format dff = detect_marker_data_format(fn, par->undef_allele_code);
+            myout << "\t" << fn << " <- " << detail::datafile_format_to_string(dff);
+            if (dff == unknown) {
+                par->fn_bad_files.insert(fn);
+                myout << " - will be ignored." << myendl;
+                continue;
+            }
+            myout << myendl;
             io::read_loci(dff, fn, study.pointer_to_loci());
+        }
+        if (not par->fn_bad_files.empty()) {
+            BOOST_FOREACH(std::string s, par->fn_bad_files) {
+                par->fn_marker_data.erase(s);
+            }
+            cerr << "! Warning: " << par->fn_bad_files.size() << " data file(s) " <<
+                "will NOT be processed due to unrecognized data format." << endl;
         }
         size_t m = study.m();
         if (m == 0) {
             throw runtime_error("No marker loci found.");
         }
-        myout << normal << ">> Found " << m << " loci." << myendl; 
+        myout << normal << "...Found " << m << " loci." << myendl; 
 
         //
-        // Marker data scan and computation of test statistics of original data
+        //  Computation of test statistics of original data
         //
-        myout << normal << ">> Scanning marker data ..." << myendl;
-
+        myout << verbose << "..." << "Computing test statistics of the data..." << myendl;
+        scoped_ptr<progress_display> pprogress;
+        bool show_progress = par->verbose;
+        if (show_progress) {
+            pprogress.reset(new progress_display(m));
+        }
         vector<bool> trait(study.sample_size());
         transform(study.ind_begin(), study.ind_end(), trait.begin(),
                 mem_fun_ref(&Individual::isAffected));
@@ -206,51 +225,60 @@ namespace Permory
         Gwas::iterator itLocus = study.begin(); //points to treated locus
         size_t m_maf = 0;   //number of markers that fulfill maf criterion
         size_t m_valid = 0;
-        myout << verbose << ">> Detected file format of marker data file(s):\n"; 
+
         BOOST_FOREACH(string fn, par->fn_marker_data) { 
             Datafile_format dff = detect_marker_data_format(fn, par->undef_allele_code);
-            par->marker_data_formats.push_back(dff);
-            myout << verbose << "\t" << detail::datafile_format_to_string(dff) << myendl;
             io::Locus_data_reader<char> loc_reader(fn, par->undef_allele_code);
+
             while (loc_reader.hasData()) {
-                Locus_data<char> ld(loc_reader.get_next(), par->undef_allele_code);
-                switch (dff) {
-                    case presto:
-                        ld.merge_alleles_to_genotypes();
-                        break;
+                Locus_data<char> data(loc_reader.get_next(), par->undef_allele_code);
+                scoped_ptr<Locus_data<uint> > data_ptr;
+                if (dff == permory_data || dff == slide) {   //datafile format
+                    data_ptr.reset(data.as_numeric());
+                }
+                else if (dff == presto || dff == plink_tped) { 
+                    data_ptr.reset(data.merge_alleles_to_genotypes(2));
                 }
 
-                ld.add_to_domain(genotype_domain);
-                bool isPoly = ld.isPolymorph();
+                //ensure that all possible genotypes appear in the domain
+                data_ptr->add_to_domain(genotype_domain); 
+
+                bool isPoly = data_ptr->isPolymorph();
                 itLocus->set_polymorph(isPoly); 
-                bool mafOk = (ld.maf(par->gen_type) > par->min_maf);
+                bool mafOk = (data_ptr->maf(par->gen_type) > par->min_maf);
                 m_maf += mafOk;
                 if (isPoly && mafOk) {
                     m_valid++;
-                    itLocus->add_test_stats(stat.test(ld)); 
+                    itLocus->add_test_stats(stat.test(*data_ptr)); 
                 }
                 itLocus++;
+                if (show_progress) {
+                    ++(*pprogress);
+                }
             }
         }
+        myout << verbose << myendl;
+
         size_t m_poly = count_if(study.begin(), study.end(), 
                 mem_fun_ref(&Locus::isPolymorph));
-        myout << normal << ">> " << m - m_poly << " loci are non-polymorphic." << myendl; 
-        myout << ">> Of the polymorphic loci, the minor allele frequency of " << 
-            m_poly - m_maf << " loci is lower than " << par->min_maf << myendl;
-        myout << normal << ">> " << m_valid << " of " << m << " loci are valid for analysis." << myendl;
+        myout << normal << "..." << m - m_poly << " loci are non-polymorphic." << myendl; 
+        myout << "..." << m_poly - m_maf << " polymorphic loci have minor " <<
+            "allele frequency lower than " << par->min_maf << myendl;
+        myout << normal << "..." << m_valid << " of " << m << " loci remain " <<
+            "for analysis." << myendl << myendl;
 
         //
         // Permutation testing
         //
+        myout << normal << "..." << "Computing permutation test..." << myendl;
         deque<double> tmax;
         permutation::Permutation pp(par->seed);
         size_t perm_todo = par->nperm_total;
 
         double d = ceil(double(perm_todo)/double(par->nperm_block));
-        progress_display* pprogress;
-        bool show_progress = not par->quiet;
+        show_progress = not par->quiet;
         if (show_progress) {
-            pprogress = new progress_display(m*size_t(d));
+            pprogress.reset(new progress_display(m*size_t(d)));
         }
 
         while (perm_todo > 0) {
@@ -262,12 +290,24 @@ namespace Permory
             itLocus = study.begin(); 
 
             BOOST_FOREACH(string fn, par->fn_marker_data) { 
+                Datafile_format dff = detect_marker_data_format(fn, par->undef_allele_code);
                 io::Locus_data_reader<char> loc_reader(fn, par->undef_allele_code);
+
                 while (loc_reader.hasData()) {
-                    Locus_data<char> ld(loc_reader.get_next(), par->undef_allele_code);
+                    Locus_data<char> data(loc_reader.get_next(), par->undef_allele_code);
+                    scoped_ptr<Locus_data<uint> > data_ptr;
+
                     if (itLocus->hasTeststat()) {
-                        ld.add_to_domain(genotype_domain);
-                        stat.permutation_test(ld); 
+                        scoped_ptr<Locus_data<uint> > data_ptr;
+                        if (dff == permory_data || dff == slide) {   //datafile format
+                            data_ptr.reset(data.as_numeric());
+                        }
+                        else if (dff == presto || dff == plink_tped) { 
+                            data_ptr.reset(data.merge_alleles_to_genotypes(2));
+                        }
+                        //ensure that all possible genotypes appear in the domain
+                        data_ptr->add_to_domain(genotype_domain); 
+                        stat.permutation_test(*data_ptr);   
                     }
                     itLocus++;
                     if (show_progress) {
@@ -284,7 +324,7 @@ namespace Permory
                 mem_fun_ref(&Locus::tmax));
         sort(t_orig.begin(), t_orig.end(), greater<double>());
 
-        //detail::print_seq(t_orig.begin(), t_orig.end());
+        detail::print_seq(t_orig.begin(), t_orig.end());
         //cout << endl;
         //detail::print_seq(tmax.begin(), tmax.end());
         cout << endl;

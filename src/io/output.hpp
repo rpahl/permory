@@ -34,6 +34,7 @@ namespace Permory { namespace io {
 
             // Modification
             void set_verbosity(Verbosity v) { verb_ref_ = v; }
+            void set_logfile(std::string, bool); 
 
         private:
             Verbosity verb_ref_;
@@ -48,19 +49,24 @@ namespace Permory { namespace io {
     {
         bool useLogfile = not par->log_file.empty();
         if (useLogfile) {
-            bool ok = true;
-            File_handle file(par->log_file);
-            if (bfs::exists(*file) && par->interactive) {
-                char c;
-                std::cerr << "Logfile: overwrite `" << par->log_file << "'? (y/n)";
-                std::cin >> c;
-                if (c != 'y') {
-                    ok = false;
-                }
+            this->set_logfile(par->log_file, par->interactive);
+        }
+    }
+
+    inline void Out_log::set_logfile(std::string fn, bool force)
+    {
+        bool ok = true;
+        File_handle file(fn);
+        if (bfs::exists(*file) && (not force)) {
+            char c;
+            std::cerr << "??? Logfile: overwrite `" << fn << "'? (y/n) ";
+            std::cin >> c;
+            if (c != 'y') {
+                ok = false;
             }
-            if (ok) {
-                out_.reset(new File_out(par->log_file));
-            }
+        }
+        if (ok) {
+            out_.reset(new File_out(fn));
         }
     }
 

@@ -8,21 +8,33 @@
 namespace Permory { namespace detail {
 
     // Supported data formats
-    enum Datafile_format{unknown=0, permory=1, slide=2, presto=3, plink=4};
+    enum Datafile_format{
+        unknown=0, 
+        permory_data, permory_meta, 
+        slide, 
+        presto, 
+        plink_tfam, plink_tped
+    };
     const std::string datafile_format_to_string(const Datafile_format df) 
     {
         switch(df) {
-            case permory: 
-                return "PERMORY"; 
+            case permory_data: 
+                return "PERMORY (*.dat)"; 
+                break;
+            case permory_meta: 
+                return "PERMORY (*.met)"; 
                 break;
             case slide: 
-                return "SLIDE"; 
+                return "SLIDE (*.slide)"; 
                 break;
             case presto: 
-                return "PRESTO"; 
+                return "PRESTO (*.bgl)"; 
                 break;
-            case plink: 
-                return "PLINK"; 
+            case plink_tfam: 
+                return "PLINK (*.tfam)"; 
+                break;
+            case plink_tped: 
+                return "PLINK (*.tped)"; 
                 break;
             case unknown: 
                 return "unknown"; 

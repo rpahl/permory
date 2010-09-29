@@ -41,7 +41,18 @@ namespace Permory { namespace io {
                 continue;
             }
             switch(format) {
-                //case permory: break; //TODO
+                case permory_meta:  //basically identical to plink *.tped below
+                    if (line[0] != '#') {   //skip comments
+                        std::istringstream iss(line);
+                        std::string chr;    //chromosome
+                        std::string rs;     //rs# or snp identifier
+                        double cm;          //cM map position
+                        size_t bp;          //base pair position in bp units
+                        iss >> chr >> rs >> cm >> bp;
+                        Locus loc(id++, rs, "", string2chr(chr), bp, cm);
+                        loci->push_back(loc);
+                    }
+                    break; 
                 case presto: //read from *.bgl file as used by presto
                     if (line[0] == 'M') {
                         std::istringstream iss(line);
@@ -52,7 +63,7 @@ namespace Permory { namespace io {
                         loci->push_back(loc);
                     }
                     break;
-                case plink: //read from trans.tped file
+                case plink_tped: //read from trans.tped file
                     if (line[0] != '#') {   //skip comments
                         std::istringstream iss(line);
                         std::string chr;    //chromosome
@@ -64,7 +75,7 @@ namespace Permory { namespace io {
                         loci->push_back(loc);
                     }
                     break;
-                case slide:
+                case slide: //create SNP names with serial number
                     if (line[0] != '#') {   //skip comments
                         std::string rs = "SNP";
                         rs.append(boost::lexical_cast<std::string>(id));
@@ -119,20 +130,20 @@ namespace Permory { namespace io {
             v.reserve(lr_.size());
 
             switch(format_) {
-                case permory: //straight copy
+                case permory_data: //straight copy
                     std::copy(lr_.begin(), lr_.end(), std::back_inserter(v)); 
                     break;
                 case slide: //white space delimiters
                     std::remove_copy(lr_.begin(), lr_.end(), 
                             std::back_inserter(v), ' ');
                     break; 
-                case presto: //skip first two chunks and then white space delims
+                case presto: //skip first two chunks and white space delims thereafter
                     if (*(lr_.begin()) != 'M')
                         continue;
                     std::remove_copy_if(lr_.begin(), lr_.end(), 
                             std::back_inserter(v), Skip_input_filter<2>());
                     break;
-                case plink: //skip first four chunks and then white space delims
+                case plink_tped: //skip first four chunks and white space delims thereafter
                     std::remove_copy_if(lr_.begin(), lr_.end(), 
                             std::back_inserter(v), Skip_input_filter<4>());
                     break;

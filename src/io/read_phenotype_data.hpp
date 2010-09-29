@@ -40,10 +40,20 @@ namespace Permory { namespace io {
 
         while (not lr.eof()) {
             lr.next();
-            std::vector<std::string> v(lr.begin(), lr.end());
+            if (lr.size() < 6) {
+                continue;
+            }
+            /*
+            PRINT(lr.size());
+            detail::print_seq(lr.begin(), lr.end());
+            std::cerr << std::endl;
+            detail::print_seq(v.begin(), v.end());
+            exit(0);
             if (v.size() < 6) {
                 throw std::runtime_error("Less than six entries in PLINK *.tfam file.");
             }
+            */
+            std::vector<std::string> v(lr.begin(), lr.begin()+6);
             // Determine sex
             Individual::Sex sex = Individual::nosex;
             int i = boost::lexical_cast<int>(v[4]);
@@ -69,13 +79,14 @@ namespace Permory { namespace io {
             // Auto correct affection status as follows:
             //  unaffected: 1 -> 0
             //  affected:   2 -> 1
-            BOOST_FOREACH(Individual i, *individuals) {
-                Individual::iterator it = i.end()-1; //iterator to last record
-                if (it->val == 2) {
-                    it->val = 1;
+            std::vector<Individual>::iterator itInd = individuals->begin();
+            for (itInd; itInd != individuals->end(); ++itInd) {
+                Individual::iterator itRecord = itInd->end()-1; //iterator to last added record
+                if (itRecord->val == 2.0) {
+                    itRecord->val = 1.0;
                 }
-                else if (it->val == 1) {
-                    it->val = 0;
+                else if (itRecord->val == 1.0) {
+                    itRecord->val = 0.0;
                 }
             }
         }
@@ -94,13 +105,16 @@ namespace Permory { namespace io {
             id = individuals->back().id() + 1;
         }
         switch (par.phenotype_data_format) {
-            //case permory: break; //TODO
-            case plink:
+            case plink_tfam:
                 read_individuals_from_tfam(par, fn, individuals);
                 break;
+
             case presto:
                 while (not lr.eof()) {
                     lr.next();  //read next line
+                    if (lr.empty()) {
+                        continue;
+                    }
                     if (*lr.begin() == "A") { //"A" indicates affection status data
                         // Ignore the "A" as well as the next entry 
                         std::vector<std::string> vs(lr.begin()+2, lr.end());  
@@ -114,7 +128,9 @@ namespace Permory { namespace io {
                             Record r(val, par.val_type);
                             ind.add_measurement(r);
                             individuals->push_back(ind);
-                            if (par.gen_type == haplotype) {
+
+                            // prevent double-count of individuals in genotype analysis
+                            if (par.gen_type == genotype) { 
                                 i++;
                             }
                         }

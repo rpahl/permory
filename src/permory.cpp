@@ -39,6 +39,7 @@ int main(int ac, char* av[])
     Parameter par;
     Out_log myout(&par); 
     string config_file;
+    std::vector<string> marker_data_files;
 
     try {
         //
@@ -124,7 +125,8 @@ int main(int ac, char* av[])
         // in config file, but will not be shown to the user.
         options_description hidden("Hidden");
         hidden.add_options()
-            ("data-file", value< vector<string> >(&par.fn_marker_data)->composing(), 
+            //("data-file", value< set<string> >(&par.fn_marker_data)->composing(), 
+            ("data-file", value< vector<string> >(&marker_data_files)->composing(), 
              "input data file")
             ;
 
@@ -180,7 +182,7 @@ int main(int ac, char* av[])
         if (hasConfigFile) {
             ifstream ifs(config_file.c_str());
             if (!ifs) {
-                cerr << "!! Unable to open config file: " << config_file << endl;
+                cerr << "!!! Unable to open config file: " << config_file << endl;
                 return 1;
             }
             else {
@@ -198,31 +200,35 @@ int main(int ac, char* av[])
         else if (par.verbose) {
             myout.set_verbosity(verbose);
         }
+        if (not par.log_file.empty()) {
+            myout.set_logfile(par.log_file, par.interactive);
+        }
 
+        par.fn_marker_data.insert(marker_data_files.begin(), marker_data_files.end());
         bool hasData = vm.count("data-file") > 0;
         if (!hasData) {
-            cerr << "!! Please specify a data-file." << endl;
-            cerr << "!! For more information try ./permory --help" << endl;
+            cerr << "!!! Please specify a data-file." << endl;
+            cerr << "!!! For more information try ./permory --help" << endl;
             return 1;
         }
         else {
-            vector<vector<string>::iterator> er;
-            for (vector<string>::iterator it = par.fn_marker_data.begin();
-                    it != par.fn_marker_data.end(); ++it) {
+            set<string> failed;
+            BOOST_FOREACH(string fn, par.fn_marker_data) {
                 try {
-                    Line_reader<char> lr(*it);
+                    Line_reader<char> lr(fn);
                 }
                 catch (const std::exception& e) {
-                    cerr << "!! " << *it << ": Could not open file - will be ignored" << endl;
-                    er.push_back(it); //remember for erasing afterwards
+                    cerr << "!!! " << fn << ": Could not open file - will be ignored" << endl;
+                    failed.insert(fn);
                 }
             }
-            for (int i=0; i<er.size(); i++) {
-                par.fn_marker_data.erase(er[i]);
+            // now discard the bad files (could not be done during loop)
+            BOOST_FOREACH(string s, failed) {
+                par.fn_marker_data.erase(s);
             }
         }
         if (par.fn_marker_data.size() < 1) {
-            cerr << "!! No valid data file." << endl;
+            cerr << "!!! No valid data file." << endl;
             return 1;
         }
 
@@ -233,22 +239,22 @@ int main(int ac, char* av[])
         if (createTrait) {
             bool ok = true;
             if (not hasNco) {
-                cerr << "!! Option '--nco' is missing." << endl;
+                cerr << "!!! Option '--nco' is missing." << endl;
                 ok = false;
             }
             if (not hasNca) {
-                cerr << "!! Option '--nca' is missing." << endl;
+                cerr << "!!! Option '--nca' is missing." << endl;
                 ok = false;
             }
             if (par.ncontrol == 0 || par.ncase == 0) {
-                cerr << "!! Number of controls or cases cannot be 0." << endl;
+                cerr << "!!! Number of controls or cases cannot be 0." << endl;
                 ok = false;
             }
             if (ok) {
                 par.fn_trait = ""; //do not read trait file anymore
             }
             else if (hasTraitFile) {    //last chance
-                cerr << "!! Will try to read trait from " << par.fn_trait << "." << endl;
+                cerr << "!!! Will try to read trait from " << par.fn_trait << "." << endl;
             }
             else {
                 return 1;   //failure
@@ -266,7 +272,7 @@ int main(int ac, char* av[])
                 }
             }
             else {
-                cerr << "!! Please specify either trait file (option '--trait-file')" <<
+                cerr << "!!! Please specify either trait file (option '--trait-file')" <<
                     " or both number of controls ('--nco') AND cases ('--nca')." << endl; 
                 return 1;
             }
@@ -283,20 +289,19 @@ int main(int ac, char* av[])
             par.tests.insert(trend);
         }
 
-        myout << ">> Data file(s):" << myendl;
-        //for_each(par.fn_marker_data.begin(), par.fn_marker_data.end(), myout);
-        for (vector<string>::iterator i = par.fn_marker_data.begin(); 
-                i!=par.fn_marker_data.end(); ++i) {
-            myout << "\t" << *i << myendl;
+        myout << normal <<"...User specified data file(s):" << myendl;
+        BOOST_FOREACH(string fn, par.fn_marker_data) {
+            myout << "\t" << fn << myendl;
         }
-        myout << ">> Output to: " << par.out_prefix << ".*" << myendl;
+        myout << "...Output to: " << par.out_prefix << ".*" << myendl;
         if (createTrait) {
             myout.verbose();
-            myout << ">> User specified case/control numbers:" << myendl;
-            myout << ">> Number of controls: " << par.ncontrol << myendl;
-            myout << ">> Number of cases: " << par.ncase << myendl;
+            myout << "...User specified case/control numbers:" << myendl;
+            myout << "...Number of controls: " << par.ncontrol << myendl;
+            myout << "...Number of cases: " << par.ncase << myendl;
         }
-        myout << normal << ">> Number of permutations: " << par.nperm_total << myendl;
+        myout << normal << "...Number of permutations: " << par.nperm_total << myendl;
+        myout << myendl;
     }
     catch(std::exception& e)
     {
@@ -319,7 +324,7 @@ int main(int ac, char* av[])
         cout << "Error: " << e.what() << endl;
         return 1;
     }    
-    myout << ">> PERMORY finished successful." << myendl;
+    myout << "...PERMORY finished successful." << myendl;
     return 0;
 
 }

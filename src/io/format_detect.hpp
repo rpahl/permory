@@ -43,18 +43,21 @@ namespace Permory { namespace detail {
             if (c1 == mc || isInt(c1)) {
                 if (c2 == mc || isInt(c2)) {
                     // either permory or plink
-                    if (c3 != ' ') 
-                        return permory;
-                    else 
-                        return plink;
+                    if (c3 != ' ') {
+                        return permory_data;
+                    }
+                    else {
+                        return plink_tped;
+                    }
                 }
                 if (c2 == ' ') {
                     // either slide or plink
-                    if (isInt(c3)) 
-                        // assume SNP name in plink file starts with non-int
+                    if (isInt(c3)) {
                         return slide;
-                    else
-                        return plink;
+                    }
+                    else {
+                        return plink_tped; //given that SNP name in plink file starts with non-int
+                    }
                 }
             }
             else {
@@ -66,8 +69,9 @@ namespace Permory { namespace detail {
                 if ((c1 == 'X' && (c2 == 'Y' || c2 == ' ')) ||  //X or XY
                         (c1 == 'Y' && c2 == ' ') ||                 //Y
                         (c1 == 'M' && c2 == 'T' && c3 == ' ')       //MT
-                   )
-                    return plink;
+                   ) {
+                    return plink_tped;   
+                }
             }
         }
         return unknown;
@@ -94,13 +98,52 @@ namespace Permory { namespace detail {
 
                 if (isInt(c1)) {
                     if (c2 == ' ') {
-                        return plink;
+                        return plink_tfam;   
+                    }
+                    else {
+                        return permory_data;
                     }
                 }
                 else {
                     // presto
                     if (c1 == 'M' || c1 == 'A' || c1 == 'S' && c2 == ' ') {
                         return presto;
+                    }
+                }
+            }
+            return unknown;
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Error during data format detection: " << e.what() << std::endl;
+        }
+    }
+
+    Datafile_format detect_meta_data_format(
+            const std::string& fn)  //file name
+    {
+        try {
+            Line_reader<char> lr(fn);
+            while (!lr.eof()) {
+                lr.next();
+                Line_reader<char>::const_iterator il = lr.begin();
+                char c1 = *il++;
+                char c2 = *il++;
+                char c3 = *il++;
+
+                if (c1 == '#') {    //ignore lines with '#' 
+                    continue;
+                }
+                else if (isInt(c1)) {
+                    if (c2 == ' ') {
+                        return plink_tped;   
+                    }
+                }
+                else {
+                    if (c1 == 'M' || c1 == 'A' || c1 == 'S' && c2 == ' ') {
+                        return presto;
+                    }
+                    if (c1 == '/' && c2 =='/' && c3 == '!') {
+                        return permory_meta;
                     }
                 }
             }

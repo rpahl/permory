@@ -1,3 +1,4 @@
 - exception.hpp
 - blocksize in advanced options aufnehmen 
 - pvalue.hpp, line 56 //XXX
+- create ./tped2meta (transform *.tped to permory *.meta file by simply dropping everything beyond the 4th column)

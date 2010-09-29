@@ -33,7 +33,6 @@ namespace Permory { namespace detail {
             // Data
             //
             // Supported data file formats: PERMORY, PRESTO, PLINK, and SLIDE
-            static std::vector<Datafile_format> marker_data_formats;     
             static Datafile_format phenotype_data_format;     
             static Record::Value_type val_type;     //dichotomous or continous 
             static char undef_allele_code;          //code of missing allele
@@ -42,7 +41,8 @@ namespace Permory { namespace detail {
             //
             // Input
             //
-            static std::vector<std::string> fn_marker_data; //data file names
+            static std::set<std::string> fn_marker_data;//data file names
+            static std::set<std::string> fn_bad_files;  //files of unknown format
             static std::string fn_trait;        //trait/phenotype file name
 
             //
@@ -97,7 +97,6 @@ namespace Permory { namespace detail {
     //
     // Data
     //
-    std::vector<Datafile_format> Parameter::marker_data_formats;
     Datafile_format Parameter::phenotype_data_format = unknown;
     char Parameter::undef_allele_code = '?';
     std::string Parameter::undef_phenotype_code = "?"; 
@@ -106,7 +105,8 @@ namespace Permory { namespace detail {
     //
     // Input
     //
-    std::vector<std::string> Parameter::fn_marker_data; 
+    std::set<std::string> Parameter::fn_marker_data; 
+    std::set<std::string> Parameter::fn_bad_files; 
     std::string Parameter::fn_trait = "";                
 
     //

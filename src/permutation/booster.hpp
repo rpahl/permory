@@ -68,7 +68,6 @@ namespace Permory { namespace permutation {
             const bitset_t& bb,         //a bitset similar to b
             std::valarray<T>& res)      //results are written into res
     {
-        //typedef boost::dynamic_bitset<> bitset_t;
         assert (b.size() == bb.size());
         assert (b.size() == pmat.tpermMat_.nrow());
         bitset_t b1 = b ^ bb;   

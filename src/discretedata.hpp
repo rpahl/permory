@@ -17,7 +17,7 @@ namespace Permory
 {
     template<class T> class Discrete_data { 
         public:
-            typedef T elem_type;
+            typedef T elem_t;
             typedef uint count_t;
 
             // Iterator pass through
@@ -55,8 +55,8 @@ namespace Permory
         private:
             void init();
             std::vector<T> data_;        
-            std::map<elem_type, count_t> unique_;//unique elements with counts
-            std::multimap<count_t, elem_type> counts_;//and vice versa
+            std::map<elem_t, count_t> unique_;//unique elements with counts
+            std::multimap<count_t, elem_t> counts_;//and vice versa
     };
 
     // ========================================================================

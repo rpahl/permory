@@ -49,9 +49,9 @@ namespace Permory {
             void set_major(const T&); 
 
             // Conversions
-            // @parameter a says how many alleles to merge
-            Locus_data<uint> merge_alleles_to_genotypes(uint a=2) const;
-            Locus_data<uint> as_numeric() const;
+            // @parameter 'a' specifies how many alleles to merge
+            Locus_data<uint>* merge_alleles_to_genotypes(uint a=2) const;
+            Locus_data<uint>* as_numeric() const;
 
         private:
             void init();
@@ -160,7 +160,7 @@ namespace Permory {
         }
     }
 
-    template<class T> inline Locus_data<uint> 
+    template<class T> inline Locus_data<uint>* 
         Locus_data<T>::merge_alleles_to_genotypes(uint a) const
     {
         std::vector<uint> v; 
@@ -179,10 +179,11 @@ namespace Permory {
                 v.push_back(-1);
             }
         }
-        Locus_data<uint> ld(v, -1); //new Locus_data with undef set to -1 
-        return ld;
+        //Locus_data<uint> ld(v, -1); //new Locus_data with undef set to -1 
+        //return ld;
+        return new Locus_data<uint>(v, -1); //new Locus_data with undef set to -1 
     }
-    template<class T> inline Locus_data<uint> Locus_data<T>::as_numeric() const
+    template<class T> inline Locus_data<uint>* Locus_data<T>::as_numeric() const
     {
         // We transform the values into integers by their position and hence
         // first need to put the values into a sequence such as vector
@@ -191,7 +192,7 @@ namespace Permory {
         typedef Discrete_data<T> data_t;
         typedef typename std::map<
             typename data_t::elem_t, typename data_t::count_t > map_t;
-        std::transform(this->unique_begin(), this->unique_begin(), 
+        std::transform(this->unique_begin(), this->unique_end(), 
                 std::back_inserter(uu), boost::bind(&map_t::value_type::first,_1) );
 
         std::vector<uint> v; 
@@ -211,8 +212,9 @@ namespace Permory {
             }
         }
 
-        Locus_data<uint> ld(v, -1); //new Locus_data with undef set to -1 
-        return ld;
+        //Locus_data<uint> ld(v, -1); //new Locus_data with undef set to -1 
+        //return ld;
+        return new Locus_data<uint>(v, -1); //new Locus_data with undef set to -1 
     }
 } // namespace Permory
 

@@ -156,37 +156,52 @@ namespace Permory { namespace statistic {
 #endif
     }
 
+    //
+    // Create contingency table from two sequences s1 and s2. The number of
+    // unique elements in s1 and s2, respectively, must not exceed the number of
+    // rows (R) and the number of columns (C) in the contingency table
+    //
     template<class T1, class T2, uint R, uint C> Con_tab<R,C>* make_Con_tab(
             typename std::vector<T1>::const_iterator start1, 
             typename std::vector<T1>::const_iterator end1, 
             typename std::vector<T2>::const_iterator start2, 
             typename std::vector<T2>::const_iterator end2)
     {
-        // Filter out only the unique elements
+        // Extact all unique elements
         std::set<T1> s1(start1, end1);
         std::set<T2> s2(start2, end2);
-        /* XXX
-        PRINT(s1.size());
-        PRINT(s2.size());
-        detail::print_seq(s1.begin(), s1.end(), "", ",");
-        detail::print_seq(s2.begin(), s2.end(), "", ",");
-        */
 
         if (s1.size() > R || s2.size() > C) {
             throw std::out_of_range("Exceeding dimension in contingency table.");
         }
+        // Next put these unique elements into a sequence that allows indexing
         std::vector<T1> v1(s1.begin(), s1.end());
         std::vector<T2> v2(s2.begin(), s2.end());
 
         Con_tab<R,C>* ctab = new Con_tab<R,C>(); //initialized with all entries to 0
         while (start1 != end1 && start2 != end2) {
-            size_t i1 = std::distance(v1.begin(), 
+            size_t row = std::distance(v1.begin(),   //row index
                     find(v1.begin(), v1.end(), *start1++));
-            size_t i2 = std::distance(v2.begin(), 
+            size_t col = std::distance(v2.begin(),  //column index
                     find(v2.begin(), v2.end(), *start2++));
-            (*ctab)[i1][i2]++;
+            (*ctab)[row][col]++;
         }
         return ctab;
+
+        // Example:
+        // 1 1 0 1 0 0 -> s1 = 0,1
+        // A B C C B A -> s2 = A,B,C
+        //
+        // initial table:
+        //      A B C
+        //   0  0 0 0
+        //   1  0 0 0
+        //
+        // 1. while-loop       2. while-loop       3. while-loop       4. while-loop   
+        // row = 1, col = 0    row = 1, col = 1    row = 0, col = 2    row = 1, col = 2
+        //      A B C               A B C               A B C               A B C
+        //   0  0 0 0            0  0 0 0            0  0 0 1            0  0 0 1
+        //   1  1 0 0            1  1 1 0            1  1 1 0            1  1 1 1      
     }
 
 } // namespace statistic
