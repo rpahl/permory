@@ -15,7 +15,7 @@
 #include "discretedata.hpp"
 #include "locus.hpp"
 
-namespace Permory {
+namespace Permory { namespace gwas {
     using namespace detail;
 
     template<class T> class Locus_data : public Discrete_data<T> {
@@ -50,7 +50,7 @@ namespace Permory {
 
             // Conversions
             // @parameter 'a' specifies how many alleles to merge
-            Locus_data<uint>* merge_alleles_to_genotypes(uint a=2) const;
+            Locus_data<T> merge_alleles_to_genotypes(uint a=2) const;
             Locus_data<uint>* as_numeric() const;
 
         private:
@@ -105,8 +105,8 @@ namespace Permory {
             std::map<elem_t, count_t> m = this->unique_with_counts();
             m.erase(undef_); //undefined does not count
 
-            // First we need to transform the elements, which could be of type
-            // int but also of type string, char, etc... into numeric type
+            // First we need to transform the domain, which could be of type
+            // int but also of type string, char, etc... into countable type
             std::vector<count_t> vv; 
             vv.reserve(m.size());
             typename std::map<elem_t, count_t>::const_iterator itMap;
@@ -160,10 +160,10 @@ namespace Permory {
         }
     }
 
-    template<class T> inline Locus_data<uint>* 
+    template<class T> inline Locus_data<T> 
         Locus_data<T>::merge_alleles_to_genotypes(uint a) const
     {
-        std::vector<uint> v; 
+        std::vector<T> v; 
         // a=2 (default) means standard 2-allelic genotype
         v.reserve(this->size()/a);
 
@@ -172,17 +172,31 @@ namespace Permory {
             bool ok = (find(it, it+a, this->undef_) == it+a);
             if (ok) { 
                 // genotype is the number of target/risk markers 
-                v.push_back((uint) count(it, it+a, this->target_));
+                size_t cnt = std::count(it, it+a, this->target_);
+                v.push_back(boost::lexical_cast<T>(cnt));
             }
             else {
                 // Found one or more undefined alleles => undefined genotype 
-                v.push_back(-1);
+                v.push_back(this->undef_);
             }
         }
-        //Locus_data<uint> ld(v, -1); //new Locus_data with undef set to -1 
-        //return ld;
-        return new Locus_data<uint>(v, -1); //new Locus_data with undef set to -1 
+        return Locus_data<T>(v, this->undef_); 
     }
+
+    template<> inline Locus_data<uint>* Locus_data<char>::as_numeric() const
+    {
+        std::vector<uint> v; 
+        v.reserve(this->size());
+        typedef std::vector<char>::const_iterator vec_iter;
+        for (std::vector<char>::const_iterator itChar = this->begin(); 
+                itChar != this->end(); ++itChar) {
+            v.push_back(uint(*itChar) - 48);
+        }
+        char c = uint(this->undef_) - 48;
+        return new Locus_data<uint>(v, c); 
+    }
+
+    /* not used
     template<class T> inline Locus_data<uint>* Locus_data<T>::as_numeric() const
     {
         // We transform the values into integers by their position and hence
@@ -211,11 +225,10 @@ namespace Permory {
                 v.push_back(-1);    //undefined
             }
         }
-
-        //Locus_data<uint> ld(v, -1); //new Locus_data with undef set to -1 
-        //return ld;
         return new Locus_data<uint>(v, -1); //new Locus_data with undef set to -1 
     }
+    */
+} // namespace gwas
 } // namespace Permory
 
 #endif // include guard

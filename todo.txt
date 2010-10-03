@@ -1,8 +1,0 @@
-- include permutation blocksize in advanced options  
-- pvalue.hpp, line 56 //XXX
-- build ./tped2meta (transform *.tped to permory *.meta file by simply dropping everything beyond the 4th column)
-- haplotype analysis
-- robust test statistics
-- unit testing
-- result output
-- MRU list using boost::serialization (see Example 9 in boost::MultiIndex)

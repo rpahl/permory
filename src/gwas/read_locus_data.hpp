@@ -18,8 +18,7 @@
 #include "io/line_reader.hpp"
 #include "io/input_filters.hpp"
 
-namespace Permory { 
-
+namespace Permory { namespace gwas {
     template<class T> class Locus_data_reader {
         public:
             // Ctor
@@ -71,8 +70,9 @@ namespace Permory {
                             std::back_inserter(v), ' ');
                     break; 
                 case presto: //skip first two chunks and white space delims thereafter
-                    if (*(lr_.begin()) != 'M')
+                    if (*(lr_.begin()) != 'M') {
                         continue;
+                    }
                     std::remove_copy_if(lr_.begin(), lr_.end(), 
                             std::back_inserter(v), io::Skip_input_filter<2>());
                     break;
@@ -103,7 +103,7 @@ namespace Permory {
 
         Line_reader<string> lr(fn);
         string line;
-        size_t id = 0;
+        size_t id = 1;
         if (not loci->empty()) {
             id = loci->back().id() + 1;
         }
@@ -113,46 +113,29 @@ namespace Permory {
                 continue;
             }
             switch(format) {
-                case permory_meta:  //basically identical to plink *.tped below
-                    if (line[0] != '#') {   //skip comments
-                        istringstream iss(line);
-                        string chr;    //chromosome
-                        string rs;     //rs# or snp identifier
-                        double cm;          //cM map position
-                        size_t bp;          //base pair position in bp units
-                        iss >> chr >> rs >> cm >> bp;
-                        Locus loc(id++, rs, "", string2chr(chr), bp, cm);
-                        loci->push_back(loc);
-                    }
-                    break; 
                 case presto: //read from *.bgl file as used by presto
                     if (line[0] == 'M') {
                         istringstream iss(line);
                         string rs;
                         iss >> rs; //now rs == 'M'
                         iss >> rs; //now rs contains the markers name
-                        Locus loc(id++, rs);
-                        loci->push_back(loc);
+                        loci->push_back(Locus(id++, rs));
                     }
                     break;
                 case plink_tped: //read from trans.tped file
                     if (line[0] != '#') {   //skip comments
                         istringstream iss(line);
-                        string chr;    //chromosome
-                        string rs;    //rs# or snp identifier
-                        double cm;          //cM map position
-                        size_t bp;          //base pair position in bp units
+                        string chr;     //chromosome
+                        string rs;      //rs# or snp identifier
+                        double cm;      //cM map position
+                        size_t bp;      //base pair position in bp units
                         iss >> chr >> rs >> cm >> bp;
-                        Locus loc(id++, rs, "", string2chr(chr), bp, cm);
-                        loci->push_back(loc);
+                        loci->push_back(Locus(id++, rs, "", string2chr(chr), bp, cm));
                     }
                     break;
                 case slide: //create SNP names with serial number
                     if (line[0] != '#') {   //skip comments
-                        string rs = "SNP";
-                        rs.append(boost::lexical_cast<string>(id));
-                        Locus loc(id++, rs);
-                        loci->push_back(loc);
+                        loci->push_back(Locus(id++));
                     }
                     break;
                 default:
@@ -160,8 +143,7 @@ namespace Permory {
             }
         }
     }
-
-
+} // namespace gwas
 } // namespace Permory
 
 #endif

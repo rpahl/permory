@@ -44,8 +44,8 @@ namespace Permory { namespace permutation {
                 const std::vector<int>&, std::valarray<T2>&); 
 
         private:
-            Matrix<T> tpermMat_;             //transposed permutations
-            std::vector<bitset_t> bitMat_;   //bit-coded permutations
+            detail::Matrix<T> tpermMat_;    //transposed permutations
+            std::vector<bitset_t> bitMat_;  //bit-coded permutations
             bool hasBitmat_;
     };
 
@@ -69,7 +69,7 @@ namespace Permory { namespace permutation {
                 tpermMat_[j][i] = v[j];     //fill by column 
             }
             if (useBitmat) {
-                bitMat_[i] = vector_to_bitset(v);
+                bitMat_[i] = detail::vector_to_bitset(v);
             }
         }
     }

@@ -12,39 +12,63 @@
 #include "file_out.hpp"
 
 namespace Permory { namespace io {
-    std::ostream& myendl(std::ostream& os) {
-        return os << std::endl; 
-    }
-    std::ostream& myflush(std::ostream& os) {
-        return os << std::flush; 
-    }
 
-    class Out_log : std::ostream {
+    // 
+    // Define own manipulators
+    //
+    std::ostream& stdpre(std::ostream& os) { //standard prefix
+        return os << "..."; 
+    }
+    std::ostream& errpre(std::ostream& os) { //error prefix
+        return os << "!!!"; 
+    }
+    std::ostream& warnpre(std::ostream& os) { //warning prefix
+        return os << "!"; 
+    }
+    class indent { 
+        public: 
+            indent(size_t n, char c=' ') : indent_string_(n, c) {}
+            std::ostream& operator()(std::ostream& os) const {
+                return os << indent_string_;
+            }
+            io::File_out& operator()(io::File_out& fo) const {
+                return fo << indent_string_;
+            }
+        private:
+            const std::string indent_string_;
+    };
+
+    //
+    // Output class to allow/suppress output to console (and/or file) 
+    // for different verbose levels
+    //
+    class Myout : std::ostream {
         public:
             // Ctor
-            Out_log(detail::Parameter* par);
+            Myout(detail::Parameter* par);
 
-            // Output
-            template<class T> Out_log& operator<<(const T& x);
+            // support standard I/O manipulators like std::endl, std::flush, ...
+            Myout& operator<<(std::ostream& (*f)(std::ostream&)); 
+            template<class T> Myout& operator<<(const T& x);
             template<class T> void operator()(const T& x);
-            Out_log& all() { verb_ = detail::all; return *this; }
-            Out_log& verbose() { verb_ = detail::verbose; return *this; }
-            Out_log& normal() { verb_ = detail::normal; return *this; }
-            Out_log& mute() { verb_ = detail::muted; return *this; }
+            Myout& all() { verb_ = detail::all; return *this; }
+            Myout& verbose() { verb_ = detail::verbose; return *this; }
+            Myout& normal() { verb_ = detail::normal; return *this; }
+            Myout& mute() { verb_ = detail::muted; return *this; }
 
             // Modification
-            void set_verbosity(Verbosity v) { verb_ref_ = v; }
+            void set_verbosity(detail::Verbosity v) { verb_ref_ = v; }
             void set_logfile(std::string, bool); 
 
         private:
-            Verbosity verb_ref_;
-            Verbosity verb_;
+            detail::Verbosity verb_ref_;
+            detail::Verbosity verb_;
             boost::scoped_ptr<File_out> out_;
     };
 
-    // Out_log implementation
+    // Myout implementation
     // ========================================================================
-    Out_log::Out_log(detail::Parameter* par)
+    Myout::Myout(detail::Parameter* par)
         : verb_ref_(par->verbose_level), verb_(verb_ref_)
     {
         bool useLogfile = not par->log_file.empty();
@@ -53,31 +77,53 @@ namespace Permory { namespace io {
         }
     }
 
-    inline void Out_log::set_logfile(std::string fn, bool force)
+    inline void Myout::set_logfile(std::string fn, bool interactive)
     {
-        bool ok = true;
         File_handle file(fn);
-        if (bfs::exists(*file) && (not force)) {
+        if (bfs::exists(*file) && interactive) {
             char c;
-            std::cerr << "??? Logfile: overwrite `" << fn << "'? (y/n) ";
+            std::cerr << "Logfile: overwrite `" << fn << "'? (y/n) ";
             std::cin >> c;
             if (c != 'y') {
-                ok = false;
+                return;
             }
         }
-        if (ok) {
-            out_.reset(new File_out(fn));
-        }
+        out_.reset(new File_out(fn));
     }
 
-    template<> inline Out_log& Out_log::operator<<(const Verbosity& v)  
+    template<> inline Myout& Myout::operator<<(const detail::Verbosity& v)  
     {
         this->verb_ = v;
         return *this;
     } 
 
-    template<class T> inline Out_log& Out_log::operator<<(const T& x)  
+    template<> inline Myout& Myout::operator<<(const indent& x)  
     {
+        using namespace detail;
+        if (verb_ >= verb_ref_ && verb_ref_ != muted) {
+            if (out_.get() != 0) {
+                x(*out_);
+            }
+            x(std::cout);
+        }
+        return *this;
+    } 
+
+    inline Myout& Myout::operator<<(std::ostream& (*f)(std::ostream&))
+    {
+        using namespace detail;
+        if (verb_ >= verb_ref_ && verb_ref_ != muted) {
+            if (out_.get() != 0) {
+                *out_ << f;
+            }
+            std::cout << f;
+        }
+        return *this;
+    }
+
+    template<class T> inline Myout& Myout::operator<<(const T& x)  
+    {
+        using namespace detail;
         if (verb_ >= verb_ref_ && verb_ref_ != muted) {
             if (out_.get() != 0) {
                 (*out_) << x;
@@ -87,8 +133,9 @@ namespace Permory { namespace io {
         return *this;
     } 
 
-    template<class T> inline void Out_log::operator()(const T& x) 
+    template<class T> inline void Myout::operator()(const T& x) 
     {
+        using namespace detail;
         if (verb_ >= verb_ref_ && verb_ref_ != muted) {
             if (out_.get() != 0) {
                 (*out_) << x;

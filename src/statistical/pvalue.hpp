@@ -15,11 +15,9 @@
 namespace Permory { namespace statistic {
     typedef std::vector<std::vector<double> > matrix_type;
 
-    // asymptotic
-    //
     double quisq(double t, double df)  // FIXME just use the gsl function
     {
-        //return 1 - gsl_cdf_chisq_P(t, df); //FIXME
+        return 1 - gsl_cdf_chisq_P(t, df); //FIXME
     }
 
     // Computes single step counts
@@ -28,32 +26,27 @@ namespace Permory { namespace statistic {
             const std::deque<double>& tperm)    //max test statistic per permutation
     {
         using namespace std;
-        if (not sequence_is_sorted(t, true)) { //sorted in decreasing order?
-            throw invalid_argument("Test statistics must be monotonically decreasing.");
-        }
-
-        deque<size_t> cc(t.size(), 0);
+        deque<size_t> cnts(t.size(), 0);
         for (size_t j=0; j<t.size(); ++j) {             //for each test statistic
             for (size_t i=0; i<tperm.size(); ++i) {     //for each permutation
                 if (tperm[i] >= t[j]) {
-                    cc[j]++;
+                    cnts[j]++;
                 }
             }
         }
-        return cc;
+        return cnts;
     }
 
     // Computes single step p-values 
-    std::deque<double> single_step_pvalues(const std::deque<double>& t, 
-            const std::deque<double>& tperm)
+    std::deque<double> single_step_pvalues(
+            const std::deque<size_t>& counts,   //see function above
+            size_t nperm)                       //number of permutations
     {
         using namespace std;
-        deque<double> p(t.size());
-        deque<size_t> cc = single_step_counts(t, tperm);
-        double nperm = double(tperm.size()); 
+        deque<double> p(counts.size());
         for (size_t i=0; i<p.size(); ++i) {
             //p[i] = double(cc[i] + 1)/(nperm + 1); 
-            p[i] = double(cc[i])/(nperm); //XXX
+            p[i] = double(counts[i])/double(nperm); //XXX
         }
         return p;
     }
@@ -65,7 +58,7 @@ namespace Permory { namespace statistic {
             const std::deque<double>& v)//condensed max test stats of the non-top markers
     {
         using namespace std;
-        if (not sequence_is_sorted(t, true)) { //sorted in decreasing order?
+        if (not detail::sequence_is_sorted(t, true)) { //sorted in decreasing order?
             throw invalid_argument("Test statistics must be monotonically decreasing.");
         }
         assert (t.size() == m.size());

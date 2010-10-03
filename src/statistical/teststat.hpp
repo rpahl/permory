@@ -26,7 +26,7 @@ namespace Permory { namespace statistic {
     //! @brief Trend test extended for different weights and variance estimators
     class Trend_ext : public Test_stat<2,3> {
         public:
-            Trend_ext(const Parameter& par) : ve(par.ve) { 
+            Trend_ext(const detail::Parameter& par) : ve(par.ve) { 
                 w[0] = par.w[0]; 
                 w[1] = par.w[1]; 
                 w[2] = par.w[2]; 
@@ -34,7 +34,7 @@ namespace Permory { namespace statistic {
             double operator()(const Con_tab<2,3>& ct) const;
 
         private:
-            Var_estimate ve; //variance estimator
+            detail::Var_estimate ve;    //variance estimator
             double w[3];                //weights
     };
 
@@ -75,6 +75,8 @@ namespace Permory { namespace statistic {
 
     inline double Trend_ext::operator()(const Con_tab<2,3>& ct) const
     { 
+        using namespace detail;
+
         // Extract data from contingency table
         double r[3], s[3];
         for (uint i=0; i<3; ++i) {

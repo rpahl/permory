@@ -25,6 +25,7 @@ namespace Permory { namespace detail {
             // Analysis
             //
             static double min_maf;                  //minor allele freq threshold
+            static double max_maf;                  //minor allele freq threshold
             static Genetic_type gen_type;           //haplotype or genotype analysis
             static size_t m;                        //number of markers
             static size_t ncase, ncontrol;          //number of cases/controls
@@ -44,11 +45,13 @@ namespace Permory { namespace detail {
             static std::set<std::string> fn_marker_data;//data file names
             static std::set<std::string> fn_bad_files;  //files of unknown format
             static std::string fn_trait;        //trait/phenotype file name
+            //static std::string fn_meta;         //meta information file name
 
             //
             // Output
             //
             static bool interactive;        //ask before overwriting files 
+            static bool pval_counts;        //output raw "p-value counts" yes/no
             static bool quiet;              //no output to console
             static bool verbose;            //verbose output 
             static Verbosity verbose_level; //verbose, normal, or muted
@@ -66,7 +69,6 @@ namespace Permory { namespace detail {
             //
             // Permutation
             //
-            static bool pval_counts;    //output raw "p-value counts" yes/no
             int seed;                   //random seed;
             static size_t nperm_total;  //total number of permutations
             static size_t nperm_block;  //block-wise number of permutations
@@ -88,7 +90,8 @@ namespace Permory { namespace detail {
     //
     // Analysis
     //
-    double Parameter::min_maf = 0.01;
+    double Parameter::min_maf = 0.0;
+    double Parameter::max_maf = 1.0;
     Genetic_type Parameter::gen_type = genotype;
     size_t Parameter::m = 0;
     size_t Parameter::ncase = 0;
@@ -108,11 +111,13 @@ namespace Permory { namespace detail {
     std::set<std::string> Parameter::fn_marker_data; 
     std::set<std::string> Parameter::fn_bad_files; 
     std::string Parameter::fn_trait = "";                
+    //std::string Parameter::fn_meta = "";                
 
     //
     // Output
     //
     bool Parameter::interactive = true;
+    bool Parameter::pval_counts = false;    
     bool Parameter::quiet = false;
     bool Parameter::verbose = false;
     Verbosity Parameter::verbose_level = detail::normal;
@@ -130,7 +135,6 @@ namespace Permory { namespace detail {
     //
     // Permutation
     //
-    bool Parameter::pval_counts = false;    
     size_t Parameter::nperm_total = 10000;
     size_t Parameter::nperm_block = 10000;
     size_t Parameter::tail_size = 100;

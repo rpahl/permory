@@ -142,9 +142,11 @@ namespace Permory { namespace detail {
                     if (c1 == 'M' || c1 == 'A' || c1 == 'S' && c2 == ' ') {
                         return presto;
                     }
+                    /* not used
                     if (c1 == '/' && c2 =='/' && c3 == '!') {
                         return permory_meta;
                     }
+                    */
                 }
             }
             return unknown;

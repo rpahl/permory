@@ -12,33 +12,25 @@
 
 #include "detail/config.hpp"
 #include "detail/parameter.hpp"
-#include "gwas.hpp"
+#include "gwas/analysis.hpp"
 #include "io/file.hpp"
 #include "io/line_reader.hpp"
 #include "io/output.hpp"
 
-using namespace std;
-
-// A helper function to simplify the main part.
-template<class T> ostream& operator<<(ostream& os, const vector<T>& v)
-{
-    copy(v.begin(), v.end(), ostream_iterator<T>(cout, " ")); 
-    return os;
-}
-
-namespace cls = boost::program_options::command_line_style;
 int main(int ac, char* av[])
 {
+    namespace cls = boost::program_options::command_line_style;
     using namespace std;
     using namespace boost;
     using namespace boost::program_options;
     using namespace Permory;
     using namespace Permory::detail;
+    using namespace Permory::gwas;
     using namespace Permory::io;
 
-    timer t; //t.restart();
+    timer t;    //t.restart();
     Parameter par;
-    Out_log myout(&par); 
+    Myout myout(&par); 
     string config_file;
     std::vector<string> marker_data_files;
 
@@ -64,23 +56,25 @@ int main(int ac, char* av[])
             ("nco", value<size_t>(&par.ncontrol), 
              "number of controls - if specified, shadows option "
              "'--trait-file' and requires option '--nca'\n" 
-             "    Assumes: data format [...controls...|...cases...]")
+             "Assumes: data format [...controls...|...cases...]")
             ("nca", value<size_t>(&par.ncase), 
              "number of cases (requires option '--nco')")
             ("min-maf", 
              value<double>(&par.min_maf)->default_value(0.0),
-             "only consider markers with minor allele frequency greater "
-             "than min-maf")
+             "lower minor allele frequency threshold") 
+            ("max-maf", 
+             value<double>(&par.max_maf)->default_value(1.0),
+             "upper minor allele frequency threshold")
             ;
         //
         // Data
         //
         options_description data("Data");
         data.add_options()
-            ("haplo", "assume haplotype data format (default: genotype)") 
-            ("missing,m",  
+            ("haplo", "do haplotype analysis (default: genotype)") 
+            ("missing",  
              value<char>(&par.undef_allele_code)->default_value('?'),
-             "code for missing marker data")
+             "code of missing marker data (single character)")
             ;
         //
         // I/O
@@ -88,7 +82,7 @@ int main(int ac, char* av[])
         options_description io("Input/Output");
         io.add_options()
             ("trait-file,f", value<string>(&par.fn_trait), 
-             "file containing binary trait data")
+             "file with binary trait data")
             ("out-prefix,o", 
              value<string>(&par.out_prefix)->default_value("out"), 
              "prefix used for all output files") 
@@ -116,18 +110,20 @@ int main(int ac, char* av[])
         options_description advanced("Advanced options");
         advanced.add_options()
             ("counts", "output counts in addition to p-values")
-            ("tail", 
-             value<size_t>(&par.tail_size)->default_value(100), 
+            ("block",value<size_t>(&par.nperm_block)->default_value(10000),  
+             "permutation block size")
+            ("ntop", value<size_t>(&par.ntop)->default_value(100), 
+             "number of top markers shown in the *.top output file")
+            ("tail", value<size_t>(&par.tail_size)->default_value(100), 
              "size of sliding tail (REM method)")
-            //("ndisp", value<int>()->default_value(100), "number of top markers to be displayed in the *.top output file")
+
             ;
 
         // Hidden options, will be allowed both on command line and
         // in config file, but will not be shown to the user.
         options_description hidden("Hidden");
         hidden.add_options()
-            //("data-file", value< set<string> >(&par.fn_marker_data)->composing(), 
-            ("data-file", value< vector<string> >(&marker_data_files)->composing(), 
+            ("data-file", value<vector<string> >(&marker_data_files)->composing(), 
              "input data file")
             ;
 
@@ -159,7 +155,7 @@ int main(int ac, char* av[])
 
         if (vm.count("help")) {
             cout << "Usage:\n\tpermory [options] data-file1 [data-file2 ...]\n\n"; 
-            cout << visible;
+            cout << visible << endl;
             return 0;
         }
         if (vm.count("help-all")) {
@@ -173,8 +169,8 @@ int main(int ac, char* av[])
             return 0;
         }
         if (vm.count("version")) {
-            cout.precision(2);
-            cout << "PERMORY version: " << showpoint << par.version << endl;
+            //cout.precision(2);
+            cout << "PERMORY version: " << showpoint << setprecision(2) << par.version << endl;
             return 0;
         }
         notify(vm);
@@ -183,7 +179,7 @@ int main(int ac, char* av[])
         if (hasConfigFile) {
             ifstream ifs(config_file.c_str());
             if (!ifs) {
-                cerr << "!!! Unable to open config file: " << config_file << endl;
+                cerr << errpre << "Unable to open config file: " << config_file << endl;
                 return 1;
             }
             else {
@@ -208,8 +204,8 @@ int main(int ac, char* av[])
         par.fn_marker_data.insert(marker_data_files.begin(), marker_data_files.end());
         bool hasData = vm.count("data-file") > 0;
         if (!hasData) {
-            cerr << "!!! Please specify a data-file." << endl;
-            cerr << "!!! For more information try ./permory --help" << endl;
+            cerr << errpre << "Please specify a data-file." << endl;
+            cerr << errpre << "For more information try ./permory --help" << endl;
             return 1;
         }
         else {
@@ -219,7 +215,7 @@ int main(int ac, char* av[])
                     Line_reader<char> lr(fn);
                 }
                 catch (const std::exception& e) {
-                    cerr << "!!! " << fn << ": Could not open file - will be ignored" << endl;
+                    cerr << errpre << fn << ": Could not open file - will be ignored" << endl;
                     failed.insert(fn);
                 }
             }
@@ -229,7 +225,7 @@ int main(int ac, char* av[])
             }
         }
         if (par.fn_marker_data.size() < 1) {
-            cerr << "!!! No valid data file." << endl;
+            cerr << errpre << "No valid data file." << endl;
             return 1;
         }
 
@@ -240,22 +236,22 @@ int main(int ac, char* av[])
         if (createTrait) {
             bool ok = true;
             if (not hasNco) {
-                cerr << "!!! Option '--nco' is missing." << endl;
+                cerr << errpre << "Option '--nco' is missing." << endl;
                 ok = false;
             }
             if (not hasNca) {
-                cerr << "!!! Option '--nca' is missing." << endl;
+                cerr << errpre << "Option '--nca' is missing." << endl;
                 ok = false;
             }
             if (par.ncontrol == 0 || par.ncase == 0) {
-                cerr << "!!! Number of controls or cases cannot be 0." << endl;
+                cerr << errpre << "Number of controls or cases cannot be 0." << endl;
                 ok = false;
             }
             if (ok) {
                 par.fn_trait = ""; //do not read trait file anymore
             }
             else if (hasTraitFile) {    //last chance
-                cerr << "!!! Will try to read trait from " << par.fn_trait << "." << endl;
+                cerr << errpre << "Will try to read trait from " << par.fn_trait << "." << endl;
             }
             else {
                 return 1;   //failure
@@ -273,8 +269,9 @@ int main(int ac, char* av[])
                 }
             }
             else {
-                cerr << "!!! Please specify either trait file (option '--trait-file')" <<
-                    " or both number of controls ('--nco') AND cases ('--nca')." << endl; 
+                cerr << errpre << "Please specify either trait file (option " <<
+                    "'--trait-file') or both number of controls ('--nco') " <<
+                    "AND cases ('--nca')." << endl; 
                 return 1;
             }
         }
@@ -290,19 +287,19 @@ int main(int ac, char* av[])
             par.tests.insert(trend);
         }
 
-        myout << normal <<"...User specified data file(s):" << myendl;
+        myout << normal << stdpre << "User specified data file(s):" << endl;
         BOOST_FOREACH(string fn, par.fn_marker_data) {
-            myout << "\t" << fn << myendl;
+            myout << indent(4) << fn << endl;
         }
-        myout << "...Output to: " << par.out_prefix << ".*" << myendl;
+        myout << stdpre<< "Output to: " << par.out_prefix << ".*" << endl;
         if (createTrait) {
             myout.verbose();
-            myout << "...User specified case/control numbers:" << myendl;
-            myout << "...Number of controls: " << par.ncontrol << myendl;
-            myout << "...Number of cases: " << par.ncase << myendl;
+            myout << stdpre << "User specified case/control numbers:" << endl;
+            myout << stdpre << "Number of controls: " << par.ncontrol << endl;
+            myout << stdpre << "Number of cases: " << par.ncase << endl;
         }
-        myout << normal << "...Number of permutations: " << par.nperm_total << myendl;
-        myout << myendl;
+        myout << normal << stdpre << "Number of permutations: " << 
+            par.nperm_total << endl << endl;
     }
     catch(std::exception& e)
     {
@@ -315,11 +312,11 @@ int main(int ac, char* av[])
     }
     catch(std::exception& e)
     {
-        cout << "Error: " << e.what() << endl;
+        cerr << errpre << "Error: " << e.what() << endl;
         return 1;
     }    
-    myout << "...PERMORY finished successful." << myendl;
-    myout << "...Runtime: " << t.elapsed() << " s" << myendl;
+    myout << stdpre << "PERMORY finished successful." << endl;
+    myout << stdpre << "Runtime: " << t.elapsed() << " s" << endl;
     return 0;
 }
 

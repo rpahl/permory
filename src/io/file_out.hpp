@@ -38,10 +38,10 @@ namespace Permory { namespace io {
             File_out(const std::string& fn);
             ~File_out() { out_.reset(); } //close all devices
 
-            // Output
+            // support standard I/O manipulators like std::endl, std::flush, ...
+            File_out& operator<<(std::ostream& (*f)(std::ostream&));
             template<class T> File_out& operator<<(const T& x);
-            File_out& endl(); 
-            File_out& flush(); 
+
             // write to File_out using delimiter after each word
             template<class T> File_out& operator()(
                     typename std::vector<T>::const_iterator start,
@@ -50,13 +50,9 @@ namespace Permory { namespace io {
 
             // Inspection
             bool file_exists() const { return bfs::exists(*file_); }
-            size_t line_count() const { return lineCount_; }
-            size_t word_count() const { return wordCount_; }
 
         private:
             File_handle file_;
-            size_t lineCount_;          
-            size_t wordCount_;          
             std::string ext_;   //the file name extension
             bio::filtering_ostream out_; //chain of filters and output device
     };
@@ -64,18 +60,18 @@ namespace Permory { namespace io {
     // File_out implementation
     // ========================================================================
     inline File_out::File_out(const std::string& fn)
-        : file_(fn), lineCount_(0), wordCount_(0) 
+        : file_(fn) 
     {
         bio::file_sink fs((*file_).filename());
         bool isOpen = fs.is_open();
         if (!isOpen) {
-            throw File_exception("failed to open file.");
+            throw detail::File_exception("failed to open file.");
         }
         /*
-        if (useCout_) { 
-            // fork stream to both file stream and std::cout
-            out_.push(bio::tee(fs));
-            out_.push(std::cout);
+           if (useCout_) { 
+        // fork stream to both file stream and std::cout
+        out_.push(bio::tee(fs));
+        out_.push(std::cout);
         }
         */
 
@@ -86,24 +82,15 @@ namespace Permory { namespace io {
         assert (out_.is_complete());
     }
 
+    inline File_out& File_out::operator<<(std::ostream& (*f)(std::ostream&))
+    {
+        out_ << f; 
+        return *this; 
+    }
     template<class T> inline File_out& File_out::operator<<(const T& x) 
     {
         out_ << x; 
-        wordCount_++;
         return *this; 
-    }
-
-    inline File_out& File_out::endl()
-    {
-        out_ << std::endl;
-        lineCount_++;
-        return *this;
-    }
-
-    inline File_out& File_out::flush()
-    {
-        out_ << std::flush;
-        return *this;
     }
 
     template<class T> inline File_out& File_out::operator()(
@@ -113,7 +100,6 @@ namespace Permory { namespace io {
     {
         std::ostream_iterator<T> to_out(out_, delim);
         std::copy(start, end, to_out);
-        wordCount_ += distance(start, end);
         return *this;
     }
 
@@ -150,7 +136,7 @@ namespace Permory { namespace io {
         bio::file_sink fs((*file_).filename());
         bool isOpen = fs.is_open();
         if (!isOpen)
-            throw File_exception("failed to open file.");
+            throw detail::File_exception("failed to open file.");
 
         if ((*file_).extension() ==  ".gz") {
             outbuf_.push(bio::gzip_compressor()); 

@@ -15,7 +15,6 @@ if ( [ os.name ] = LINUX )
     lib gsl : : <name>gsl ;
 }
 
-#if ( [ modules.peek : OS ] in CYGWIN )
 if ( [ os.name ] = CYGWIN )
 {
     path-constant BOOST_PATH : [ os.environ BOOST_PATH ] ;
@@ -31,9 +30,5 @@ if ( [ os.name ] = CYGWIN )
     lib gsl : : <name>gsl ;
 }
 
-# misc stuff
 #local mypath = [ os.environ PATH ] ;
 #ECHO $(mypath) ;
-#
-#<library>gsl/<link>static
-#LDFLAGS = -static -lgsl -lgslcblas -L/usr/local/lib/boost -lboost_program_options-1_42

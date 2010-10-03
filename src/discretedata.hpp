@@ -35,7 +35,7 @@ namespace Permory
             explicit Discrete_data(const std::vector<T>&);  
             explicit Discrete_data(const_iterator, const_iterator);
 
-            // Inspector
+            // Inspection
             const T& operator[](const size_t pos) const { return data_[pos]; }
             size_t size() const { return data_.size(); }
             size_t domain_cardinality() const { return unique_.size(); }
@@ -43,9 +43,8 @@ namespace Permory
             std::map<T, count_t> unique_with_counts() const { return unique_; } 
             bool isInDomain(const T&) const;
             count_t count_elem(const T&) const;
-            void print(); //for debugging
 
-            // Modifier
+            // Modification
             template<class Compare> void regroup(const std::vector<uint> v);
             void add_to_domain(const std::set<T>& s);
             void add_to_domain(const T& x);
@@ -135,11 +134,6 @@ namespace Permory
         return Discrete_data<T>(v);
     }
 
-    template<class T> inline void Discrete_data<T>::print()
-    {
-        copy(data_.begin(), data_.end(), std::ostream_iterator<T>(std::cout," "));
-        std::cout << std::endl;
-    }
 } // namespace Permory
 
 #endif // include guard

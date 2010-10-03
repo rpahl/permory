@@ -11,8 +11,7 @@
 
 #include "detail/config.hpp"
 
-namespace Permory 
-{
+namespace Permory { namespace gwas {
     // Modelling a genetic locus, for which test statistics are computed
     class Locus {
         public: 
@@ -23,7 +22,7 @@ namespace Permory
 
             // Ctor
             Locus(
-                    size_t id,              //unique id
+                    size_t id=0,            //unique id
                     std::string rs="",      //rs-id or other Locus identifier
                     std::string gene="",    //gene the locus belongs to
                     Chr chr=none,           //chr1-chr22, X, Y or na if undefined
@@ -32,28 +31,29 @@ namespace Permory
                     bool isPolymorph=true   //polymorph yes/no
                  ) 
                 : id_(id), rs_(rs), gene_(gene), chr_(chr), bp_(bp), cm_(cm),
-                isPolymorph_(isPolymorph), tsMax_(0.0), flag_(false)
+                isPolymorph_(isPolymorph), tsMax_(0.0), maf_(0.0)
             { }
 
             // Inspection 
             size_t id() const { return id_; }
             bool isPolymorph() const { return isPolymorph_; }
-            bool isFlagged() const { return flag_; }
             bool hasTeststat() const { return (not ts_.empty()); }
             const std::string& rs() const { return rs_; }
             const std::string& gene() const { return gene_; }
             Chr chr() const { return chr_; }
             size_t bp() const { return bp_; }
             double cm() const { return cm_; }
+            double maf() const { return maf_; }
             double tmax() const { return tsMax_; }
             bool operator<(const Locus& x) const;
             bool operator==(const Locus& x) const; 
-            std::vector<double> test_stats() const { return ts_; }
+            const std::vector<double>& test_stats() const { return ts_; }
 
             // Modification
-            void set_flag(bool x) { flag_ = x; }
             void set_polymorph(bool x) { isPolymorph_ = x; }
             void set_gene(const std::string& s) { gene_ = s; }
+            void set_maf(double x) { maf_ = x; }
+            void set_rs(const std::string& s) { rs_ = s; }
             void add_test_stats(const std::vector<double>&);
         private:
             size_t id_;     //unique id
@@ -65,8 +65,8 @@ namespace Permory
 
             std::vector<double> ts_;    //test statistics for the locus
             double tsMax_;              //max of ts_
+            double maf_;                //minor allele frequency
             bool isPolymorph_;          //polymorph yes/no
-            bool flag_;                 //flag this locus
     };
 
     // Locus implementation
@@ -121,6 +121,13 @@ namespace Permory
         else
             return Locus::none;
     }
+
+    struct Locus_tmax_greater {
+        bool operator()(const Locus& loc1, const Locus loc2) {
+            return loc1.tmax() > loc2.tmax();
+        }
+    };
+} // namespace gwas
 } // namespace Permory
 
 #endif // include guard

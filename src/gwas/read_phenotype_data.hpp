@@ -20,8 +20,7 @@
 #include "io/line_reader.hpp"
 #include "io/input_filters.hpp"
 
-namespace Permory { 
-
+namespace Permory { namespace gwas {
     //
     // Read individuals from PLINK's *.tfam file. This function is called by
     // the function 'read_individuals' (see below).
@@ -139,7 +138,7 @@ namespace Permory {
                 throw std::invalid_argument("Data format not supported.");
         }
     }
-
+} // namespace gwas
 } // namespace Permory
 
 #endif

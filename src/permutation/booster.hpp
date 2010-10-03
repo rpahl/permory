@@ -15,7 +15,6 @@
 #include "detail/bitset.hpp" 
 #include "detail/matrix.hpp" 
 #include "detail/vector.hpp" 
-#include "locusdata.hpp"
 #include "permutation/perm_matrix.hpp"
 #include "recode.hpp"
 

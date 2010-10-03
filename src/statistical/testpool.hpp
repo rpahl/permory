@@ -26,26 +26,27 @@ namespace Permory { namespace statistic {
             const_iterator end() const { return ts_.end(); }
 
             Test_pool(){}
-            Test_pool(const Parameter&); 
+            Test_pool(const detail::Parameter&); 
             // Inspector
             size_t size() const { return ts_.size(); }
 
             // Modifier
-            void add(const Parameter&);
-            void remove(const std::set<Test_type>&);
+            void add(const detail::Parameter&);
+            void remove(const std::set<detail::Test_type>&);
         private:
             boost::ptr_vector<Test_stat<K, L> > ts_; 
     };
 
     // Test_pool implementation
     // ========================================================================
-    template<uint K, uint L> inline Test_pool<K, L>::Test_pool(const Parameter& par) 
+    template<uint K, uint L> inline Test_pool<K, L>::Test_pool(const detail::Parameter& par) 
     {
         add(par);
     }
-    template<> inline void Test_pool<2, 3>::add(const Parameter& par)
+    template<> inline void Test_pool<2, 3>::add(const detail::Parameter& par)
     {
-        BOOST_FOREACH(detail::Test_type t, par.tests) {
+        using namespace detail;
+        BOOST_FOREACH(Test_type t, par.tests) {
             switch (t) {
                 case trend: // standard trend test
                     ts_.push_back(new Trend);
@@ -57,9 +58,10 @@ namespace Permory { namespace statistic {
         }
     }
 
-    template<> inline void Test_pool<2, 2>::add(const Parameter& par)
+    template<> inline void Test_pool<2, 2>::add(const detail::Parameter& par)
     {
-        BOOST_FOREACH(detail::Test_type t, par.tests) {
+        using namespace detail;
+        BOOST_FOREACH(Test_type t, par.tests) {
             switch (t) {
                 case chisq: // Qui square test
                     ts_.push_back(new Chi_squ);
@@ -68,7 +70,7 @@ namespace Permory { namespace statistic {
         }
     }
     template<uint K, uint L> inline void Test_pool<K, L>::remove(
-            const std::set<Test_type>& tests)
+            const std::set<detail::Test_type>& tests)
     {
         BOOST_FOREACH(detail::Test_type t, tests) {
             ts_.erase(remove_if(ts_.begin(), ts_.end(), t), ts_.end());
@@ -116,7 +118,7 @@ namespace Permory { namespace statistic {
                 for (typename std::vector<Con_tab<K, L> >::const_iterator 
                         itTab=tab.begin(); itTab!=tab.end(); itTab++)   
                 { 
-                    double d = max(*itResult, (*itTest)(*itTab));
+                    double d = std::max(*itResult, (*itTest)(*itTab));
                     *itResult++ = d;    //Tmax
                 }
                 // "STL-version" requires temporary vector v, and hence is slower:

@@ -7,21 +7,20 @@ project permory ;
 import os ;
 echo "Operating system:" [ os.name ] ;
 
-# used libraries
+# used libraries are defined in site-config.jam
 include site-config.jam ;
+alias /libs : bfs bpop bio bsys zlib gsl ; 
 
 #build-project test ;
 
 project permory 
     : requirements <include>src <warnings>off
-    : #usage-requirements <include>. 
+    : usage-requirements <include>. 
     ;
 
-alias /libs : bfs bpop bio bsys zlib gsl ;
 exe permory  
     : src/permory.cpp /libs
-    : <link>static #<runtime-link>static 
-    #<dll-path>/usr/local/lib #requirements
+    : <link>static <runtime-link>static 
     : #default-build
     : #usage-requirements
     ;

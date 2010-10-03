@@ -17,7 +17,7 @@
 #include "contab.hpp"
 #include "detail/functors.hpp" //pair_comp_2nd
 #include "detail/parameter.hpp"
-#include "locusdata.hpp"
+#include "gwas/locusdata.hpp"
 #include "permutation/booster.hpp"  //Bitset_with_count,
 #include "permutation/perm.hpp"
 #include "statistical/testpool.hpp"
@@ -37,7 +37,7 @@ namespace Permory { namespace statistic {
             const_iterator tmax_end() const { return tMax_.end(); }
 
             Dichotom(
-                    const Parameter&, 
+                    const detail::Parameter&, 
                     const std::vector<bool>& trait, //dichotomous trait
                     const Permutation* pp=0);       //pre-stored permutations
 
@@ -52,18 +52,19 @@ namespace Permory { namespace statistic {
 
             // Conversion
             // Compute test statistics for the data
-            template<class D> std::vector<double> test(const Locus_data<D>&);
+            template<class D> std::vector<double> test(const gwas::Locus_data<D>&);
             // Compute permutation test statistics 
-            template<class D> void permutation_test(const Locus_data<D>&);
+            template<class D> void permutation_test(const gwas::Locus_data<D>&);
 
         private:
             // This function does the "permutation work"
-            template<class D> void do_permutation(const Locus_data<D>&);
+            template<class D> void do_permutation(const gwas::Locus_data<D>&);
 
             Test_pool<K, L> testPool_;
             T nCases_;
             std::vector<T> trait_;
-            Matrix<T> caseFreqs_;//freqs for all permutations (one row per genotype)
+            detail::Matrix<T> caseFreqs_;   //freqs for all permutations 
+                                            //(one row per genotype)
             boost::ptr_vector<Perm_boost<T> > boosters_;
             std::vector<double> tMax_; //max test statistics 
 
@@ -77,7 +78,7 @@ namespace Permory { namespace statistic {
     // Dichotom implementations
     template<uint K, uint L, class T> inline 
         Dichotom<K, L, T>::Dichotom(
-                const Parameter& par,
+                const detail::Parameter& par,
                 const std::vector<bool>& trait,
                 const Permutation* pp) 
         : trait_(trait.begin(), trait.end()), testPool_(par),
@@ -112,7 +113,7 @@ namespace Permory { namespace statistic {
     }
 
     template<uint K, uint L, class T> template<class D> inline 
-        std::vector<double> Dichotom<K, L, T>::test(const Locus_data<D>& data)
+        std::vector<double> Dichotom<K, L, T>::test(const gwas::Locus_data<D>& data)
         {
             // Create contingency tab and analyze it with each test of the test pool
             Con_tab<K, L>* tab;
@@ -120,7 +121,7 @@ namespace Permory { namespace statistic {
                 std::vector<D> dd; dd.reserve(data.size());
                 std::vector<T> tt; tt.reserve(data.size());
 
-                typename Locus_data<D>::const_iterator it = data.begin(); 
+                typename gwas::Locus_data<D>::const_iterator it = data.begin(); 
                 BOOST_FOREACH(T t, trait_) {
                     if (*it != data.get_undef()) { //only keep the valid values
                         dd.push_back(*it);
@@ -140,7 +141,7 @@ namespace Permory { namespace statistic {
         }
 
     template<uint K, uint L, class T> template<class D> inline void 
-        Dichotom<K, L, T>::permutation_test(const Locus_data<D>& data) 
+        Dichotom<K, L, T>::permutation_test(const gwas::Locus_data<D>& data) 
         {
             assert (trait_.size() == data.size());
             bool yesPermutation = (not boosters_.empty());
@@ -152,7 +153,7 @@ namespace Permory { namespace statistic {
             uint j = 0; //row index of matrix with case frequency results
             uint c = 0; //column index of contingency table
 
-            typename Locus_data<D>::unique_iterator uniques = data.unique_begin();
+            typename gwas::Locus_data<D>::unique_iterator uniques = data.unique_begin();
             // the unique_iterator is defined in discretedata.hpp:
             // std::map<elem_type, count_type> unique_;//unique elements with counts
             //
@@ -176,14 +177,14 @@ namespace Permory { namespace statistic {
         }
 
     template<uint K, uint L, class T> template<class D> inline void 
-        Dichotom<K, L, T>::do_permutation(const Locus_data<D>& data)
+        Dichotom<K, L, T>::do_permutation(const gwas::Locus_data<D>& data)
         {
             if (not (data.domain_cardinality() == L+1)) {
                 throw std::runtime_error("Bad domain cardinality in permutation test.");
             }
             uint boost_index[L+1]; //see below
             size_t worst_idx = 0, maxcnt = 0;
-            typename Locus_data<D>::unique_iterator it = data.unique_begin();
+            typename gwas::Locus_data<D>::unique_iterator it = data.unique_begin();
             for (uint i=0; i<L+1; i++) {
                 size_t cnt = (size_t) it->second; //#occurences of the code
                 D a = it->first; //allelic code

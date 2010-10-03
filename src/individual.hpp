@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "detail/config.hpp"
-#include "locus.hpp"
+#include "gwas/locus.hpp"
 
 namespace Permory 
 {

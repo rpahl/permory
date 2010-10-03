@@ -10,7 +10,7 @@ namespace Permory { namespace detail {
     // Supported data formats
     enum Datafile_format{
         unknown=0, 
-        permory_data, permory_meta, 
+        permory_data, //permory_meta, 
         slide, 
         presto, 
         plink_tfam, plink_tped
@@ -19,11 +19,13 @@ namespace Permory { namespace detail {
     {
         switch(df) {
             case permory_data: 
-                return "PERMORY (*.dat)"; 
+                return "PERMORY (*.012)"; 
                 break;
+                /*
             case permory_meta: 
                 return "PERMORY (*.met)"; 
                 break;
+                */
             case slide: 
                 return "SLIDE (*.slide)"; 
                 break;
@@ -65,10 +67,10 @@ namespace Permory { namespace detail {
     {
         switch(tt) {
             case trend: 
-                return "Trend test"; 
+                return "Trend-test"; 
                 break;
             case trend_extended: 
-                return "Extended trend test"; 
+                return "Trend-test_ext"; 
                 break;
             case chisq: 
                 return "Chi-square"; 
