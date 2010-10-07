@@ -34,17 +34,18 @@ namespace Permory { namespace gwas {
         }
         size_t sum = nbad + nmin + nmax;
 
-        myout << verbose << stdpre << "Loci filtered out:" << endl;
-        myout << indent(4) << "non-polymorphic: " << nbad << endl; 
+        myout << verbose << stdpre << "Markers excluded from analyis:" << endl;
+        myout << indent(4) << nbad << " non-polymorphic" << endl; 
         if (par->min_maf > 0) {
-            myout << indent(4) << "maf < " << par->min_maf << ": " << nmin << endl; 
+            myout << indent(4) << nmin << " with maf < " << par->min_maf << endl; 
         }
-        if (par->max_maf < 1) {
-            myout << indent(4) << "maf > " << par->max_maf << ": " << nmax << endl; 
+        if (par->max_maf < 0.5) {
+            myout << indent(4) << nmax << " with maf > " << par->max_maf << endl; 
         }
-        myout << indent(4) << "Total: " << sum << endl;
-        myout << normal << stdpre << m - sum << " of " << m <<
-            " loci were used for analysis." << endl;
+        sum > m ? sum = m : sum;
+        myout << indent(4) << sum << " in total" << endl;
+        myout << normal << stdpre << m - sum << " (of " << m <<
+            ") markers were used for analysis." << endl;
     }
 
     void result_to_file(
@@ -75,22 +76,24 @@ namespace Permory { namespace gwas {
         }
         File_out out(fn);
 
-        Gwas::const_iterator itLoc;
+        // Determine maximal widhts to be set for the different columns
         bool hasChr = false;
-        size_t wrs = 0,
-               wgene = 0;
+        size_t wrs = 0;     //max width for rsIDs
+        size_t wgene = 0;   //max width of gene names
+        Gwas::const_iterator itLoc;
         for (itLoc = study.begin(); itLoc != study.end(); itLoc++) {
             hasChr = hasChr || itLoc->chr() != Locus::none;
             wrs = std::max(wrs, itLoc->rs().size());
             wgene = std::max(wgene, itLoc->gene().size());
         }
 
-        // Header 
-        std::string s = "Serial no.";
-        out << left << setw(12) << s;
+        // Write header 
+        std::string s = "Serial_no";
+        size_t w = max(int(ceil(log10(m))), 9)+4;
+        out << left << setw(w) << s;
         s = "rsID";
         if (wrs > 0) {
-            out << left << setw(wrs+3) << s;
+            out << left << setw(wrs+4) << s;
         }
         s = "chr";
         if (hasChr) {
@@ -98,49 +101,55 @@ namespace Permory { namespace gwas {
         }
         s = "gene";
         if (wgene > 0) {
-            out << left << setw(wgene+3) << s;
+            out << left << setw(wgene+4) << s;
         }
+        s = "maf";
+        out << left << setw(9) << s;
+
         size_t ntest = par->tests.size();
         for (std::set<Test_type>::const_iterator it=par->tests.begin();
                 it!=par->tests.end(); ++it)
         {
             s = test_type_to_string(*it);
-            out << left << setw(16) << s;
+            out << left << setw(13) << s;
         }
         if (ntest > 1) {
-            out << left << setw(12) << "T_max";
+            out << left << setw(10) << "T_max";
         }
-        out << left << setw(15) << "p.unadjusted" << 
-            left << setw(12) << "p.adjusted";
+        out << left << setw(14) << "p_raw" << 
+            left << setw(12) << "p_adjusted";
         if (par->pval_counts) {
             out << left << setw(10) << "p.counts";
         }
         out << endl;
 
-        //std::deque<double>::const_iterator itP = pvals_unadj.begin();
+        // Write results
         std::deque<double>::const_iterator itPadj = pp.begin();
         std::deque<size_t>::const_iterator itPcnt = pval_cnts.begin();
         for (itLoc = study.begin(); itLoc != study.begin()+pp.size(); itLoc++) {
-            out << left << setw(12) << itLoc->id();
+            size_t w = max(int(ceil(log10(m))), 9)+4;
+            out << left << setw(w) << itLoc->id();
             if (wrs > 0) {
-                out << left << setw(wrs+3) << itLoc->rs();
+                out << left << setw(wrs+4) << itLoc->rs();
             }
             s = "chr";
             if (hasChr) {
-                out << left << setw(7) << itLoc->rs();
+                out << left << setw(7) << itLoc->chr();
             }
             s = "gene";
             if (wgene > 0) {
-                out << left << setw(wgene+3) << itLoc->gene();
+                out << left << setw(wgene+4) << itLoc->gene();
             }
+            out << left << setw(9) << setprecision(3) << itLoc->maf();
             for (std::vector<double>::const_iterator it=itLoc->test_stats().begin();
                     it!=itLoc->test_stats().end(); ++it) {
-                out << left << setw(16) << setprecision(8) << fixed << *it;
+                out << left << setw(13) << setprecision(5) << fixed << *it;
             }
             if (ntest > 1) {
-                out << left << setw(12) << setprecision(6) << fixed << itLoc->tmax();
+                out << left << setw(10) << setprecision(5) << fixed << itLoc->tmax();
             }
-            out << left << setw(15) << setprecision(6) << scientific << 0.0;//*itP++;TODO
+            out << left << setw(14) << setprecision(4) << scientific << 
+                1.0 - gsl_cdf_chisq_P(itLoc->tmax(), 1); 
             out << left << setw(12) << setprecision(ceil(log10(par->nperm_total))) <<
                     fixed << *itPadj++;
             if (par->pval_counts) {

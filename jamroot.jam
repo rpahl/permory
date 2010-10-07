@@ -25,4 +25,8 @@ exe permory
     : #usage-requirements
     ;
 
+exe compactor  
+    : src/util/data_compactor.cpp /libs
+    : <link>static <runtime-link>static 
+    ;
 

@@ -42,11 +42,11 @@ namespace Permory { namespace detail {
 
             if (c1 == mc || isInt(c1)) {
                 if (c2 == mc || isInt(c2)) {
-                    // either permory or plink
+                    // either compact or plink
                     if (c3 != ' ') {
-                        return permory_data;
+                        return compact;
                     }
-                    else {
+                    else {  //chromosome number
                         return plink_tped;
                     }
                 }
@@ -71,6 +71,9 @@ namespace Permory { namespace detail {
                         (c1 == 'M' && c2 == 'T' && c3 == ' ')       //MT
                    ) {
                     return plink_tped;   
+                }
+                if (c1 != ' ' && c2 != ' ' && c3 != ' ') {
+                    return compact;
                 }
             }
         }
@@ -101,7 +104,7 @@ namespace Permory { namespace detail {
                         return plink_tfam;   
                     }
                     else {
-                        return permory_data;
+                        return compact;
                     }
                 }
                 else {

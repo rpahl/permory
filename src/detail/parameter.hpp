@@ -19,14 +19,17 @@ namespace Permory { namespace detail {
             //
             // General
             //
-            static double version;                  //program version
+            static bool interactive;        //ask before overwriting files 
+            static bool quiet;              //no output to console
+            static bool verbose;            //verbose output 
+            static double version;          //program version
 
             //
             // Analysis
             //
             static double min_maf;                  //minor allele freq threshold
             static double max_maf;                  //minor allele freq threshold
-            static Genetic_type gen_type;           //haplotype or genotype analysis
+            static Marker_type marker_type;         //allelic or genotype 
             static size_t m;                        //number of markers
             static size_t ncase, ncontrol;          //number of cases/controls
 
@@ -50,10 +53,7 @@ namespace Permory { namespace detail {
             //
             // Output
             //
-            static bool interactive;        //ask before overwriting files 
             static bool pval_counts;        //output raw "p-value counts" yes/no
-            static bool quiet;              //no output to console
-            static bool verbose;            //verbose output 
             static Verbosity verbose_level; //verbose, normal, or muted
             static size_t ntop;             //show the top n results
             static std::string out_prefix;  //to derive output file names 
@@ -85,14 +85,17 @@ namespace Permory { namespace detail {
     //
     // General
     //
+    bool Parameter::interactive = true;
+    bool Parameter::quiet = false;
+    bool Parameter::verbose = false;
     double Parameter::version = 1.0;
 
     //
     // Analysis
     //
     double Parameter::min_maf = 0.0;
-    double Parameter::max_maf = 1.0;
-    Genetic_type Parameter::gen_type = genotype;
+    double Parameter::max_maf = 0.5;
+    Marker_type Parameter::marker_type = genotype;
     size_t Parameter::m = 0;
     size_t Parameter::ncase = 0;
     size_t Parameter::ncontrol = 0;
@@ -116,10 +119,7 @@ namespace Permory { namespace detail {
     //
     // Output
     //
-    bool Parameter::interactive = true;
     bool Parameter::pval_counts = false;    
-    bool Parameter::quiet = false;
-    bool Parameter::verbose = false;
     Verbosity Parameter::verbose_level = detail::normal;
     size_t Parameter::ntop = 100;
     std::string Parameter::out_prefix = "out";  

@@ -11,7 +11,7 @@
 #include<boost/lexical_cast.hpp>
 
 #include "detail/config.hpp"
-#include "detail/enums.hpp" //Genetic_type
+#include "detail/enums.hpp" //Marker_type
 #include "discretedata.hpp"
 #include "locus.hpp"
 
@@ -41,7 +41,7 @@ namespace Permory { namespace gwas {
             bool isPolymorph() const;
             size_t nValid() const { return this->size() - count_elem(undef_); }
             size_t nMiss() const { return count_elem(undef_); }
-            double maf(Genetic_type type) const; //minor allele frequency
+            double maf(Marker_type) const; //*m*inor *a*llele *f*requency
 
             // Modifiers
             void set_target(const T&); 
@@ -50,7 +50,7 @@ namespace Permory { namespace gwas {
 
             // Conversions
             // @parameter 'a' specifies how many alleles to merge
-            Locus_data<T> merge_alleles_to_genotypes(uint a=2) const;
+            Locus_data<T> condense_alleles_to_genotypes(uint a=2) const;
             Locus_data<uint>* as_numeric() const;
 
         private:
@@ -95,12 +95,12 @@ namespace Permory { namespace gwas {
         return this->data_cardinality() > ( 1 + (size_t) hasMissings() );
     }
 
-    template<class T> inline double Locus_data<T>::maf(Genetic_type type) const
+    template<class T> inline double Locus_data<T>::maf(Marker_type mt) const
     {
         if (nValid() == 0) {
             return 0.0;
         }
-        if (type == genotype) {
+        if (mt == genotype) {
             // derive maf via genotype
             std::map<elem_t, count_t> m = this->unique_with_counts();
             m.erase(undef_); //undefined does not count
@@ -127,7 +127,7 @@ namespace Permory { namespace gwas {
             }
             return double(sum)/double(max_sum);
         }
-        else { //or via haplotype, which is simple to compute
+        else { //or via alleles, which is simple to compute
             return double(count_elem(minor_)) / double(nValid());
         }
     }
@@ -161,7 +161,7 @@ namespace Permory { namespace gwas {
     }
 
     template<class T> inline Locus_data<T> 
-        Locus_data<T>::merge_alleles_to_genotypes(uint a) const
+        Locus_data<T>::condense_alleles_to_genotypes(uint a) const
     {
         std::vector<T> v; 
         // a=2 (default) means standard 2-allelic genotype

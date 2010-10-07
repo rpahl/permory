@@ -4,11 +4,12 @@
 
 #include <iostream>
 #include <iomanip>
+#include <time.h>
 
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/variables_map.hpp>
-#include <boost/progress.hpp>
+#include <boost/progress.hpp>   //timer
 
 #include "detail/config.hpp"
 #include "detail/parameter.hpp"
@@ -28,11 +29,23 @@ int main(int ac, char* av[])
     using namespace Permory::gwas;
     using namespace Permory::io;
 
-    timer t;    //t.restart();
+    timer t;    //t.restart(); //start clock
     Parameter par;
     Myout myout(&par); 
     string config_file;
     std::vector<string> marker_data_files;
+
+    myout << endl;
+    myout << "+-----------------+-----------------+------------------+" << endl;
+    myout << "|    PERMORY      |      v"<< fixed << setprecision(2) << 
+        par.version <<                     "      |    6/Oct/2010    |" << endl;
+    myout << "+-----------------+-----------------+------------------+" << endl;
+    myout << "|           Copyright (c) 2010 Roman Pahl              |" << endl;
+    myout << "|  Distributed under the Boost Software License, v1.0  |" << endl;
+    myout << "+------------------------------------------------------+" << endl;
+    myout << "|                   www.permory.org                    |" << endl;
+    myout << "+------------------------------------------------------+" << endl;
+    myout << endl;
 
     try {
         //
@@ -45,8 +58,7 @@ int main(int ac, char* av[])
             ("help-all,H", "show all options")
             ("interactive,i", "prompt before overwriting files")
             ("quiet", "suppress console output")
-            ("verbose,v", "detailed status output")
-            ("version", "output the version number")
+            ("verbose,v", "detailed output")
             ;
         //
         // Analysis
@@ -63,7 +75,7 @@ int main(int ac, char* av[])
              value<double>(&par.min_maf)->default_value(0.0),
              "lower minor allele frequency threshold") 
             ("max-maf", 
-             value<double>(&par.max_maf)->default_value(1.0),
+             value<double>(&par.max_maf)->default_value(0.5),
              "upper minor allele frequency threshold")
             ;
         //
@@ -71,7 +83,7 @@ int main(int ac, char* av[])
         //
         options_description data("Data");
         data.add_options()
-            ("haplo", "do haplotype analysis (default: genotype)") 
+            ("allelic", "allelic-based permutation (default: genotype)") 
             ("missing",  
              value<char>(&par.undef_allele_code)->default_value('?'),
              "code of missing marker data (single character)")
@@ -85,7 +97,7 @@ int main(int ac, char* av[])
              "file with binary trait data")
             ("out-prefix,o", 
              value<string>(&par.out_prefix)->default_value("out"), 
-             "prefix used for all output files") 
+             "prefix for all output files") 
             ("config,c", value<string>(&config_file), "configuration file")
             ("log", value<string>(&par.log_file), "log file")
             //("stat,s", value<string>(&tests), "statistical tests to be used")
@@ -154,23 +166,18 @@ int main(int ac, char* av[])
 
 
         if (vm.count("help")) {
-            cout << "Usage:\n\tpermory [options] data-file1 [data-file2 ...]\n\n"; 
+            cout << "Usage:\n\tpermory [options] <data_file1> [data_file2 ...]\n\n"; 
             cout << visible << endl;
             return 0;
         }
         if (vm.count("help-all")) {
-            cout << "Usage:\n\tpermory [options] data-file1 [data-file2 ...]\n\n"; 
+            cout << "Usage:\n\tpermory [options] <data_file1> [data_file2 ...]\n\n"; 
             cout << visible << endl;
             cout << advanced << endl;
             return 0;
         }
         if (vm.count("help-adv")) {
             cout << advanced << endl;
-            return 0;
-        }
-        if (vm.count("version")) {
-            //cout.precision(2);
-            cout << "PERMORY version: " << showpoint << setprecision(2) << par.version << endl;
             return 0;
         }
         notify(vm);
@@ -199,6 +206,8 @@ int main(int ac, char* av[])
         }
         if (not par.log_file.empty()) {
             myout.set_logfile(par.log_file, par.interactive);
+            myout << normal << stdpre << "Writing this to log file `" << 
+                par.log_file<<"'." << endl;
         }
 
         par.fn_marker_data.insert(marker_data_files.begin(), marker_data_files.end());
@@ -279,15 +288,27 @@ int main(int ac, char* av[])
         if (vm.count("counts")) {
             par.pval_counts = true;
         }
-        if (vm.count("haplo")) {
-            par.gen_type = haplotype;
+        if (vm.count("allelic")) {
+            par.marker_type = allelic;
             par.tests.insert(chisq);
         }
         else {
             par.tests.insert(trend);
         }
 
-        myout << normal << stdpre << "User specified data file(s):" << endl;
+        if (par.min_maf >= par.max_maf) {
+            cerr << errpre << "Bad maf filter specification will left no " <<
+                "markers to analyze." << endl;
+            return 1;
+        }
+
+        time_t rawtime;
+        time(&rawtime);
+        struct tm * timeinfo;
+        timeinfo = localtime ( &rawtime );
+        myout << normal << stdpre << "Started at " << asctime(timeinfo) << endl;
+
+        myout << normal << stdpre << "Data file(s):" << endl;
         BOOST_FOREACH(string fn, par.fn_marker_data) {
             myout << indent(4) << fn << endl;
         }

@@ -10,7 +10,7 @@ namespace Permory { namespace detail {
     // Supported data formats
     enum Datafile_format{
         unknown=0, 
-        permory_data, //permory_meta, 
+        compact, //permory_meta, 
         slide, 
         presto, 
         plink_tfam, plink_tped
@@ -18,8 +18,8 @@ namespace Permory { namespace detail {
     const std::string datafile_format_to_string(const Datafile_format df) 
     {
         switch(df) {
-            case permory_data: 
-                return "PERMORY (*.012)"; 
+            case compact: 
+                return "compact (*.comp)"; 
                 break;
                 /*
             case permory_meta: 
@@ -46,12 +46,12 @@ namespace Permory { namespace detail {
         }
     }
 
-    enum Genetic_type {haplotype, genotype};
-    const std::string genetic_type_to_string(const Genetic_type gtype) 
+    enum Marker_type {allelic, genotype};
+    const std::string marker_type_to_string(const Marker_type mt) 
     {
-        switch(gtype) {
-            case haplotype: 
-                return "haplotype"; 
+        switch(mt) {
+            case allelic: 
+                return "allelic"; 
                 break;
             case genotype: 
                 return "genotype"; 
@@ -67,13 +67,13 @@ namespace Permory { namespace detail {
     {
         switch(tt) {
             case trend: 
-                return "Trend-test"; 
+                return "T_trend"; 
                 break;
             case trend_extended: 
-                return "Trend-test_ext"; 
+                return "T_trend_ext"; 
                 break;
             case chisq: 
-                return "Chi-square"; 
+                return "T_chi^2"; 
                 break;
             default:
                 return "undefined";

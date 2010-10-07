@@ -28,14 +28,14 @@ namespace Permory { namespace gwas {
 
             // Inspection
             bool hasData() const { return !lr_.eof(); }
-            Datafile_format get_format() const { return format_; }
+            detail::Datafile_format get_format() const { return format_; }
 
             // Conversion
-            std::vector<T> get_next();
+            size_t get_next(std::vector<T>&);
 
         private:
-            Datafile_format format_;
-            Line_reader<T> lr_;
+            detail::Datafile_format format_;
+            io::Line_reader<T> lr_;
     };
 
     // Locus_data_reader<T> implementation
@@ -44,25 +44,29 @@ namespace Permory { namespace gwas {
             const std::string& fn, char mc)
         : lr_(fn)
     {
-        format_ = detect_marker_data_format(fn, mc);
+        this->format_ = io::detect_marker_data_format(fn, mc);
 
-        if (format_ == unknown) {
+        if (format_ == detail::unknown) {
             throw std::runtime_error("Unknown data format.");
         }
     }
 
-    template<> inline std::vector<char> Locus_data_reader<char>::get_next()
+    template<> inline size_t Locus_data_reader<char>::get_next(std::vector<char>& v)
     {
-        std::vector<char> v;
+        using namespace Permory::detail;
+        size_t nskipped = 0;
+        v.clear();
+        v.reserve(lr_.size());
 
         while (hasData()) {   
             lr_.next();
-            if (*lr_.begin() == '#')    
+            if (*lr_.begin() == '#') {
+                nskipped++;
                 continue;   //skip comments
-            v.reserve(lr_.size());
+            }
 
             switch(format_) {
-                case permory_data: //straight copy
+                case compact: //straight copy
                     std::copy(lr_.begin(), lr_.end(), std::back_inserter(v)); 
                     break;
                 case slide: //white space delimiters
@@ -71,6 +75,7 @@ namespace Permory { namespace gwas {
                     break; 
                 case presto: //skip first two chunks and white space delims thereafter
                     if (*(lr_.begin()) != 'M') {
+                        nskipped++;
                         continue;
                     }
                     std::remove_copy_if(lr_.begin(), lr_.end(), 
@@ -85,7 +90,7 @@ namespace Permory { namespace gwas {
                 break;
             }
         }
-        return v;
+        return nskipped;
     }
 
     // ========================================================================
@@ -94,14 +99,14 @@ namespace Permory { namespace gwas {
     // SLIDE where in case of SLIDE, the loci names are simply formed by the 
     // ID. All newly read loci are appended to the loci deque.
     //
-    void read_loci(const Datafile_format& format, const std::string& fn, 
+    void read_loci(const detail::Datafile_format& format, const std::string& fn, 
             //std::back_insert_iterator<std::deque<Locus> > loci_back)
             std::deque<Locus>* loci)
     {
         using namespace std;
         using namespace Permory::io;
 
-        Line_reader<string> lr(fn);
+        io::Line_reader<string> lr(fn);
         string line;
         size_t id = 1;
         if (not loci->empty()) {
@@ -113,6 +118,11 @@ namespace Permory { namespace gwas {
                 continue;
             }
             switch(format) {
+                case compact:
+                    if (line[0] != '#') {   //skip comments
+                        loci->push_back(Locus(id++));
+                    }
+                    break;
                 case presto: //read from *.bgl file as used by presto
                     if (line[0] == 'M') {
                         istringstream iss(line);

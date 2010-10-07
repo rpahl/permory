@@ -34,11 +34,11 @@ namespace Permory { namespace gwas {
         vector<Individual> v;
         string fn = par->fn_trait;
         if (not fn.empty()) {
-            myout << normal << stdpre << "Read trait from file..." << endl;
+            myout << normal << stdpre << "Reading trait from file..." << endl;
             Datafile_format dff = detect_phenotype_data_format(fn);
             par->phenotype_data_format = dff;
-            myout << verbose << indent(4) << "`" << par->fn_trait << "' -> assumed " <<
-                "file format: " << datafile_format_to_string(dff) << endl;
+            myout << verbose << indent(4) << "`" << par->fn_trait << "' -> assuming " <<
+                "file format " << datafile_format_to_string(dff) << endl;
             read_individuals(*par, fn, &v);
         }
         else {
@@ -47,7 +47,7 @@ namespace Permory { namespace gwas {
             if (n == 0) {
                 throw runtime_error("Sample size must not be 0");
             }
-            myout << normal << stdpre << "Create trait via given numbers..." << endl;
+            myout << normal << stdpre << "Creating trait via given numbers..." << endl;
             v = case_control_sample(n, double(par->ncase)/double(n)); //individual.hpp
         }
         return v;
@@ -63,7 +63,7 @@ namespace Permory { namespace gwas {
         myout << normal << stdpre << "Scanning marker data..." << endl;
         BOOST_FOREACH(string fn, par->fn_marker_data) {
             Datafile_format dff = detect_marker_data_format(fn, par->undef_allele_code);
-            myout << verbose << indent(4) << "`" << fn << "' -> assumed file format: " << 
+            myout << verbose << indent(4) << "`" << fn << "' -> assuming file format " << 
                 detail::datafile_format_to_string(dff);
             if (dff == unknown) {
                 par->fn_bad_files.insert(fn);
@@ -104,12 +104,15 @@ namespace Permory { namespace gwas {
             pprogress.reset(new progress_display(m*size_t(d), std::cout, "","",""));
         }
 
-        deque<double> tmax;                         //permutation Tmax statistics
-        permutation::Permutation pp(par->seed);     //permutation factory
+        deque<double> tmax;     //holds the maximum test statistic per permutation
+        statistic::Dichotom<K,L> stat(*par, trait); //computes all statistic stuff
+        permutation::Permutation pp(par->seed);     //does the shuffling/permutation
         Gwas::iterator itLocus = study->begin();    //points to current locus
-        statistic::Dichotom<K,L> stat(*par, trait); //handles the statistic stuff
+
         bool isFirstRound = true;
         while (perm_todo > 0) {
+            // By default analysis is done in blocks of 10000 permutations. In
+            // each block each marker is analyzed one by one
             size_t nperm = par->nperm_block;
             if (nperm > perm_todo) {
                 nperm = perm_todo;
@@ -122,28 +125,34 @@ namespace Permory { namespace gwas {
                 Locus_data_reader<char> loc_reader(fn, par->undef_allele_code);
 
                 while (loc_reader.hasData()) {
-                    Locus_data<char> data(loc_reader.get_next(), par->undef_allele_code);
+                    std::vector<char> v;
+                    loc_reader.get_next(v);
+                    Locus_data<char> data(v, par->undef_allele_code);
                     if (data.size() == 0) {
                         continue;
                     }
 
-                    if (par->gen_type == genotype) {
-                        // Handle haplotype-based data formats 
-                        if (dff == presto || dff == plink_tped) { 
-                            data = data.merge_alleles_to_genotypes(2);
+                    if (par->marker_type == genotype) {
+                        if (data.size() == 2*trait.size()) {
+                            data = data.condense_alleles_to_genotypes(2);
                         }
-                        //ensure that all possible genotypes appear in the domain
+                        // Ensure that all possible genotypes appear in the domain
                         data.add_to_domain(the_domain); 
                     }
 
-                    if (data.size() != study->sample_size()) {
+                    if (data.size() != trait.size()) {
                         // Provide some more information in case of this error
                         // as it may be hard to spot in large data sets
-                        std::string s = "Sample size (";
-                        s.append(boost::lexical_cast<string>(study->sample_size()));
+                        std::string s = "At marker no ";
+                        s.append(boost::lexical_cast<string>(itLocus->id()));
+                        s.append(": length of phenotype data (");
+                        s.append(boost::lexical_cast<string>(trait.size()));
                         s.append(") does not match with length of marker data (");
                         s.append(boost::lexical_cast<string>(data.size()));
                         s.append(").\n");
+                        if (data.size() == 2*trait.size()) {
+                            s.append("Maybe you forgot to set option '--allelic'?\n");
+                        }
                         throw std::runtime_error(s);
                     }
 
@@ -151,7 +160,7 @@ namespace Permory { namespace gwas {
                         // The non-permutation stuff needs only to be done once 
                         bool isPoly = data.isPolymorph();
                         itLocus->set_polymorph(isPoly); 
-                        double maf = data.maf(genotype);
+                        double maf = data.maf(par->marker_type);
                         itLocus->set_maf(maf); 
                         bool mafOk = maf > par->min_maf && maf < par->max_maf;
                         if (isPoly && mafOk) {
@@ -159,7 +168,7 @@ namespace Permory { namespace gwas {
                         }
                     }
                     if (itLocus->hasTeststat() && perm_todo > 0) {
-                        stat.permutation_test(data);   //permute and compute
+                        stat.permutation_test(data);   
                     }
                     if (show_progress) {
                         ++(*pprogress);
@@ -203,10 +212,10 @@ namespace Permory { namespace gwas {
         // Phenotype data (either read in or create)
         Gwas study(create_study_sample(par, myout)); 
         if (not par->fn_trait.empty()) {
-            myout << normal << indent(4) << "Found ";
+            myout << normal << stdpre << "Found ";
         }
         else {
-            myout << normal << indent(4) << "Created ";
+            myout << normal << stdpre << "Created ";
         }
         myout << study.ncase() << " cases and " << study.ncontrol() << 
             " controls." << endl;
@@ -215,25 +224,35 @@ namespace Permory { namespace gwas {
         vector<bool> trait(study.sample_size());
         transform(study.ind_begin(), study.ind_end(), trait.begin(),
                 mem_fun_ref(&Individual::isAffected));
+        // If allelic analyis, double trait status for each of the two alleles
+        if (par->marker_type == allelic) {   
+            vector<bool> tmp;
+            tmp.reserve(trait.size()*2);
+            BOOST_FOREACH(bool b, trait) {
+                tmp.push_back(b);
+                tmp.push_back(b);
+            }
+            trait.swap(tmp);
+        }
 
         // Loci information read in
         scan_loci(&study, par, myout);
         size_t m = study.m();
         if (study.m() == 0) {
-            throw runtime_error("No marker loci found.");
+            throw runtime_error("No marker available.");
         }
-        myout << normal << stdpre << "Found " << m << " loci." << endl << endl; 
+        myout << normal << stdpre << m << " markers found." << endl << endl; 
 
         myout << normal << stdpre << "Starting analysis..." << endl;
         std::set<char> data_domain;
-        switch (par->gen_type) {
+        switch (par->marker_type) {
             case genotype:  //2x3 contingency table analysis
                 data_domain.insert('0');
                 data_domain.insert('1');
                 data_domain.insert('2');
                 analyze_dichotom<2,3>(par, myout, trait, &study, data_domain);
                 break;
-            case haplotype: //2x2 contingency table analysis
+            case allelic: //2x2 contingency table analysis
                 analyze_dichotom<2,2>(par, myout, trait, &study);
                 break;
         }
