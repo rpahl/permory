@@ -85,12 +85,14 @@ namespace Permory { namespace io {
         }
 
         // the input streambuffer
-        in_.push(bio::file_source((*file_).string()));
+        //std::string file_name = (*file_).string();
+        in_.push(bio::file_source(fn));
         assert (in_.is_complete());
         bool isOpen = 
             in_.component<bio::file_source>(in_.size()-1)->is_open();
-        if (!isOpen) 
-            throw File_exception("unable to open file.");
+        if (not isOpen) {
+            throw File_exception(fn + ": unable to open file.");
+        }
     }
 
     template<class T> inline void Line_reader<T>::next() 
@@ -158,8 +160,8 @@ namespace Permory { namespace io {
         private:
             File_handle file_;
             std::vector<char> buf_; //line buffer
-            size_t lineCount_;          
             size_t charCount_;          
+            size_t lineCount_;          
 
             std::string ext_;   //the file name extension
             bio::filtering_istreambuf in_; //chain of filters and input device
@@ -185,8 +187,9 @@ namespace Permory { namespace io {
         assert (in_.is_complete());
         bool isOpen = 
             in_.component<bio::file_source>(in_.size()-1)->is_open();
-        if (!isOpen) 
-            throw File_exception("unable to open file.");
+        if (not isOpen) {
+            throw File_exception(fn + ": unable to open file.");
+        }
 
         it_ = &in_;
         std::istreambuf_iterator<char> eos;

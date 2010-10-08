@@ -60,9 +60,9 @@ namespace Permory { namespace statistic {
             // This function does the "permutation work"
             template<class D> void do_permutation(const gwas::Locus_data<D>&);
 
+            std::vector<T> trait_;
             Test_pool<K, L> testPool_;
             T nCases_;
-            std::vector<T> trait_;
             detail::Matrix<T> caseFreqs_;   //freqs for all permutations 
                                             //(one row per genotype)
             boost::ptr_vector<Perm_boost<T> > boosters_;
@@ -153,15 +153,14 @@ namespace Permory { namespace statistic {
             uint j = 0; //row index of matrix with case frequency results
             uint c = 0; //column index of contingency table
 
-            typename gwas::Locus_data<D>::unique_iterator uniques = data.unique_begin();
             // the unique_iterator is defined in discretedata.hpp:
             // std::map<elem_type, count_type> unique_;//unique elements with counts
-            //
-            for (uniques; uniques!=data.unique_end(); uniques++) {
+            typename gwas::Locus_data<D>::unique_iterator uniques = data.unique_begin();
+            for (; uniques!=data.unique_end(); uniques++) {
                 bool ok = not (uniques->first == data.get_undef());
                 if (ok) {
                     uint n = uniques->second; //frequency of both (cases + controls)
-                    for (int t=0; t<con_tabs_.size(); ++t) {  
+                    for (uint t=0; t<con_tabs_.size(); ++t) {  
                         con_tabs_[t][0][c] = caseFreqs_[j][t];     //cases r[j]
                         con_tabs_[t][1][c] = n - caseFreqs_[j][t]; //controls s[j]
                     }

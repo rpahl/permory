@@ -85,6 +85,8 @@ namespace Permory { namespace gwas {
                     std::remove_copy_if(lr_.begin(), lr_.end(), 
                             std::back_inserter(v), io::Skip_input_filter<4>());
                     break;
+                default:
+                    throw std::invalid_argument("Data format not supported.\n");
             }
             if (not v.empty()) {
                 break;

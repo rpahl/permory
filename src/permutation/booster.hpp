@@ -12,7 +12,6 @@
 #include <boost/circular_buffer.hpp>
 
 #include "detail/config.hpp"
-#include "detail/bitset.hpp" 
 #include "detail/matrix.hpp" 
 #include "detail/vector.hpp" 
 #include "permutation/perm_matrix.hpp"
@@ -53,7 +52,7 @@ namespace Permory { namespace permutation {
             std::valarray<T>& res)      //results are written into res
     {
         BOOST_FOREACH(int i, idx) {
-            assert (i < pmat.tpermMat_.size());
+            assert (size_t(i) < pmat.tpermMat_.size());
             res += pmat.tpermMat_[i]; 
         }
     }

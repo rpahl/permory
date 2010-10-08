@@ -1,17 +1,23 @@
 # Copyright (c) 2010 Roman Pahl
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
+
+project test ;
+
+# Libraries
 include site-config.jam ;
-alias files : /io//file.cpp ;
-alias libs : bfs bio bsys ;
-alias deps : files libs ;
+alias /libs : bfs bpop bio bsys zlib gsl gslcblas utf ; 
 
 project test 
-    : requirements <include>.
+    : requirements <library>/libs
+    : usage-requirements <include>. 
     ;
 
-#exe teststat 
-#    : teststat.cpp deps
-#    ;
-
+import testing ;
+test-suite "permory"
+    :
+    [ run detail.cpp ]
+    # more to come
+    : <linkflags>-lgslcblas
+    ;
 

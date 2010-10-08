@@ -54,6 +54,9 @@ namespace Permory { namespace statistic {
                 case trend_extended: // extended trend test
                     ts_.push_back(new Trend_ext(par));
                     break;
+                default:
+                    //ignore unsupported tests
+                    break;
             }
         }
     }
@@ -65,6 +68,9 @@ namespace Permory { namespace statistic {
             switch (t) {
                 case chisq: // Qui square test
                     ts_.push_back(new Chi_squ);
+                    break;
+                default:
+                    //ignore unsupported tests
                     break;
             }
         }

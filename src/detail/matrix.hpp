@@ -23,7 +23,7 @@ namespace Permory { namespace detail {
             Matrix(Matrix<T>&) throw(std::exception); 
 
             // Inspection
-            bool empty() const { return m_.size() > 0; }
+            bool empty() const { return m_.size() == 0; }
             size_t size() const { return nrow()*ncol(); }
             size_t nrow() const { return m_.size(); }
             size_t ncol() const { return m_.size() > 0 ? m_[0].size() : 0; }
@@ -90,8 +90,9 @@ namespace Permory { namespace detail {
                 m.nrow() <<", "<< m.ncol() <<") failed (" << e.what() << ").\n";
             exit(-1);
         }
-        for (size_t i=0; i<m_.size(); i++)
+        for (size_t i=0; i<m_.size(); i++) {
             m_[i] = m[i]; //copying
+        }
     }
 
     // e.g.: v = m.row_apply(&std::valarray<int>::sum); however, has 
@@ -99,7 +100,9 @@ namespace Permory { namespace detail {
     template<class T> inline std::valarray<T> Matrix<T>::row_apply(
             int (std::valarray<T>::*f)() const) const
     {
-        assert (!m_.empty());
+        if (this->empty()) {
+            throw std::out_of_range("Operation not defined for empty matrix.");
+        }
 
         std::valarray<T> v(nrow());
         for (size_t i=0; i<nrow(); ++i) {
@@ -263,8 +266,10 @@ namespace Permory { namespace detail {
     template<class T> inline Matrix<T>& Matrix<T>::resize(size_t d1, size_t d2)
     {
         m_.resize(d1);
-        for (size_t i=0; i<nrow(); i++)
+        for (size_t i=0; i<nrow(); i++) {
             m_[i].resize(d2);
+        }
+        return *this;
     }
 } //namespace detail
 } //namespace Permory

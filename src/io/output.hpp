@@ -82,7 +82,7 @@ namespace Permory { namespace io {
         File_handle file(fn);
         if (bfs::exists(*file) && interactive) {
             char c;
-            std::cerr << "Logfile: overwrite `" << fn << "'? (y/n) ";
+            std::cout << "Logfile: overwrite `" << fn << "'? (y/n) ";
             std::cin >> c;
             if (c != 'y') {
                 return;

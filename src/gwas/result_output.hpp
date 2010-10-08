@@ -25,7 +25,7 @@ namespace Permory { namespace gwas {
         size_t nmin = 0;
         size_t nmax = 0;
         Gwas::const_iterator itLocus = study.begin(); 
-        for (itLocus; itLocus!=study.end(); ++itLocus) {
+        for (; itLocus!=study.end(); ++itLocus) {
             bool isPoly = itLocus->isPolymorph();
             double maf = itLocus->maf();
             nbad += not isPoly;
@@ -68,7 +68,7 @@ namespace Permory { namespace gwas {
         File_handle file(fn);
         if (bfs::exists(*file) && (par->interactive)) {
             char c;
-            std::cerr << "Logfile: overwrite `" << fn << "'? (y/n) ";
+            std::cout << "Results: overwrite `" << fn << "'? (y/n) ";
             std::cin >> c;
             if (c != 'y') {
                 return;
@@ -127,6 +127,9 @@ namespace Permory { namespace gwas {
         std::deque<double>::const_iterator itPadj = pp.begin();
         std::deque<size_t>::const_iterator itPcnt = pval_cnts.begin();
         for (itLoc = study.begin(); itLoc != study.begin()+pp.size(); itLoc++) {
+            if (not itLoc->hasTeststat()) {
+                continue;
+            }
             size_t w = max(int(ceil(log10(m))), 9)+4;
             out << left << setw(w) << itLoc->id();
             if (wrs > 0) {
@@ -151,7 +154,7 @@ namespace Permory { namespace gwas {
             out << left << setw(14) << setprecision(4) << scientific << 
                 1.0 - gsl_cdf_chisq_P(itLoc->tmax(), 1); 
             out << left << setw(12) << setprecision(ceil(log10(par->nperm_total))) <<
-                    fixed << *itPadj++;
+                fixed << *itPadj++;
             if (par->pval_counts) {
                 out << left << setw(10) << *itPcnt++;
             }

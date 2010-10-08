@@ -13,14 +13,16 @@ if ( [ os.name ] = LINUX )
     lib bsys : : <name>boost_system ;
     lib zlib : : <name>z ;
     lib gsl : : <name>gsl ;
+    lib gslcblas : : <name>gslcblas ;
+    lib utf : : <name>boost_unit_test_framework ; 
 }
 
 if ( [ os.name ] = CYGWIN )
 {
-    path-constant BOOST_PATH : [ os.environ BOOST_PATH ] ;
-    path-constant BOOST_LIB_PATH : [ os.environ BOOST_LIB_PATH ] ;
-    #path-constant BOOST_PATH : /usr/local/include/boost ;
-    #path-constant BOOST_LIB_PATH : /usr/local/lib ;
+    #path-constant BOOST_PATH : [ os.environ BOOST_PATH ] ;
+    #path-constant BOOST_LIB_PATH : [ os.environ BOOST_LIB_PATH ] ;
+    path-constant BOOST_PATH : /usr/local/include/boost ;
+    path-constant BOOST_LIB_PATH : /usr/local/lib ;
     
     lib bfs : : <name>boost_filesystem <search>$(BOOST_LIB_PATH:W) ;
     lib bpop : : <name>boost_program_options ;
@@ -28,6 +30,8 @@ if ( [ os.name ] = CYGWIN )
     lib bsys : : <name>boost_system ; 
     lib zlib : : <name>z ; 
     lib gsl : : <name>gsl ;
+    lib gslcblas : : <name>gslcblas ;
+    lib utf : : <name>boost_unit_test_framework ; 
 }
 
 #local mypath = [ os.environ PATH ] ;

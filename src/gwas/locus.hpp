@@ -64,9 +64,9 @@ namespace Permory { namespace gwas {
             double cm_;     //cM map position
 
             std::vector<double> ts_;    //test statistics for the locus
+            bool isPolymorph_;          //polymorph yes/no
             double tsMax_;              //max of ts_
             double maf_;                //minor allele frequency
-            bool isPolymorph_;          //polymorph yes/no
     };
 
     // Locus implementation

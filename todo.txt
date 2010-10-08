@@ -1,0 +1,4 @@
+- robust test statistics
+- unit tests
+- MRU list using boost::serialization (see Example 9 in boost::MultiIndex)
+- add to docu: do not use allelic test on *.tped data as plink reorders alleles when transposing the filesets using --transpose

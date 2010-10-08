@@ -30,6 +30,8 @@ int main(int ac, char* av[])
     using namespace Permory::io;
 
     timer t;    //t.restart(); //start clock
+    time_t rawtime; 
+    struct tm * timeinfo;   //time and date
     Parameter par;
     Myout myout(&par); 
     string config_file;
@@ -45,7 +47,6 @@ int main(int ac, char* av[])
     myout << "+------------------------------------------------------+" << endl;
     myout << "|                   www.permory.org                    |" << endl;
     myout << "+------------------------------------------------------+" << endl;
-    myout << endl;
 
     try {
         //
@@ -302,10 +303,8 @@ int main(int ac, char* av[])
             return 1;
         }
 
-        time_t rawtime;
         time(&rawtime);
-        struct tm * timeinfo;
-        timeinfo = localtime ( &rawtime );
+        timeinfo = localtime(&rawtime);
         myout << normal << stdpre << "Started at " << asctime(timeinfo) << endl;
 
         myout << normal << stdpre << "Data file(s):" << endl;
@@ -336,7 +335,9 @@ int main(int ac, char* av[])
         cerr << errpre << "Error: " << e.what() << endl;
         return 1;
     }    
-    myout << stdpre << "PERMORY finished successful." << endl;
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    myout << stdpre << "Finished at " << asctime(timeinfo);
     myout << stdpre << "Runtime: " << t.elapsed() << " s" << endl;
     return 0;
 }

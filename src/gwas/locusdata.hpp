@@ -16,7 +16,6 @@
 #include "locus.hpp"
 
 namespace Permory { namespace gwas {
-    using namespace detail;
 
     template<class T> class Locus_data : public Discrete_data<T> {
         public:
@@ -41,7 +40,7 @@ namespace Permory { namespace gwas {
             bool isPolymorph() const;
             size_t nValid() const { return this->size() - count_elem(undef_); }
             size_t nMiss() const { return count_elem(undef_); }
-            double maf(Marker_type) const; //*m*inor *a*llele *f*requency
+            double maf(detail::Marker_type) const; //*m*inor *a*llele *f*requency
 
             // Modifiers
             void set_target(const T&); 
@@ -82,10 +81,10 @@ namespace Permory { namespace gwas {
         // determine minor and major allele:
         std::map<elem_t, count_t> m = this->unique_with_counts();
         m.erase(undef_); //undefined is not allowed
-        minor_ =  (*min_element(m.begin(), m.end(), 
-                    detail::comp_second<std::pair<T, int> >())).first;
-        major_ =  (*max_element(m.begin(), m.end(), 
-                    detail::comp_second<std::pair<T, int> >())).first;
+        minor_ =  (*std::min_element(m.begin(), m.end(), 
+                    detail::comp_second<std::pair<elem_t, count_t> >())).first;
+        major_ =  (*std::max_element(m.begin(), m.end(), 
+                    detail::comp_second<std::pair<elem_t, count_t> >())).first;
         target_ = minor_; //default target is minor allele
 
         this->add_to_domain(undef_); //make undef_ always a part of domain
@@ -95,12 +94,12 @@ namespace Permory { namespace gwas {
         return this->data_cardinality() > ( 1 + (size_t) hasMissings() );
     }
 
-    template<class T> inline double Locus_data<T>::maf(Marker_type mt) const
+    template<class T> inline double Locus_data<T>::maf(detail::Marker_type mt) const
     {
         if (nValid() == 0) {
             return 0.0;
         }
-        if (mt == genotype) {
+        if (mt == detail::genotype) {
             // derive maf via genotype
             std::map<elem_t, count_t> m = this->unique_with_counts();
             m.erase(undef_); //undefined does not count
@@ -111,7 +110,15 @@ namespace Permory { namespace gwas {
             vv.reserve(m.size());
             typename std::map<elem_t, count_t>::const_iterator itMap;
             for (itMap=m.begin(); itMap != m.end(); ++itMap) {
-                vv.push_back(boost::lexical_cast<count_t>(itMap->first));
+                try {
+                    vv.push_back(boost::lexical_cast<count_t>(itMap->first));
+                }
+                catch (const boost::bad_lexical_cast& e) {
+                    std::string s = "Bad data entry '";
+                    s.append(boost::lexical_cast<std::string>(itMap->first));
+                    s.append("' because it is not part of the genotype domain.\n");
+                    throw std::domain_error(s);
+                }
             }
 
             count_t max_sum = nValid()*(*max_element(vv.begin(), vv.end()));
@@ -125,10 +132,12 @@ namespace Permory { namespace gwas {
                     sum += boost::lexical_cast<count_t>(g)*it->second; 
                 }
             }
-            return double(sum)/double(max_sum);
+            double maf = double(sum)/double(max_sum);
+            return maf > 0.5 ? 1.0 - maf : maf;
         }
         else { //or via alleles, which is simple to compute
-            return double(count_elem(minor_)) / double(nValid());
+            double maf = double(count_elem(minor_)) / double(nValid());
+            return maf > 0.5 ? 1.0 - maf : maf;
         }
     }
 

@@ -26,12 +26,13 @@ namespace Permory { namespace gwas {
     // the function 'read_individuals' (see below).
     //
     void read_individuals_from_tfam(
-            const Parameter& par,   //data format, missing code
+            const detail::Parameter& par,   //data format, missing code
             const std::string& fn,  //file name 
             std::vector<Individual>* individuals)
     {
         using namespace std;
         using namespace Permory::io;
+        using namespace Permory::detail;
         size_t id = 0;
         if (not individuals->empty()) 
             id = individuals->back().id() + 1;
@@ -72,9 +73,10 @@ namespace Permory { namespace gwas {
             // Auto correct affection status as follows:
             //  unaffected: 1 -> 0
             //  affected:   2 -> 1
-            vector<Individual>::iterator itInd = individuals->begin();
-            for (itInd; itInd != individuals->end(); ++itInd) {
-                Individual::iterator itRecord = itInd->end()-1; //iterator to last added record
+            for (vector<Individual>::iterator itInd = individuals->begin(); 
+                    itInd != individuals->end(); ++itInd) {
+                // get iterator to last added record
+                Individual::iterator itRecord = itInd->end()-1; 
                 if (itRecord->val == 2.0) {
                     itRecord->val = 1.0;
                 }
@@ -89,7 +91,7 @@ namespace Permory { namespace gwas {
     // Read individuals from file. Supports PERMORY, PRESTO, and PLINK. If 
     // vector contains individuals, the newly read individuals are appended.
     //
-    void read_individuals(const Parameter& par, const std::string& fn,      
+    void read_individuals(const detail::Parameter& par, const std::string& fn,      
             std::vector<Individual>* individuals)
     {
         using namespace std;
@@ -109,7 +111,7 @@ namespace Permory { namespace gwas {
                     if (*lr.begin() != "#") { //skip comments
                         vector<string> vs(lr.begin(), lr.end());  
 
-                        for (int i=0; i<vs.size(); i++) {
+                        for (size_t i=0; i<vs.size(); i++) {
                             Individual ind(id++);
                             double val = //0 means unaffected and 1 affected
                                 boost::lexical_cast<double>(vs[i]);
@@ -135,7 +137,7 @@ namespace Permory { namespace gwas {
                         // Ignore the "A" as well as the next entry 
                         vector<string> vs(lr.begin()+2, lr.end());  
 
-                        for (int i=0; i<vs.size(); i+=2) {
+                        for (size_t i=0; i<vs.size(); i+=2) {
                             Individual ind(id++);
                             double val = boost::lexical_cast<double>(vs[i]);
                             // Presto uses 1 (unaffected) and 2 (affected), but

@@ -15,11 +15,6 @@
 namespace Permory { namespace statistic {
     typedef std::vector<std::vector<double> > matrix_type;
 
-    double quisq(double t, double df)  // FIXME just use the gsl function
-    {
-        return 1 - gsl_cdf_chisq_P(t, df); //FIXME
-    }
-
     // Computes single step counts
     std::deque<size_t> single_step_counts(
             const std::deque<double>& t,        //test statistics sorted _decreasingly
@@ -45,8 +40,7 @@ namespace Permory { namespace statistic {
         using namespace std;
         deque<double> p(counts.size());
         for (size_t i=0; i<p.size(); ++i) {
-            //p[i] = double(cc[i] + 1)/(nperm + 1); 
-            p[i] = double(counts[i])/double(nperm); //XXX
+            p[i] = double(counts[i] + 1)/(nperm + 1); 
         }
         return p;
     }

@@ -12,8 +12,7 @@
 #include "io/file.hpp" 
 #include "io/line_reader.hpp" 
 
-namespace Permory { namespace detail {
-    using io::Line_reader;
+namespace Permory { namespace io {
 
     bool isInt(char c) {
         int i = int(c);
@@ -62,7 +61,7 @@ namespace Permory { namespace detail {
             }
             else {
                 // presto
-                if (c1 == 'M' || c1 == 'A' || c1 == 'S' && c2 == ' ') {
+                if ((c1 == 'M' || c1 == 'A' || c1 == 'S') && c2 == ' ') {
                     return presto;
                 }
                 // check for plink non-autosomal chromosomes
@@ -94,7 +93,6 @@ namespace Permory { namespace detail {
                 Line_reader<char>::const_iterator il = lr.begin();
                 char c1 = *il++;
                 char c2 = *il++;
-                char c3 = *il++;
 
                 if (c1 == '#') //ignore lines starting with '#' 
                     continue;
@@ -109,16 +107,16 @@ namespace Permory { namespace detail {
                 }
                 else {
                     // presto
-                    if (c1 == 'M' || c1 == 'A' || c1 == 'S' && c2 == ' ') {
+                    if ((c1 == 'M' || c1 == 'A' || c1 == 'S') && c2 == ' ') {
                         return presto;
                     }
                 }
             }
-            return unknown;
         }
         catch (const std::exception& e) {
             std::cerr << "Error during data format detection: " << e.what() << std::endl;
         }
+        return unknown;
     }
 
     Datafile_format detect_meta_data_format(
@@ -131,7 +129,7 @@ namespace Permory { namespace detail {
                 Line_reader<char>::const_iterator il = lr.begin();
                 char c1 = *il++;
                 char c2 = *il++;
-                char c3 = *il++;
+                //char c3 = *il++; not used
 
                 if (c1 == '#') {    //ignore lines with '#' 
                     continue;
@@ -142,7 +140,7 @@ namespace Permory { namespace detail {
                     }
                 }
                 else {
-                    if (c1 == 'M' || c1 == 'A' || c1 == 'S' && c2 == ' ') {
+                    if ((c1 == 'M' || c1 == 'A' || c1 == 'S') && c2 == ' ') {
                         return presto;
                     }
                     /* not used
@@ -152,13 +150,13 @@ namespace Permory { namespace detail {
                     */
                 }
             }
-            return unknown;
         }
         catch (const std::exception& e) {
             std::cerr << "Error during data format detection: " << e.what() << std::endl;
         }
+        return unknown;
     }
-} //namespace detail
+} //namespace io
 } //namespace Permory
 
 #endif

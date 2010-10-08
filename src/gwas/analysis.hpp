@@ -121,7 +121,6 @@ namespace Permory { namespace gwas {
             itLocus = study->begin(); 
 
             BOOST_FOREACH(string fn, par->fn_marker_data) { 
-                Datafile_format dff = detect_marker_data_format(fn, par->undef_allele_code);
                 Locus_data_reader<char> loc_reader(fn, par->undef_allele_code);
 
                 while (loc_reader.hasData()) {
