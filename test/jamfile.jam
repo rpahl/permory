@@ -2,6 +2,8 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
+import testing ;
+
 project test ;
 
 # Libraries
@@ -9,15 +11,16 @@ include site-config.jam ;
 alias /libs : bfs bpop bio bsys zlib gsl gslcblas utf ; 
 
 project test 
-    : requirements <library>/libs
-    : usage-requirements <include>. 
+    : requirements 
+      <library>/libs
+      <link>static
     ;
 
-import testing ;
+
 test-suite "permory"
     :
     [ run detail.cpp ]
     # more to come
-    : <linkflags>-lgslcblas
+    #: <linkflags>-lgslcblas
     ;
 

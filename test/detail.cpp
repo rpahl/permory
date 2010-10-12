@@ -9,7 +9,8 @@
 #include "test.hpp"
 
 using namespace std;
-using namespace boost::unit_test;
+using namespace boost;
+using namespace unit_test;
 using namespace Permory::detail;
 
 
@@ -49,7 +50,7 @@ void matrix_class_test()
 
 test_suite* init_unit_test_suite( int argc, char* argv[] )
 {
-    test_suite *test = BOOST_TEST_SUITE("Test some functions and classes from src/detail");
+    test_suite *test = BOOST_TEST_SUITE("Functions and classes from src/detail");
 
     test->add(BOOST_TEST_CASE(&vector_functions_test));
     test->add(BOOST_TEST_CASE(&matrix_class_test));
@@ -57,10 +58,3 @@ test_suite* init_unit_test_suite( int argc, char* argv[] )
     return test;
 }
 
-/*
-int main(int argc, char** argv)
-{
-    //init_unit_test_suite(argc, argv);
-    //return unit_test_main( &init_unit_test_suite, argc, argv );
-}
-*/

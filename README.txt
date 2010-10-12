@@ -1,4 +1,4 @@
-PERMORY version 0.4.0 -- May 12, 2010
+PERMORY version 1.0 -- Oct 6, 2010
 ------------------------------------
     PERMORY is a free, open-source software, designed to perform efficient 
     permutation tests for large-scale genetic data sets (e.g. genome-wide
@@ -14,16 +14,18 @@ License notes
 
 Package content
 ---------------
-    permory             # permory executable
-    example.cfg         # example configuration file (optional usage)
-    QUICKSTART.txt      # general usage and application examples
+    compactor           # data compactor executable
+    example.cfg         # example configuration file 
     LICENSE_1_0.txt     # license information
+    permory             # permory executable
+    QUICKSTART.txt      # general usage and application examples
     README.txt          # this file
-    - data (folder)     # example data
-        data_tiny1.txt  # genotype data set (5 SNPs a' 20 individuals)
-        data_tiny2.txt  # 2nd genotype data set 
-        data_tinyH.txt  # haplotype data set (5 SNPs a' 20 alleles)
-        trait_tiny.txt  # trait status (10 affected + 10 non-affected)
+    - data (folder)     # example data of different formats
+        tiny.bgl.gz     # marker data (Beagle format as used by PRESTO)
+        tiny.tfam       # trait data (transposed fileset PLINK format)
+        tiny.tped       # marker data (transposed fileset PLINK format)
+        tinyA.slide     # allelic marker data (SLIDE format)
+        tinyG.slide     # genotype marker data (SLIDE format)
 
 
 Getting started

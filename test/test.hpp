@@ -6,8 +6,8 @@
 #ifndef permory_test_hpp
 #define permory_test_hpp
 
-#include <boost/test/included/unit_test.hpp> //no library linking needed and no main
-//#include <boost/test/unit_test.hpp> //requires special main - FIXME
-
+#include <boost/test/unit_test.hpp> 
+//#include <boost/test/included/unit_test.hpp> //no library linking needed and no main
+//#include <boost/test/included/unit_test_framework.hpp>
 #endif
 

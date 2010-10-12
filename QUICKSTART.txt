@@ -85,9 +85,9 @@ an error.
 Example 5
 ---------
 To prevent the user from typing the same commands over and over again, all
-option can be alternatively specified in a configuration file:
+options can be alternatively specified in a configuration file:
 
-$ permory data/tiny.bgl.gz -c data/example.cfg
+$ permory data/tiny.bgl.gz -c example.cfg
 
 For more information see the configuration file ('example.cfg').
 

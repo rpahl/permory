@@ -13,20 +13,22 @@ alias /libs : bfs bpop bio bsys zlib gsl gslcblas utf ;
 
 
 project permory 
-    : requirements <include>src #<warnings>off
-    : usage-requirements <include>. 
+    : requirements 
+      <include>src 
+      <link>static 
+      #<linkflags>-lgslcblas #<runtime-link>static 
+      #<warnings>off
+    : usage-requirements 
+      <include>. 
     ;
 
 exe permory  
     : src/permory.cpp /libs 
-    : <link>static #<linkflags>-lgslcblas #<runtime-link>static 
-    : #default-build
-    : #usage-requirements
+    : #<linkflags>-lgslcblas #<runtime-link>static 
     ;
 
 exe compactor  
     : src/util/data_compactor.cpp /libs
-    : <link>static #<runtime-link>static 
     ;
 
 build-project test ;

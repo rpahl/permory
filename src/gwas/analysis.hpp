@@ -82,6 +82,26 @@ namespace Permory { namespace gwas {
         }
     }
 
+    struct Locus_filter {
+        public:
+            virtual bool operator()(const Locus&) = 0;
+    };
+
+    struct Maf_filter : public Locus_filter {
+        public:
+            Maf_filter(double min=0.0, double max=0.5)
+                : min_maf(min), max_maf(max)
+            {}
+            bool operator()(const Locus& loc) {
+                double maf = loc.maf();
+                return (maf > min_maf && maf < max_maf);
+            }
+            double min_maf;
+            double max_maf;
+    };
+    // then use std::vector<Locus_filter*> e.g. 
+    // boost::ptr_vector<Locus_filter>
+
     //
     //  Compute test statistics and perform permutation test
     template<uint K, uint L> void analyze_dichotom(
