@@ -14,13 +14,17 @@ namespace Permory { namespace statistic {
     template<uint K, uint L> class Test_stat {
         public: 
             virtual ~Test_stat(){}
-            virtual double operator()(const Con_tab<K,L>&) const = 0;
+            double operator()(const Con_tab<K,L>& tab) const {
+                return do_operator(tab);
+            }
+        private:
+            virtual double do_operator(const Con_tab<K,L>&) const = 0;
     };
 
     //! @brief Standard trend test with pooled variance estimator
     class Trend : public Test_stat<2,3> {
-        public:
-            double operator()(const Con_tab<2,3>& ct) const; 
+        private:
+            double do_operator(const Con_tab<2,3>& ct) const; 
     };
 
     //! @brief Trend test extended for different weights and variance estimators
@@ -31,21 +35,20 @@ namespace Permory { namespace statistic {
                 w[1] = par.w[1]; 
                 w[2] = par.w[2]; 
             }
-            double operator()(const Con_tab<2,3>& ct) const;
-
         private:
+            double do_operator(const Con_tab<2,3>& ct) const;
             detail::Var_estimate ve;    //variance estimator
             double w[3];                //weights
     };
 
     class Chi_squ : public Test_stat<2,2> {
-        public:
-            double operator()(const Con_tab<2,2>& ct) const;
+        private:
+            double do_operator(const Con_tab<2,2>& ct) const;
     };
 
     // ========================================================================
     // Test_stat implementations
-    inline double Trend::operator()(const Con_tab<2,3>& ct) const
+    inline double Trend::do_operator(const Con_tab<2,3>& ct) const
     {
         // Extract data from contingency table
         uint r[3], n[3]; //r[0] and n[0] are ignored since weight is 0 anyway
@@ -73,7 +76,7 @@ namespace Permory { namespace statistic {
         }
     }
 
-    inline double Trend_ext::operator()(const Con_tab<2,3>& ct) const
+    inline double Trend_ext::do_operator(const Con_tab<2,3>& ct) const
     { 
         using namespace detail;
 
@@ -128,7 +131,7 @@ namespace Permory { namespace statistic {
         }
     }
 
-    inline double Chi_squ::operator()(const Con_tab<2,2>& ct) const
+    inline double Chi_squ::do_operator(const Con_tab<2,2>& ct) const
     {
         // Extract data from contingency table
         double a = double(ct(0, 0)),

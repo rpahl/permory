@@ -10,11 +10,13 @@
 #include <vector>
 
 #include <boost/progress.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
 
 #include "detail/config.hpp"
 #include "detail/parameter.hpp"
 #include "gwas.hpp"
 #include "locusdata.hpp"
+#include "locus_filter.hpp"
 #include "io/output.hpp"
 #include "permutation/perm.hpp"
 #include "read_phenotype_data.hpp"
@@ -82,26 +84,6 @@ namespace Permory { namespace gwas {
         }
     }
 
-    struct Locus_filter {
-        public:
-            virtual bool operator()(const Locus&) = 0;
-    };
-
-    struct Maf_filter : public Locus_filter {
-        public:
-            Maf_filter(double min=0.0, double max=0.5)
-                : min_maf(min), max_maf(max)
-            {}
-            bool operator()(const Locus& loc) {
-                double maf = loc.maf();
-                return (maf > min_maf && maf < max_maf);
-            }
-            double min_maf;
-            double max_maf;
-    };
-    // then use std::vector<Locus_filter*> e.g. 
-    // boost::ptr_vector<Locus_filter>
-
     //
     //  Compute test statistics and perform permutation test
     template<uint K, uint L> void analyze_dichotom(
@@ -123,6 +105,11 @@ namespace Permory { namespace gwas {
             double d = ceil(double(perm_todo)/double(par->nperm_block));
             pprogress.reset(new progress_display(m*size_t(d), std::cout, "","",""));
         }
+
+        // Define locus filter (e.g. maf filter)
+        ptr_vector<Locus_filter> locus_filters;
+        locus_filters.push_back(new Maf_filter(par->min_maf, par->max_maf));
+        locus_filters.push_back(new Polymorph_filter());
 
         deque<double> tmax;     //holds the maximum test statistic per permutation
         statistic::Dichotom<K,L> stat(*par, trait); //computes all statistic stuff
@@ -175,18 +162,26 @@ namespace Permory { namespace gwas {
                         throw std::runtime_error(s);
                     }
 
+                    // The non-permutation stuff needs only to be done once 
                     if (isFirstRound) { 
-                        // The non-permutation stuff needs only to be done once 
-                        bool isPoly = data.isPolymorph();
-                        itLocus->set_polymorph(isPoly); 
-                        double maf = data.maf(par->marker_type);
-                        itLocus->set_maf(maf); 
-                        bool mafOk = maf > par->min_maf && maf < par->max_maf;
-                        if (isPoly && mafOk) {
+                        itLocus->set_polymorph(data.isPolymorph()); 
+                        itLocus->set_maf(data.maf(par->marker_type)); 
+
+                        bool hasPassed = true;
+                        ptr_vector<Locus_filter>::iterator itFilter = 
+                            locus_filters.begin();
+                        for (; itFilter != locus_filters.end(); ++itFilter) {
+                            if (not (*itFilter)(*itLocus)) {
+                                hasPassed = false;
+                                break;
+                            }
+                        }
+
+                        if (hasPassed) {
                             itLocus->add_test_stats(stat.test(data)); 
                         }
                     }
-                    if (itLocus->hasTeststat() && perm_todo > 0) {
+                    if (itLocus->hasTeststat()) {
                         stat.permutation_test(data);   
                     }
                     if (show_progress) {
