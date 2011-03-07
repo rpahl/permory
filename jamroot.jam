@@ -23,12 +23,13 @@ project permory
     ;
 
 exe permory  
-    : src/permory.cpp /libs 
-    : #<linkflags>-lgslcblas #<runtime-link>static 
+    : src/permory.cpp /libs
+    : <define>BOOST_FILESYSTEM_VERSION=2 #<linkflags>-lgslcblas #<runtime-link>static
     ;
 
 exe compactor  
     : src/util/data_compactor.cpp /libs
+    : <define>BOOST_FILESYSTEM_VERSION=2
     ;
 
 build-project test ;
