@@ -7,14 +7,14 @@ project site-config ;
 import os ;
 if ( [ os.name ] = LINUX )
 {
-    lib bfs : : <name>boost_filesystem ;
-    lib bpop : : <name>boost_program_options ;
-    lib bio : : <name>boost_iostreams ;
-    lib bsys : : <name>boost_system ;
+    lib bfs : : <name>boost_filesystem <search>/opt/boost-1.46.0/lib ;
+    lib bpop : : <name>boost_program_options <search>/opt/boost-1.46.0/lib ;
+    lib bio : : <name>boost_iostreams <search>/opt/boost-1.46.0/lib ;
+    lib bsys : : <name>boost_system <search>/opt/boost-1.46.0/lib ;
     lib zlib : : <name>z ;
     lib gsl : : <name>gsl ;
     lib gslcblas : : <name>gslcblas ;
-    lib utf : : <name>boost_unit_test_framework ; 
+    lib utf : : <name>boost_unit_test_framework <search>/opt/boost-1.46.0/lib ;
 }
 
 if ( [ os.name ] = CYGWIN )

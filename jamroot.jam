@@ -14,7 +14,8 @@ alias /libs : bfs bpop bio bsys zlib gsl gslcblas utf ;
 
 project permory 
     : requirements 
-      <include>src 
+      <include>src
+      <include>/opt/boost-1.46.0/include
       <link>static 
       #<linkflags>-lgslcblas #<runtime-link>static 
       #<warnings>off
