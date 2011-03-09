@@ -6,6 +6,7 @@
 #include "detail/config.hpp"
 #include "detail/vector.hpp"
 #include "detail/matrix.hpp"
+#include "detail/functors.hpp"
 #include "test.hpp"
 
 using namespace std;
@@ -48,12 +49,36 @@ void matrix_class_test()
 
 }
 
+
+void deque_concat_test()
+{
+    struct deque_concat<double> concatenator;
+    deque<double> l1(4, 1.);
+    deque<double> l2(4, 2.);
+
+    BOOST_CHECK_EQUAL((concatenator(l1, l2)).size(), 8);
+    BOOST_CHECK_EQUAL((concatenator(l2, l1)).size(), 8);
+
+    const deque<double>& q1 = concatenator(l1, l2);
+    BOOST_CHECK_EQUAL(q1.at(0), 1.);
+    BOOST_CHECK_EQUAL(q1.at(1), 1.);
+    BOOST_CHECK_EQUAL(q1.at(2), 1.);
+    BOOST_CHECK_EQUAL(q1.at(3), 1.);
+    BOOST_CHECK_EQUAL(q1.at(4), 2.);
+    BOOST_CHECK_EQUAL(q1.at(5), 2.);
+    BOOST_CHECK_EQUAL(q1.at(6), 2.);
+    BOOST_CHECK_EQUAL(q1.at(7), 2.);
+}
+
+
 test_suite* init_unit_test_suite( int argc, char* argv[] )
 {
     test_suite *test = BOOST_TEST_SUITE("Functions and classes from src/detail");
 
     test->add(BOOST_TEST_CASE(&vector_functions_test));
     test->add(BOOST_TEST_CASE(&matrix_class_test));
+
+    test->add(BOOST_TEST_CASE(&deque_concat_test));
 
     return test;
 }

@@ -6,6 +6,7 @@
 #define permory_detail_functors_hpp
 
 #include <functional>
+#include <deque>
 
 #include "detail/config.hpp"
 
@@ -35,7 +36,19 @@ namespace Permory { namespace detail {
 
     // Operators
     // =======================================================================
-    
+
+    // Concatenates two deques into one.
+    template<class T> struct deque_concat :
+        public std::binary_function< std::deque<T>, std::deque<T>, std::deque<T> >
+    {
+            std::deque<T> operator()(const std::deque<T>& v1, const std::deque<T>& v2) {
+                std::deque<T> result;
+                copy(v1.begin(), v1.end(), back_inserter(result));
+                copy(v2.begin(), v2.end(), back_inserter(result));
+                return result;
+            }
+    };
+
 } // namespace detail
 } // namespace Permory
 
