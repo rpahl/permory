@@ -27,7 +27,7 @@
 
 namespace Permory { namespace gwas {
 
-    template<uint K, uint L> class Analyzer {
+    class Analyzer {
         public:
             // Ctor
             Analyzer(
@@ -39,7 +39,7 @@ namespace Permory { namespace gwas {
                 {}
 
             // Modifiers
-            void analyze_dichotom();
+            template<uint K, uint L> void analyze_dichotom();
 
         protected:
             virtual void output_results(std::deque<double> tmax);
@@ -56,7 +56,7 @@ namespace Permory { namespace gwas {
 
     //
     //  Compute test statistics and perform permutation test
-    template<uint K, uint L> void Analyzer<K,L>::analyze_dichotom()
+    template<uint K, uint L> void Analyzer::analyze_dichotom()
     {
         using namespace std;
         using namespace boost;
@@ -164,7 +164,7 @@ namespace Permory { namespace gwas {
         output_results(tmax);
     }
 
-    template<uint K, uint L> void Analyzer<K,L>::output_results(std::deque<double> tmax)
+    void Analyzer::output_results(std::deque<double> tmax)
     {
         using namespace std;
         using namespace io;
@@ -301,13 +301,13 @@ namespace Permory { namespace gwas {
                 data_domain.insert('0');
                 data_domain.insert('1');
                 data_domain.insert('2');
-                Analyzer<2,3> analyzer(par, myout, trait, &study, data_domain);
-                analyzer.analyze_dichotom();
+                Analyzer analyzer(par, myout, trait, &study, data_domain);
+                analyzer.analyze_dichotom<2,3>();
                 break;
             }
             case allelic: //2x2 contingency table analysis
-                Analyzer<2,2> analyzer(par, myout, trait, &study);
-                analyzer.analyze_dichotom();
+                Analyzer analyzer(par, myout, trait, &study);
+                analyzer.analyze_dichotom<2,3>();
                 break;
         }
     }
