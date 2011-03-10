@@ -11,6 +11,7 @@
 
 #include <boost/progress.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "detail/config.hpp"
 #include "detail/parameter.hpp"
@@ -49,6 +50,42 @@ namespace Permory { namespace gwas {
             const std::vector<bool>& trait_;
             Gwas* study_;
             std::set<char> domain_;
+    };
+
+    struct Abstract_analyzer_factory {
+        public:
+            Abstract_analyzer_factory(int argc, char *argv[])
+                { }
+
+            boost::shared_ptr<Analyzer> operator()(
+                    detail::Parameter* par, io::Myout& out,
+                    const std::vector<bool>& trait, Gwas* study,
+                    std::set<char> the_domain=std::set<char>())
+            {
+                return get_analyzer(par, out, trait, study, the_domain);
+            }
+
+        private:
+            virtual boost::shared_ptr<Analyzer> get_analyzer(
+                    detail::Parameter* par, io::Myout& out,
+                    const std::vector<bool>& trait, Gwas* study,
+                    std::set<char> the_domain=std::set<char>()) = 0;
+    };
+    struct Default_analyzer_factory : public Abstract_analyzer_factory {
+        public:
+            Default_analyzer_factory(int argc, char *argv[])
+                : Abstract_analyzer_factory(argc, argv)
+                { }
+
+        private:
+            boost::shared_ptr<Analyzer> get_analyzer(
+                    detail::Parameter* par, io::Myout& out,
+                    const std::vector<bool>& trait, Gwas* study,
+                    std::set<char> the_domain=std::set<char>())
+            {
+                boost::shared_ptr<Analyzer> ptr(new Analyzer(par, out, trait, study, the_domain));
+                return ptr;
+            }
     };
 
     // Analyzer implementation
@@ -254,7 +291,7 @@ namespace Permory { namespace gwas {
         }
     }
 
-    void gwas_analysis(detail::Parameter* par, io::Myout& myout)
+    void gwas_analysis(detail::Parameter* par, io::Myout& myout, Abstract_analyzer_factory& factory)
     {
         using namespace std;
         using namespace io;
@@ -301,8 +338,8 @@ namespace Permory { namespace gwas {
                 data_domain.insert('0');
                 data_domain.insert('1');
                 data_domain.insert('2');
-                Analyzer analyzer(par, myout, trait, &study, data_domain);
-                analyzer.analyze_dichotom<2,3>();
+                boost::shared_ptr<Analyzer> analyzer = factory(par, myout, trait, &study, data_domain);
+                analyzer->analyze_dichotom<2,3>();
                 break;
             }
             case allelic: //2x2 contingency table analysis

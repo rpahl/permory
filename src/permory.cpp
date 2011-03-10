@@ -37,6 +37,8 @@ int main(int ac, char* av[])
     string config_file;
     std::vector<string> marker_data_files;
 
+    ANALYZER_FACTORY factory(ac, av);
+
     myout << endl;
     myout << "+-----------------+-----------------+------------------+" << endl;
     myout << "|    PERMORY      |      v"<< fixed << setprecision(2) << 
@@ -328,7 +330,7 @@ int main(int ac, char* av[])
     }    
 
     try {
-        gwas_analysis(&par, myout);
+        gwas_analysis(&par, myout, factory);
     }
     catch(std::exception& e)
     {
