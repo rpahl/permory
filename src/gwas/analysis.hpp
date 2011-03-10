@@ -41,7 +41,9 @@ namespace Permory { namespace gwas {
             // Modifiers
             void analyze_dichotom();
 
-        private:
+        protected:
+            virtual void output_results(std::deque<double> tmax);
+
             detail::Parameter* par_;
             io::Myout& out_;
             const std::vector<bool>& trait_;
@@ -52,7 +54,6 @@ namespace Permory { namespace gwas {
     // Analyzer implementation
     // ========================================================================
 
-
     //
     //  Compute test statistics and perform permutation test
     template<uint K, uint L> void Analyzer<K,L>::analyze_dichotom()
@@ -60,7 +61,6 @@ namespace Permory { namespace gwas {
         using namespace std;
         using namespace boost;
         using namespace io;
-        using namespace statistic;
 
         // Prepare progress bar
         size_t m = study_->m();
@@ -160,6 +160,16 @@ namespace Permory { namespace gwas {
             copy(stat.tmax_begin(), stat.tmax_end(), back_inserter(tmax));
             isFirstRound = false;
         }
+
+        output_results(tmax);
+    }
+
+    template<uint K, uint L> void Analyzer<K,L>::output_results(std::deque<double> tmax)
+    {
+        using namespace std;
+        using namespace io;
+        using namespace statistic;
+
         out_ << endl;
         result_to_console(par_, out_, *study_);
 
