@@ -340,7 +340,7 @@ int main(int ac, char* av[])
     {
         cerr << errpre << "Error: " << e.what() << endl;
         return 1;
-    }    
+    }
     time(&rawtime);
     timeinfo = localtime(&rawtime);
     myout << stdpre << "Finished at " << asctime(timeinfo);

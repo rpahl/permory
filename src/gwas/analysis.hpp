@@ -15,6 +15,7 @@
 
 #include "detail/config.hpp"
 #include "detail/parameter.hpp"
+#include "detail/exception.hpp"
 #include "gwas.hpp"
 #include "locusdata.hpp"
 #include "locus_filter.hpp"
@@ -55,6 +56,8 @@ namespace Permory { namespace gwas {
             std::set<char> domain_;
     };
 
+    // Factories
+    // ========================================================================
     class Abstract_analyzer_factory {
         public:
             // Ctor
@@ -161,17 +164,8 @@ namespace Permory { namespace gwas {
                     if (data.size() != trait_.size()) {
                         // Provide some more information in case of this error
                         // as it may be hard to spot in large data sets
-                        std::string s = "At marker no ";
-                        s.append(boost::lexical_cast<string>(itLocus->id()));
-                        s.append(": length of phenotype data (");
-                        s.append(boost::lexical_cast<string>(trait_.size()));
-                        s.append(") does not match with length of marker data (");
-                        s.append(boost::lexical_cast<string>(data.size()));
-                        s.append(").\n");
-                        if (data.size() == 2*trait_.size()) {
-                            s.append("Maybe you forgot to set option '--allelic'?\n");
-                        }
-                        throw std::runtime_error(s);
+                        throw Data_length_mismatch_error(
+                                itLocus->id(), trait_.size(), data.size());
                     }
 
                     // The non-permutation stuff needs only to be done once 

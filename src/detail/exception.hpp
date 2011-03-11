@@ -7,6 +7,9 @@
 
 #include <exception>
 #include <stdexcept>
+
+#include <boost/lexical_cast.hpp>
+
 #include "detail/config.hpp"
 
 namespace Permory { namespace detail {
@@ -33,6 +36,31 @@ namespace Permory { namespace detail {
     };
 
     class Math_error {
+    };
+
+    //
+    // Error for mismatching length of phenotype and marker data.
+    // Thrown in Analyzer::analyze_dichotom().
+    class Data_length_mismatch_error : public std::runtime_error
+    {
+        public:
+            // Ctor
+            Data_length_mismatch_error(size_t id, size_t pheno_length, size_t marker_length)
+                : runtime_error(
+                            std::string("")
+                            .append( "At marker no ")
+                            .append(boost::lexical_cast<std::string>(id))
+                            .append(": length of phenotype data (")
+                            .append(boost::lexical_cast<std::string>(pheno_length))
+                            .append(") does not match with length of marker data (")
+                            .append(boost::lexical_cast<std::string>(marker_length))
+                            .append(").\n")
+                            .append(
+                                (marker_length == 2 * pheno_length
+                                    ? "Maybe you forgot to set option '--allelic'?\n"
+                                    : ""))
+                        )
+                { }
     };
 
 } //namespace detail
