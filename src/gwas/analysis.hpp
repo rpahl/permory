@@ -39,6 +39,9 @@ namespace Permory { namespace gwas {
                   domain_(the_domain)
                 {}
 
+            // Dtor
+            virtual ~Analyzer() { }
+
             // Modifiers
             template<uint K, uint L> void analyze_dichotom();
 
@@ -52,10 +55,13 @@ namespace Permory { namespace gwas {
             std::set<char> domain_;
     };
 
-    struct Abstract_analyzer_factory {
+    class Abstract_analyzer_factory {
         public:
+            // Ctor
             Abstract_analyzer_factory(int argc, char *argv[])
                 { }
+            // Dtor
+            virtual ~Abstract_analyzer_factory() { }
 
             boost::shared_ptr<Analyzer> operator()(
                     detail::Parameter* par, io::Myout& out,
@@ -71,11 +77,14 @@ namespace Permory { namespace gwas {
                     const std::vector<bool>& trait, Gwas* study,
                     std::set<char> the_domain=std::set<char>()) = 0;
     };
-    struct Default_analyzer_factory : public Abstract_analyzer_factory {
+    class Default_analyzer_factory : public Abstract_analyzer_factory {
         public:
+            // Ctor
             Default_analyzer_factory(int argc, char *argv[])
                 : Abstract_analyzer_factory(argc, argv)
                 { }
+            // Dtor
+            virtual ~Default_analyzer_factory() { }
 
         private:
             boost::shared_ptr<Analyzer> get_analyzer(

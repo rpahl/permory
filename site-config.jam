@@ -15,6 +15,8 @@ if ( [ os.name ] = LINUX )
     lib gsl : : <name>gsl ;
     lib gslcblas : : <name>gslcblas ;
     lib utf : : <name>boost_unit_test_framework <search>/opt/boost-1.46.0/lib ;
+    lib bmpi : : <name>boost_mpi <search>/opt/boost-1.46.0/lib ;
+    lib bs   : : <name>boost_serialization <search>/opt/boost-1.46.0/lib ;
 }
 
 if ( [ os.name ] = CYGWIN )
@@ -32,6 +34,8 @@ if ( [ os.name ] = CYGWIN )
     lib gsl : : <name>gsl ;
     lib gslcblas : : <name>gslcblas ;
     lib utf : : <name>boost_unit_test_framework ; 
+    lib bmpi : : <name>boost_mpi ;
+    lib bs   : : <name>boost_serialization ;
 }
 
 #local mypath = [ os.environ PATH ] ;

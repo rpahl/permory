@@ -5,13 +5,26 @@
 project permory ;
 
 import os ;
+import mpi ;
+
 echo "Operating system:" [ os.name ] ;
 
 # used libraries are defined in site-config.jam
 include site-config.jam ;
-alias /libs : bfs bpop bio bsys zlib gsl gslcblas utf ; 
 
+flags = ;
 analyzer_factory = Default_analyzer_factory ;
+
+if [ mpi.configured ]
+{
+    echo "Using MPI." ;
+    alias /libs : bfs bpop bio bsys zlib gsl gslcblas utf bs bmpi ;
+    flags +=  <define>USE_MPI ;
+    analyzer_factory = Mpi_analyzer_factory ;
+} else {
+    alias /libs : bfs bpop bio bsys zlib gsl gslcblas utf ;
+}
+
 
 project permory 
     : requirements 
@@ -22,17 +35,20 @@ project permory
       #<warnings>off
     : usage-requirements 
       <include>. 
+      $(flags)
     ;
 
 exe permory  
     : src/permory.cpp /libs
     : <define>BOOST_FILESYSTEM_VERSION=2 #<linkflags>-lgslcblas #<runtime-link>static
       <define>ANALYZER_FACTORY=$(analyzer_factory)
+      $(flags)
     ;
 
 exe compactor  
     : src/util/data_compactor.cpp /libs
     : <define>BOOST_FILESYSTEM_VERSION=2
+      $(flags)
     ;
 
 build-project test ;

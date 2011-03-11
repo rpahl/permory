@@ -18,6 +18,10 @@
 #include "io/line_reader.hpp"
 #include "io/output.hpp"
 
+#ifdef USE_MPI
+#include "mpi/mpi.hpp"
+#endif  // USE_MPI
+
 int main(int ac, char* av[])
 {
     namespace cls = boost::program_options::command_line_style;
