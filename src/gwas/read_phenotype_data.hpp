@@ -59,7 +59,7 @@ namespace Permory { namespace gwas {
 
             // Get the phenotype
             i = boost::lexical_cast<int>(v[5]);
-            has2 = (i == 2);
+            has2 = (i == 2);    // XXX: correct check???
             Record r(boost::lexical_cast<double>(v[5]), par.val_type);
             if (v[5] == par.undef_phenotype_code) { 
                 r.theType = Record::undefined; 
