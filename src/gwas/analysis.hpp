@@ -61,7 +61,7 @@ namespace Permory { namespace gwas {
     class Abstract_analyzer_factory {
         public:
             // Ctor
-            Abstract_analyzer_factory(int argc, char *argv[])
+            Abstract_analyzer_factory(int& argc, char **& argv)
                 { }
             // Dtor
             virtual ~Abstract_analyzer_factory() { }
@@ -83,7 +83,7 @@ namespace Permory { namespace gwas {
     class Default_analyzer_factory : public Abstract_analyzer_factory {
         public:
             // Ctor
-            Default_analyzer_factory(int argc, char *argv[])
+            Default_analyzer_factory(int& argc, char **& argv)
                 : Abstract_analyzer_factory(argc, argv)
                 { }
             // Dtor

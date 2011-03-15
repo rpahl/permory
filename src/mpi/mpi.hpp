@@ -73,7 +73,7 @@ namespace Permory { namespace gwas {
     class Mpi_analyzer_factory : public Abstract_analyzer_factory {
         public:
             // Ctor
-            Mpi_analyzer_factory(int argc, char *argv[])
+            Mpi_analyzer_factory(int& argc, char **& argv)
                 : Abstract_analyzer_factory(argc, argv), env_(argc, argv)
                 { }
 
