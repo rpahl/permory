@@ -346,8 +346,8 @@ namespace Permory { namespace gwas {
                 break;
             }
             case allelic: //2x2 contingency table analysis
-                Analyzer analyzer(par, myout, trait, &study);
-                analyzer.analyze_dichotom<2,2>();
+                boost::shared_ptr<Analyzer> analyzer = factory(par, myout, trait, &study);
+                analyzer->analyze_dichotom<2,2>();
                 break;
         }
     }
