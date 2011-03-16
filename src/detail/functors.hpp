@@ -8,10 +8,6 @@
 #include <functional>
 #include <deque>
 
-#ifdef USE_MPI
-#include <boost/mpi/datatype.hpp>
-#endif  // USE_MPI
-
 #include "detail/config.hpp"
 
 namespace Permory { namespace detail {
@@ -44,9 +40,6 @@ namespace Permory { namespace detail {
     // Concatenates two deques into one.
     template<class T> struct deque_concat :
         public std::binary_function< std::deque<T>, std::deque<T>, std::deque<T> >
-#ifdef USE_MPI
-        , public boost::mpl::true_
-#endif  // USE_MPI
     {
             std::deque<T> operator()(const std::deque<T>& v1, const std::deque<T>& v2) {
                 std::deque<T> result;
