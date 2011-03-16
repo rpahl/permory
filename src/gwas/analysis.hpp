@@ -307,7 +307,7 @@ namespace Permory { namespace gwas {
             }
             case allelic: //2x2 contingency table analysis
                 Analyzer analyzer(par, myout, trait, &study);
-                analyzer.analyze_dichotom<2,3>();
+                analyzer.analyze_dichotom<2,2>();
                 break;
         }
     }
