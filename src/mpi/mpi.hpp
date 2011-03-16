@@ -17,6 +17,7 @@
 #include <boost/mpi/communicator.hpp>
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/deque.hpp>
+#include <boost/progress.hpp>   //timer
 
 #include "detail/config.hpp"
 #include "detail/parameter.hpp"
@@ -114,10 +115,14 @@ namespace Permory { namespace gwas {
         using namespace detail;
 
         if (world_.rank() == 0) {
+            boost::timer t;
             deque<double> tmax_result;
             reduce(world_, tmax, tmax_result, deque_concat<double>(), 0);
+            out_ << io::stdpre << "Runtime reduce: " << t.elapsed() << " s" << endl;
+            t.restart();
             par_->nperm_total = orig_nperm_total_;  // reset nperm_total for correct output calculations
             Analyzer::output_results(tmax_result);
+            out_ << io::stdpre << "Runtime output: " << t.elapsed() << " s" << endl;
         }
         else {
             reduce(world_, tmax, deque_concat<double>(), 0);
