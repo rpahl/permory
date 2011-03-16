@@ -18,12 +18,22 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/deque.hpp>
 
+#include <boost/mpi/operations.hpp>
+
 #include "detail/config.hpp"
 #include "detail/parameter.hpp"
 #include "detail/functors.hpp"
 #include "gwas/gwas.hpp"
 #include "gwas/analysis.hpp"
 #include "io/output.hpp"
+
+// Make deque_concat() commulative to gain more speed.
+namespace boost { namespace mpi {
+
+  template<>
+  struct is_commutative<Permory::detail::deque_concat<double>, std::deque<double> >
+    : mpl::true_ { };
+} } // end namespace boost::mpi
 
 namespace Permory { namespace gwas {
     namespace mpi = boost::mpi;
