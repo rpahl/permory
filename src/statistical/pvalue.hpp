@@ -18,16 +18,14 @@ namespace Permory { namespace statistic {
     // Computes single step counts
     std::deque<size_t> single_step_counts(
             const std::deque<double>& t,        //test statistics sorted _decreasingly
-            const std::deque<double>& tperm)    //max test statistic per permutation
+            std::deque<double>* tperm)          //max test statistic per permutation
     {
         using namespace std;
+        sort(tperm->begin(), tperm->end());
         deque<size_t> cnts(t.size(), 0);
         for (size_t j=0; j<t.size(); ++j) {             //for each test statistic
-            for (size_t i=0; i<tperm.size(); ++i) {     //for each permutation
-                if (tperm[i] >= t[j]) {
-                    cnts[j]++;
-                }
-            }
+            deque<double>::iterator it = lower_bound(tperm->begin(), tperm->end(), t[j]);
+            cnts[j] = tperm->end() - it;
         }
         return cnts;
     }

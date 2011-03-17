@@ -34,7 +34,7 @@ void single_step_counts_test()
 
     deque<size_t> result;
  
-    result = single_step_counts(l1, l2);
+    result = single_step_counts(l1, &l2);
 
     BOOST_CHECK_EQUAL( result.at(0), size_t(10) );
     BOOST_CHECK_EQUAL( result.at(1), size_t(6) );
@@ -52,7 +52,7 @@ void single_step_counts_test()
     l3.push_back(0.8);
     l3.push_back(0.9);
 
-    result = single_step_counts(l1, l3);
+    result = single_step_counts(l1, &l3);
 
     BOOST_CHECK_EQUAL( result.at(0), size_t(9) );
     BOOST_CHECK_EQUAL( result.at(1), size_t(5) );

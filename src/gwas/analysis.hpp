@@ -218,7 +218,7 @@ namespace Permory { namespace gwas {
         deque<double> t_orig(study_->m());
         transform(study_->begin(), study_->end(), 
                 t_orig.begin(), mem_fun_ref(&Locus::tmax));
-        deque<size_t> counts = single_step_counts(t_orig, tmax);
+        deque<size_t> counts = single_step_counts(t_orig, &tmax);
         std::string fn = par_->out_prefix;
         fn.append(".all");
         result_to_file(par_, *study_, counts, fn);
@@ -228,7 +228,7 @@ namespace Permory { namespace gwas {
         t_orig.resize(par_->ntop);
         transform(study_->begin(), study_->begin()+par_->ntop, 
                 t_orig.begin(), mem_fun_ref(&Locus::tmax));
-        counts = single_step_counts(t_orig, tmax);
+        counts = single_step_counts(t_orig, &tmax);
         fn = par_->out_prefix;
         fn.append(".top");
         result_to_file(par_, *study_, counts, fn);
