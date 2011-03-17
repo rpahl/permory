@@ -210,28 +210,45 @@ namespace Permory { namespace gwas {
         using namespace io;
         using namespace statistic;
 
+    boost::timer t;
+
         out_ << endl;
         result_to_console(par_, out_, *study_);
 
         // Get tmax of original data and use permutation tmax to derive p-values
         out_ << normal << stdpre << "Writing results." << endl;
         deque<double> t_orig(study_->m());
+    t.restart();
         transform(study_->begin(), study_->end(), 
                 t_orig.begin(), mem_fun_ref(&Locus::tmax));
+    out_ << stdpre << "Runtime transform all: " << t.elapsed() << " s" << endl;
+
+    t.restart();
         deque<size_t> counts = single_step_counts(t_orig, &tmax);
+    out_ << stdpre << "Runtime single_step_counts all: " << t.elapsed() << " s" << endl;
         std::string fn = par_->out_prefix;
         fn.append(".all");
+    t.restart();
         result_to_file(par_, *study_, counts, fn);
+    out_ << stdpre << "Runtime result_to_file all: " << t.elapsed() << " s" << endl;
 
         // The same but this time just for the top p-values
+    t.restart();
         sort(study_->begin(), study_->end(), Locus_tmax_greater());
+    out_ << stdpre << "Runtime sort top: " << t.elapsed() << " s" << endl;
         t_orig.resize(par_->ntop);
+    t.restart();
         transform(study_->begin(), study_->begin()+par_->ntop, 
                 t_orig.begin(), mem_fun_ref(&Locus::tmax));
+    out_ << stdpre << "Runtime transform top: " << t.elapsed() << " s" << endl;
+    t.restart();
         counts = single_step_counts(t_orig, &tmax);
+    out_ << stdpre << "Runtime single_step_counts top: " << t.elapsed() << " s" << endl;
         fn = par_->out_prefix;
         fn.append(".top");
+    t.restart();
         result_to_file(par_, *study_, counts, fn);
+    out_ << stdpre << "Runtime result_to_file top: " << t.elapsed() << " s" << endl;
     }
 
     // None-Class Functions
