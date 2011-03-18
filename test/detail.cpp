@@ -77,10 +77,10 @@ void deque_concat_test()
 
     const deque<double>& q2 = concatenator(l3, l3);
     BOOST_CHECK_EQUAL(q2.at(0), 1.);
-    BOOST_CHECK_EQUAL(q2.at(1), 2.);
-    BOOST_CHECK_EQUAL(q2.at(2), 3.);
-    BOOST_CHECK_EQUAL(q2.at(3), 1.);
-    BOOST_CHECK_EQUAL(q2.at(4), 2.);
+    BOOST_CHECK_EQUAL(q2.at(1), 1.);
+    BOOST_CHECK_EQUAL(q2.at(2), 2.);
+    BOOST_CHECK_EQUAL(q2.at(3), 2.);
+    BOOST_CHECK_EQUAL(q2.at(4), 3.);
     BOOST_CHECK_EQUAL(q2.at(5), 3.);
 }
 
