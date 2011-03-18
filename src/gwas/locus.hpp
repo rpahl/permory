@@ -123,7 +123,7 @@ namespace Permory { namespace gwas {
     }
 
     struct Locus_tmax_greater {
-        bool operator()(const Locus& loc1, const Locus loc2) {
+        bool operator()(const Locus& loc1, const Locus& loc2) {
             return loc1.tmax() > loc2.tmax();
         }
     };
