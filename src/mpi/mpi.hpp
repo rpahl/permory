@@ -124,6 +124,8 @@ namespace Permory { namespace gwas {
         using namespace boost::mpi;
         using namespace detail;
 
+        sort(tmax.begin(), tmax.end());
+
         if (world_.rank() == 0) {
             boost::timer t;
             deque<double> tmax_result;
