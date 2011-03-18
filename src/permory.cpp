@@ -66,6 +66,7 @@ int main(int ac, char* av[])
             ("interactive,i", "prompt before overwriting files")
             ("quiet", "suppress console output")
             ("verbose,v", "detailed output")
+            ("debug,d", "more detailed output")
             ;
         //
         // Analysis
@@ -205,8 +206,12 @@ int main(int ac, char* av[])
         par.quiet = vm.count("quiet") > 0;
         par.interactive = vm.count("interactive") > 0;
         par.verbose = vm.count("verbose") > 0;
+        par.debug = vm.count("debug") > 0;
         if (par.quiet) {
             myout.set_verbosity(muted);
+        }
+        else if (par.debug) {
+            myout.set_verbosity(all);
         }
         else if (par.verbose) {
             myout.set_verbosity(verbose);

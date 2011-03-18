@@ -22,6 +22,7 @@ namespace Permory { namespace detail {
             static bool interactive;        //ask before overwriting files 
             static bool quiet;              //no output to console
             static bool verbose;            //verbose output 
+            static bool debug;              //very verbose output
             static double version;          //program version
 
             //
@@ -88,6 +89,7 @@ namespace Permory { namespace detail {
     bool Parameter::interactive = true;
     bool Parameter::quiet = false;
     bool Parameter::verbose = false;
+    bool Parameter::debug = false;
     double Parameter::version = 1.0;
 
     //
