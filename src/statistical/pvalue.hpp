@@ -17,7 +17,7 @@ namespace Permory { namespace statistic {
 
     // Computes single step counts
     std::deque<size_t> single_step_counts(
-            const std::deque<double>& t,        //test statistics sorted _decreasingly
+            const std::deque<double>& t,        //test statistics
             std::deque<double>* tperm)          //max test statistic per permutation
     {
         using namespace std;
