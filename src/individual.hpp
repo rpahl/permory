@@ -20,8 +20,8 @@ namespace Permory
             Record(double d=0.0, Value_type type = continous)
                 : val(d), theType(type)
             {}
-            double operator<(const Record& r) const { return val < r.val; }
-            double operator=(const Record& r) const { return val == r.val; }
+            bool operator<(const Record& r) const { return val < r.val; }
+            bool operator==(const Record& r) const { return val == r.val; }
             bool as_dichotom() const { return (val != 0); }
             bool is_defined() const { return theType != undefined; }
 
