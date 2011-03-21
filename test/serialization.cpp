@@ -10,12 +10,14 @@
 #include <boost/archive/text_iarchive.hpp>
 
 #include "individual.hpp"
+#include "gwas/locus.hpp"
 #include "test.hpp"
 
 using namespace std;
 using namespace boost;
 using namespace unit_test;
 using namespace Permory;
+using namespace Permory::gwas;
 
 template<class T> void serialize_deserialize(const T& orig, T& loaded)
 {
@@ -62,6 +64,19 @@ void individual_test()
     BOOST_CHECK_EQUAL(ind_orig.costs(), ind_loaded.costs());
 }
 
+void locus_test()
+{
+    Locus orig(1, "rs", "gene", Locus::chr22, 23, 42, false);
+    Locus loaded;
+
+    serialize_deserialize(orig, loaded);
+    BOOST_CHECK_EQUAL(orig.id(), loaded.id());
+    BOOST_CHECK_EQUAL(orig.rs(), loaded.rs());
+    BOOST_CHECK_EQUAL(orig.gene(), loaded.gene());
+    BOOST_CHECK_EQUAL(orig.chr(), loaded.chr());
+    BOOST_CHECK_EQUAL(orig.bp(), loaded.bp());
+    BOOST_CHECK_EQUAL(orig.cm(), loaded.cm());
+}
 
 test_suite* init_unit_test_suite( int argc, char* argv[] )
 {
@@ -69,6 +84,7 @@ test_suite* init_unit_test_suite( int argc, char* argv[] )
 
     test->add(BOOST_TEST_CASE(&record_test));
     test->add(BOOST_TEST_CASE(&individual_test));
+    test->add(BOOST_TEST_CASE(&locus_test));
 
     return test;
 }

@@ -9,6 +9,9 @@
 #include <string>
 #include <vector>
 
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/string.hpp>
+
 #include "detail/config.hpp"
 
 namespace Permory { namespace gwas {
@@ -67,6 +70,19 @@ namespace Permory { namespace gwas {
             bool isPolymorph_;          //polymorph yes/no
             double tsMax_;              //max of ts_
             double maf_;                //minor allele frequency
+
+            // serialization stuff
+            friend class boost::serialization::access;
+            template<class Archive>
+            void serialize(Archive & ar, const unsigned int version)
+            {
+                ar & id_;
+                ar & rs_;
+                ar & gene_;
+                ar & chr_;
+                ar & bp_;
+                ar & cm_;
+            }
     };
 
     // Locus implementation
