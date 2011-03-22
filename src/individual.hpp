@@ -148,6 +148,11 @@ namespace Permory
 
 } // namespace Permory
 
+// Boost Serialization API Version Information
+// ========================================================================
+BOOST_CLASS_VERSION(Permory::Record, 1)
+BOOST_CLASS_VERSION(Permory::Individual, 1)
+
 #endif // include guard
 
 
