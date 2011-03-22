@@ -8,6 +8,9 @@
 #include <deque>
 #include <vector>
 
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/deque.hpp>
+
 #include "detail/config.hpp"
 #include "individual.hpp"
 #include "locus.hpp"
@@ -51,6 +54,16 @@ namespace Permory { namespace gwas {
         private:
             std::vector<Individual> ind_;   //recruited individuals
             std::deque<Locus> loci_;
+
+            // serialization stuff
+            friend class boost::serialization::access;
+            template<class Archive>
+            void serialize(Archive & ar, const unsigned int version)
+            {
+                ar & ind_;
+                ar & loci_;
+            }
+
     };
 
     // Gwas implementation

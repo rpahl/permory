@@ -87,6 +87,9 @@ namespace Permory
 
             // serialization stuff
             friend class boost::serialization::access;
+
+            Individual() {}
+
             template<class Archive>
             void serialize(Archive & ar, const unsigned int version)
             {
