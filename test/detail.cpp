@@ -35,8 +35,8 @@ void matrix_class_test()
     // Constructor test
     Matrix<int> m1(5, 20);
     BOOST_CHECK_EQUAL( m1.empty(), false );
-    BOOST_CHECK_EQUAL( m1.nrow(), 5 );
-    BOOST_CHECK_EQUAL( m1.ncol(), 20 );
+    BOOST_CHECK_EQUAL( m1.nrow(), size_t(5) );
+    BOOST_CHECK_EQUAL( m1.ncol(), size_t(20) );
 
     // Data access
     // TODO
@@ -56,8 +56,8 @@ void deque_concat_test()
     deque<double> l1(4, 1.);
     deque<double> l2(4, 2.);
 
-    BOOST_CHECK_EQUAL((concatenator(l1, l2)).size(), 8);
-    BOOST_CHECK_EQUAL((concatenator(l2, l1)).size(), 8);
+    BOOST_CHECK_EQUAL((concatenator(l1, l2)).size(), size_t(8));
+    BOOST_CHECK_EQUAL((concatenator(l2, l1)).size(), size_t(8));
 
     const deque<double>& q1 = concatenator(l1, l2);
     BOOST_CHECK_EQUAL(q1.at(0), 1.);
