@@ -15,7 +15,7 @@ using namespace unit_test;
 using namespace Permory::detail;
 
 
-void vector_functions_test() 
+void vector_functions_test()
 {
     int a1[4] =  {1,2,3,4};
     int a2[4] =  {1,7,0,6};
@@ -30,7 +30,7 @@ void vector_functions_test()
 }
 
 
-void matrix_class_test() 
+void matrix_class_test()
 {
     // Constructor test
     Matrix<int> m1(5, 20);
@@ -42,7 +42,7 @@ void matrix_class_test()
     // TODO
     // Modification
     // TODO
-    
+
     // Exception
     Matrix<int> m2(0, 0);
     BOOST_CHECK_THROW (m2.row_apply(&std::valarray<int>::sum), std::out_of_range );
