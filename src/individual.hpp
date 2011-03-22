@@ -8,6 +8,9 @@
 #include <string>
 #include <vector>
 
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/string.hpp>
+
 #include "detail/config.hpp"
 #include "gwas/locus.hpp"
 
@@ -20,13 +23,23 @@ namespace Permory
             Record(double d=0.0, Value_type type = continous)
                 : val(d), theType(type)
             {}
-            double operator<(const Record& r) const { return val < r.val; }
-            double operator=(const Record& r) const { return val == r.val; }
+            bool operator<(const Record& r) const { return val < r.val; }
+            bool operator==(const Record& r) const { return val == r.val; }
             bool as_dichotom() const { return (val != 0); }
             bool is_defined() const { return theType != undefined; }
 
             double val;
             Value_type theType;
+
+        private:
+            // serialization stuff
+            friend class boost::serialization::access;
+            template<class Archive>
+            void serialize(Archive & ar, const unsigned int version)
+            {
+                ar & val;
+                ar & theType;
+            }
     };
 
     //
@@ -71,6 +84,21 @@ namespace Permory
             Sex sex_;
             std::vector<Record> r_;
             double cost_; //for example, cost of recruitment or analysis
+
+            // serialization stuff
+            friend class boost::serialization::access;
+
+            Individual() {}
+
+            template<class Archive>
+            void serialize(Archive & ar, const unsigned int version)
+            {
+                ar & id_;
+                ar & name_;
+                ar & sex_;
+                ar & r_;
+                ar & cost_;
+            }
     };
 
     //

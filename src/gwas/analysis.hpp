@@ -47,7 +47,7 @@ namespace Permory { namespace gwas {
             template<uint K, uint L> void analyze_dichotom();
 
         protected:
-            virtual void output_results(std::deque<double> tmax);
+            virtual void output_results(std::deque<double>& tmax);
 
             detail::Parameter* par_;
             io::Myout& out_;
@@ -204,7 +204,7 @@ namespace Permory { namespace gwas {
         output_results(tmax);
     }
 
-    void Analyzer::output_results(std::deque<double> tmax)
+    void Analyzer::output_results(std::deque<double>& tmax)
     {
         using namespace std;
         using namespace io;

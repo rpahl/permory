@@ -8,7 +8,7 @@ project test ;
 
 # Libraries
 include site-config.jam ;
-alias /libs : bfs bpop bio bsys zlib gsl gslcblas utf ; 
+alias /libs : bfs bpop bio bsys zlib gsl gslcblas utf bs ;
 
 project test 
     : requirements 
@@ -21,6 +21,7 @@ test-suite "permory"
     :
     [ run detail.cpp ]
     [ run statistic.cpp ]
+    [ run serialization.cpp ]
     # more to come
     #: <linkflags>-lgslcblas
     ;
