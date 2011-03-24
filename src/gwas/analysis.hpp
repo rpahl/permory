@@ -38,7 +38,7 @@ namespace Permory { namespace gwas {
                     std::set<char> the_domain=std::set<char>())
                 : par_(par), out_(out), trait_(trait), study_(study),
                   domain_(the_domain)
-                {}
+                { init_filters(); }
 
             // Dtor
             virtual ~Analyzer() { }
@@ -48,12 +48,15 @@ namespace Permory { namespace gwas {
 
         protected:
             virtual void output_results(std::deque<double>& tmax);
+            virtual void init_filters(); // Define locus filter (e.g. maf filter)
 
             detail::Parameter* par_;
             io::Myout& out_;
             const std::vector<bool>& trait_;
             Gwas* study_;
             std::set<char> domain_;
+
+            boost::ptr_vector<Locus_filter> locus_filters_;
     };
 
     // Factories
@@ -121,10 +124,6 @@ namespace Permory { namespace gwas {
             pprogress.reset(new progress_display(m*size_t(d), std::cout, "","",""));
         }
 
-        // Define locus filter (e.g. maf filter)
-        ptr_vector<Locus_filter> locus_filters;
-        locus_filters.push_back(new Maf_filter(par_->min_maf, par_->max_maf));
-        locus_filters.push_back(new Polymorph_filter());
 
         deque<double> tmax;     //holds the maximum test statistic per permutation
         statistic::Dichotom<K,L> stat(*par_, trait_); //computes all statistic stuff
@@ -175,8 +174,8 @@ namespace Permory { namespace gwas {
 
                         bool hasPassed = true;
                         ptr_vector<Locus_filter>::iterator itFilter = 
-                            locus_filters.begin();
-                        for (; itFilter != locus_filters.end(); ++itFilter) {
+                            locus_filters_.begin();
+                        for (; itFilter != locus_filters_.end(); ++itFilter) {
                             if (not (*itFilter)(*itLocus)) {
                                 hasPassed = false;
                                 break;
@@ -244,6 +243,12 @@ namespace Permory { namespace gwas {
         fn.append(".top");
         TIME("Runtime result_to_file top: ",
             result_to_file(par_, *study_, counts, fn));
+    }
+
+    void Analyzer::init_filters()
+    {
+        locus_filters_.push_back(new Maf_filter(par_->min_maf, par_->max_maf));
+        locus_filters_.push_back(new Polymorph_filter());
     }
 
     // None-Class Functions

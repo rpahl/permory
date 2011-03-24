@@ -107,6 +107,10 @@ namespace Permory { namespace gwas {
 } // namespace gwas
 } // namespace Permory
 
+// Boost Serialization API Version Information
+// ========================================================================
+BOOST_CLASS_VERSION(Permory::gwas::Gwas, 1)
+
 #endif // include guard
 
 /*
