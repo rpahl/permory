@@ -26,8 +26,7 @@ if [ mpi.configured ]
 
 project permory 
     : requirements 
-      <include>src
-      <include>/opt/boost-1.46.0/include
+      <include>src 
       <link>static 
       #<linkflags>-lgslcblas #<runtime-link>static 
       #<warnings>off
