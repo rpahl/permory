@@ -8,6 +8,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <iomanip>
 
 #include <boost/progress.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
