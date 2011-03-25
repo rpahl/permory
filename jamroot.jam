@@ -13,14 +13,12 @@ echo "Operating system:" [ os.name ] ;
 include site-config.jam ;
 
 flags = ;
-analyzer_factory = Default_analyzer_factory ;
 
 if [ mpi.configured ]
 {
     echo "Using MPI." ;
     alias /libs : bfs bpop bio bsys zlib gsl gslcblas utf bs bmpi ;
     flags +=  <define>USE_MPI ;
-    analyzer_factory = Mpi_analyzer_factory ;
 } else {
     alias /libs : bfs bpop bio bsys zlib gsl gslcblas utf ;
 }
@@ -42,7 +40,6 @@ project permory
 exe permory  
     : src/permory.cpp /libs
     : #<linkflags>-lgslcblas #<runtime-link>static
-      <define>ANALYZER_FACTORY=$(analyzer_factory)
       $(flags)
     ;
 

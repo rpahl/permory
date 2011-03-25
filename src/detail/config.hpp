@@ -17,6 +17,10 @@
 
 #include "detail/print.hpp" //mainly debug printing
 
+#ifdef USE_MPI
+#include "mpi/mpi.hpp"
+#endif  // USE_MPI
+
 // A simple print macro 
 #define PRINT(X) std::cerr << (#X) << " = "<< (X) << std::endl
 
@@ -27,6 +31,14 @@
 namespace Permory 
 {
     typedef unsigned int uint;
+
+    #ifdef USE_MPI
+        namespace gwas { class Mpi_analyzer_factory; }
+        typedef gwas::Mpi_analyzer_factory analyzer_factory_t;
+    #else
+        namespace gwas { class Default_analyzer_factory; }
+        typedef gwas::Default_analyzer_factory analyzer_factory_t;
+    #endif  // USE_MPI
 }
 #endif
 

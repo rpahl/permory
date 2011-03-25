@@ -18,10 +18,6 @@
 #include "io/line_reader.hpp"
 #include "io/output.hpp"
 
-#ifdef USE_MPI
-#include "mpi/mpi.hpp"
-#endif  // USE_MPI
-
 int main(int ac, char* av[])
 {
     namespace cls = boost::program_options::command_line_style;
@@ -41,7 +37,7 @@ int main(int ac, char* av[])
     string config_file;
     std::vector<string> marker_data_files;
 
-    ANALYZER_FACTORY factory(ac, av);
+    analyzer_factory_t factory(ac, av);
 
     myout << endl;
     myout << "+-----------------+-----------------+------------------+" << endl;
