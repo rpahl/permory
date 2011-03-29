@@ -1,0 +1,72 @@
+Copyright (c) 2011 Volker Steiß
+Distributed under the Boost Software License, Version 1.0. (See accompanying
+file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
+
+
+
+Message Passing Interface (MPI)
+-------------------------------
+
+PERMORY is using Boost MPI (http://www.boost.org/doc/libs/release/doc/html/mpi.html)
+and was tested with Open MPI (http://www.open-mpi.org/).
+
+MPI allows you to spawn multiple processes of PERMORY. These processes will
+divide the calculation and work parallelly.
+
+To run PERMORY with MPI just pass the command line to run PERMORY (see
+QUICKSTART.txt) to mpirun. The usage is:
+    $ mpirun [mpi_options] permory [option] <data_file1> [data_file2 ...]
+
+You may consult the documentation of your MPI implementation for options to pass
+to mpirun.
+
+
+Requirements
+------------
+Each instance of PERMORY needs access to the data files. If a configuration
+file is used, each instance needs access to the configuration file, too.
+If there is no file-system which is available to each node it is necessary to
+copy all needed files to each single node before starting PERMORY.
+If there is a global file-system available to each node check if the data
+throughput is sufficient to concurrently serve all nodes running PERMORY.
+You can use compressed data files to lower the raw I/O data throughput.
+
+
+Example 1
+---------
+To calculate 120000 permutations in six MPI processes of PERMORY use the
+following command:
+
+$ mpirun -np 6 permory -n 120000 -f data/tiny.tfam data/tiny.tped
+
+Each of the six processes will calculate 20000 permutations. Eventually all
+processes will send their individual results to the process with id 0 which
+will print out the result.
+
+
+Example 2
+---------
+Simple example script "permory_mpi.sh" to use with Oracle Grid Engine (former
+Sun Grid Engine):
+
+    #!/bin/sh
+    mpirun -np $NSLOTS -machinefile $TMPDIR/machines ./permory -c some.conf
+
+To submit this script into a queue "parallel@@nodes_ng" using Open MPI run the
+following command:
+
+$ qsub -cwd -l h_rt=1:0:0 -pe orte 10 -q parallel@@nodes_ng -R y permory_mpi.sh
+
+This will queue the script "permory_mpi.sh" requesting 10 nodes for MPI usage.
+
+
+Example 3
+---------
+To take advantage of multiple CPUs and cores per node you can tell mpirun
+(version 1.3+) to spawn multiple processes on one node.
+
+$ mpirun -npernode 2 -H hosta,hostb ./permory -c some.conf
+
+This command will run four instances of PERMORY: Two on node "hosta" and two on
+node "hostb".
+
