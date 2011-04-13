@@ -145,7 +145,9 @@ namespace Permory { namespace gwas {
                             // Presto uses 1 (unaffected) and 2 (affected), but
                             // we use 0 (unaffected) and 1 (affected), thus
                             // subract 1
-                            val--;  
+                            if (par.val_type == Record::dichotomous) {
+                                val--;
+                            }
                             Record r(val, par.val_type);
                             ind.add_measurement(r);
                             individuals->push_back(ind);

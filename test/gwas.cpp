@@ -14,22 +14,14 @@ using namespace std;
 using namespace boost;
 using namespace unit_test;
 using namespace Permory;
+using namespace Permory::io;
 using namespace Permory::detail;
 using namespace Permory::gwas;
 
-void read_individuals_from_tfam_test()
-{
-    const string filename = "test/data/pheno_quant_test.tfam";
-    Parameter par;
-    par.val_type = Record::continous;
-    vector<Individual> individuals;
-
-    read_individuals_from_tfam(par, filename, &individuals);
-
-    vector<Individual>::iterator it = individuals.begin();
-
+void check_individuals(const vector<Individual>& individuals) {
     BOOST_CHECK_EQUAL(size_t(5), individuals.size());
 
+    vector<Individual>::const_iterator it = individuals.begin();
     BOOST_CHECK_EQUAL(0, it++->begin()->val);
     BOOST_CHECK_EQUAL(-1, it++->begin()->val);
     BOOST_CHECK_EQUAL(-0.42, it++->begin()->val);
@@ -37,11 +29,37 @@ void read_individuals_from_tfam_test()
     BOOST_CHECK_EQUAL(423, it++->begin()->val);
 }
 
+void read_individuals_from_tfam_test()
+{
+    const string filename = "test/data/pheno_quant_test.tfam";
+    Parameter par;
+    par.val_type = Record::continous;
+    par.phenotype_data_format = plink_tfam;
+    vector<Individual> individuals;
+
+    read_individuals_from_tfam(par, filename, &individuals);
+
+    check_individuals(individuals);
+}
+
+void read_individuals_test() {
+    const string filename = "test/data/pheno_quant_test.bgl";
+    Parameter par;
+    par.val_type = Record::continous;
+    par.phenotype_data_format = presto;
+    vector<Individual> individuals;
+
+    read_individuals(par, filename, &individuals);
+
+    check_individuals(individuals);
+}
+
 test_suite* init_unit_test_suite( int argc, char* argv[] )
 {
     test_suite *test = BOOST_TEST_SUITE("Functions and classes from src/detail");
 
     test->add(BOOST_TEST_CASE(&read_individuals_from_tfam_test));
+    test->add(BOOST_TEST_CASE(&read_individuals_test));
 
     return test;
 }
