@@ -316,14 +316,16 @@ namespace Permory { namespace gwas {
 
         // Phenotype data (either read in or create)
         Gwas study(create_study_sample(par, myout)); 
-        if (not par->fn_trait.empty()) {
-            myout << normal << stdpre << "Found ";
+        if (par->val_type == Record::dichotomous) {
+            if (not par->fn_trait.empty()) {
+                myout << normal << stdpre << "Found ";
+            }
+            else {
+                myout << normal << stdpre << "Created ";
+            }
+            myout << study.ncase() << " cases and " << study.ncontrol() <<
+                " controls." << endl;
         }
-        else {
-            myout << normal << stdpre << "Created ";
-        }
-        myout << study.ncase() << " cases and " << study.ncontrol() << 
-            " controls." << endl;
 
         // Create *dichotomous* trait/phenotype data
         vector<bool> trait(study.sample_size());
