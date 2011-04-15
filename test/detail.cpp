@@ -7,7 +7,10 @@
 #include "detail/vector.hpp"
 #include "detail/matrix.hpp"
 #include "detail/functors.hpp"
+#include "detail/pair.hpp"
 #include "test.hpp"
+
+#include <utility>
 
 using namespace std;
 using namespace boost;
@@ -85,6 +88,26 @@ void deque_concat_test()
 }
 
 
+void pair_helper_test() {
+    typedef int T;
+    typedef pair<T, T> P;
+
+    P a(1,2);
+    P b(1,2);
+    P c;
+
+    c = a + b;
+    BOOST_CHECK_EQUAL( c.first,  2 );
+    BOOST_CHECK_EQUAL( c.second, 4 );
+
+    c += a;
+    BOOST_CHECK_EQUAL( c.first,  3 );
+    BOOST_CHECK_EQUAL( c.second, 6 );
+    BOOST_CHECK_EQUAL( a.first,  1 );
+    BOOST_CHECK_EQUAL( a.second, 2 );
+}
+
+
 test_suite* init_unit_test_suite( int argc, char* argv[] )
 {
     test_suite *test = BOOST_TEST_SUITE("Functions and classes from src/detail");
@@ -93,6 +116,8 @@ test_suite* init_unit_test_suite( int argc, char* argv[] )
     test->add(BOOST_TEST_CASE(&matrix_class_test));
 
     test->add(BOOST_TEST_CASE(&deque_concat_test));
+
+    test->add(BOOST_TEST_CASE(&pair_helper_test));
 
     return test;
 }
