@@ -50,12 +50,15 @@ namespace Permory { namespace statistic {
                     const Permutation* pp,  //creates the permutations
                     size_t nperm,           //number of permutations
                     size_t tail_size);      //parameter of the permutation booster
+            template<class D> void calculate_mu_j(const gwas::Locus_data<D>& data);
+            void calculate_denom_invariant();
 
             // Conversion
             // Compute test statistics for the data
             template<class D> std::vector<double> test(const gwas::Locus_data<D>&);
             template<class D> std::vector<std::pair<T, T> >
                 make_table(const gwas::Locus_data<D>&);
+            void test_for_tab(std::vector<std::pair<T, T> >&, std::vector<double>*);
             // Compute permutation test statistics 
             template<class D> void permutation_test(const gwas::Locus_data<D>&);
 
@@ -66,6 +69,11 @@ namespace Permory { namespace statistic {
             std::vector<T> trait_;
             double mu_y_;               // mean of phenotypes:
                                         //   1/N * \sum_{i=1}^{N} Y_i
+            double mu_j_;               // mean of genotypes of marker j:
+                                        //   1/N * \sum_{i=1}^{M} X_ji
+            double denom_invariant_;    // invariant summand of denominator in
+                                        // marker j:
+                                        //   \mu_j^2 * \sum_{i=1}^{N} (Y_i - \mu_y)^2
             std::vector<std::pair<T,T> > nomdenom_buf_;
                                         // nominator-denominator buffer:
                                         //   first  = \sum_{i=1}^{N} (Y_i - \mu_y)
@@ -112,6 +120,24 @@ namespace Permory { namespace statistic {
         tMax_.resize(nperm);
     }
 
+    template<uint L, class T>
+    template<class D> void Quantitative<L, T>::calculate_mu_j(
+                const gwas::Locus_data<D>& data)
+    {
+        mu_j_ = std::accumulate(data.begin(), data.end(), 0.) / data.size();
+    }
+
+    template<uint L, class T>
+    void Quantitative<L, T>::calculate_denom_invariant()
+    {
+        typedef std::pair<T, T> P;
+        denom_invariant_ = 0;
+        BOOST_FOREACH(P x, nomdenom_buf_) {
+            denom_invariant_ += x.second;
+        }
+        denom_invariant_ *= mu_j_ * mu_j_;
+    }
+
     template<uint L, class T> template<class D> inline 
         std::vector<std::pair<T, T> > Quantitative<L, T>::make_table(const gwas::Locus_data<D>& data)
         {
@@ -127,6 +153,22 @@ namespace Permory { namespace statistic {
             return result;
         }
 
+    template<uint L, class T>
+        void Quantitative<L, T>::test_for_tab(
+                std::vector<std::pair<T, T> >& tab,
+                std::vector<double> *result)
+    {
+        double nominator = 0.;
+        double denominator = denom_invariant_;
+        for (size_t i = 1; i < tab.size(); ++i) {
+            std::pair<T, T> x = tab[i];
+            nominator += i * x.first;
+            denominator += (i * i - 2 * i * mu_j_) * x.second;
+        }
+        nominator *= nominator;
+        result->push_back(nominator / denominator);
+    }
+
     template<uint L, class T> template<class D> inline 
         std::vector<double> Quantitative<L, T>::test(const gwas::Locus_data<D>& data)
         {
@@ -136,7 +178,10 @@ namespace Permory { namespace statistic {
             else {
                 tab = make_table(data);
             }
+            calculate_mu_j(data);
+            calculate_denom_invariant();
             std::vector<double> v;
+            test_for_tab(tab, &v);
             return v;
         }
 

@@ -71,8 +71,10 @@ void single_step_counts_test()
     BOOST_CHECK_EQUAL( result.at(3), size_t(0) );
 }
 
+
 void quantitative_test() {
     typedef double T;
+    const double tolerance = 0.0001;
 
     Parameter par;
     vector<T> trait;
@@ -98,7 +100,6 @@ void quantitative_test() {
     Quantitative<3, T> q(par, trait, &perm);
 
     {
-        double tolerance = 0.0001;
         vector<pair<T, T> > r = q.make_table(locus_data);
         BOOST_CHECK_CLOSE( r[0].first,   0.22   , tolerance );
         BOOST_CHECK_CLOSE( r[0].second,  0.3028 , tolerance );
@@ -108,11 +109,10 @@ void quantitative_test() {
         BOOST_CHECK_CLOSE( r[2].second,  0.0676 , tolerance );
     }
 
-    return;
     {
         vector<double> r = q.test(locus_data);
         BOOST_REQUIRE_EQUAL( r.size(), size_t(1) );
-        BOOST_CHECK_EQUAL( r[0], 0.9530113 );
+        BOOST_CHECK_CLOSE( r[0], 0.9530113, tolerance );
     }
 }
 
