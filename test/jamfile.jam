@@ -23,6 +23,7 @@ test-suite "permory"
     [ run statistic.cpp ]
     [ run serialization.cpp ]
     [ run gwas.cpp ]
+    [ run permutation.cpp ]
     # more to come
     #: <linkflags>-lgslcblas
     ;

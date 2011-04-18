@@ -24,6 +24,15 @@ namespace Permory { namespace detail {
         return b;
     }
 
+    // Specialization for pair because of static typing. Needed to not produce
+    // compilation error in constuctor of Perm_matrix (reason bitMat).
+    template<class T>
+    boost::dynamic_bitset<> vector_to_bitset(const std::vector<std::pair<T, T> >& v)
+    {
+        throw std::runtime_error(
+            "Bit arithmetics not allowed with quantitative phenotypes!");
+    }
+
     template<class T> std::vector<T>
         bitset_to_vector(const boost::dynamic_bitset<>& b)
     {
