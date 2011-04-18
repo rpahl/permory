@@ -72,6 +72,12 @@ void single_step_counts_test()
 }
 
 
+template<class T, uint L>
+Locus_data<T> create_locus_data(const T (&list)[L], const Parameter& par) {
+    vector<T> v(&list[0], &list[0]+L);
+    return Locus_data<T>(v, par.undef_allele_code);
+}
+
 void quantitative_test() {
     typedef double T;
     const double tolerance = 0.0001;
@@ -93,14 +99,15 @@ void quantitative_test() {
     trait[3] = 0.1;
     trait[4] = 0.2;
 
-    uint d[5] = {0,0,1,0,2};
-    vector<uint> v(&d[0], &d[0]+5);
-    Locus_data<uint> locus_data(v, par.undef_allele_code);
+    uint marker1[5] = {0,0,1,0,2};
+    uint marker2[5] = {0,0,1,0,2};
+    Locus_data<uint> locus_data_1 = create_locus_data<uint>(marker1, par);
+    Locus_data<uint> locus_data_2 = create_locus_data<uint>(marker2, par);
 
     Quantitative<3, T> q(par, trait, &perm);
 
     {
-        vector<pair<T, T> > r = q.make_table(locus_data);
+        vector<pair<T, T> > r = q.make_table(locus_data_1);
         BOOST_CHECK_CLOSE( r[0].first,   0.22   , tolerance );
         BOOST_CHECK_CLOSE( r[0].second,  0.3028 , tolerance );
         BOOST_CHECK_CLOSE( r[1].first,   0.04   , tolerance );
@@ -110,7 +117,7 @@ void quantitative_test() {
     }
 
     {
-        vector<double> r = q.test(locus_data);
+        vector<double> r = q.test(locus_data_1);
         BOOST_REQUIRE_EQUAL( r.size(), size_t(1) );
         BOOST_CHECK_CLOSE( r[0], 0.9530113, tolerance );
     }
