@@ -83,6 +83,7 @@ void quantitative_test() {
     const double tolerance = 0.0001;
 
     Parameter par;
+    par.nperm_block = 10000;
     vector<T> trait;
     Permory::permutation::Permutation perm;
 
