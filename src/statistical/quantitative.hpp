@@ -53,6 +53,7 @@ namespace Permory { namespace statistic {
                     size_t nperm,           //number of permutations
                     size_t tail_size);      //parameter of the permutation booster
             template<class D> void calculate_mu_j(const gwas::Locus_data<D>& data);
+            void calculate_mu_j(const gwas::Locus_data<char>& data);
             void calculate_denom_invariant();
 
             // Conversion
@@ -140,6 +141,14 @@ namespace Permory { namespace statistic {
         mu_j_ = std::accumulate(data.begin(), data.end(), 0.) / data.size();
     }
 
+    template<uint L, class T> void Quantitative<L, T>::calculate_mu_j(
+                const gwas::Locus_data<char>& data)
+    {
+        gwas::Locus_data<uint> *numeric = data.as_numeric();
+        calculate_mu_j<uint>(*numeric);
+        delete numeric;
+    }
+
     template<uint L, class T>
     void Quantitative<L, T>::calculate_denom_invariant()
     {
@@ -155,14 +164,31 @@ namespace Permory { namespace statistic {
         std::vector<typename Quantitative<L, T>::element_t>
         Quantitative<L, T>::make_table(const gwas::Locus_data<D>& data)
         {
-            std::vector<element_t> result;
+            using namespace std;
+
+            vector<element_t> result;
             result.resize(L);
-            typename std::vector<element_t>::const_iterator
+            typename vector<element_t>::const_iterator
                 it = nomdenom_buf_.begin();
-            typename gwas::Locus_data<D>::const_iterator it_data = data.begin();
+            typename gwas::Locus_data<D>::const_iterator
+                it_data = data.begin();
+
+            map<typename gwas::Locus_data<D>::elem_t, size_t> indices;
+            {
+                size_t i = 0;
+                for(typename gwas::Locus_data<D>::unique_iterator
+                            it_unique = data.unique_begin();
+                        it_unique != data.unique_end();
+                        ++it_unique) {
+                    indices[it_unique->first] = i++;
+                }
+            }
+
+            assert(indices.size() <= L+1);
             while (it != nomdenom_buf_.end() && it_data != data.end()) {
-                assert(*it_data < L);
-                result[*it_data++] += *it++;
+                uint index = indices[*it_data++];
+                assert(index < result.size());
+                result[index] += *it++;
             }
             return result;
         }
@@ -229,7 +255,8 @@ namespace Permory { namespace statistic {
         {
             std::vector<int> index_[L+1];   //L+1 integer vectors
 
-            typename gwas::Locus_data<D>::unique_iterator it = data.unique_begin();
+            typename gwas::Locus_data<D>::unique_iterator
+                it = data.unique_begin();
             for (uint i=0; i < L+1; i++) {
                 size_t cnt = (size_t) it->second; //#occurences of the code
                 D allelic_code = it->first;

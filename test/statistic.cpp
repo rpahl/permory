@@ -136,6 +136,12 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
         BOOST_REQUIRE_EQUAL( r.size(), size_t(1) );
         BOOST_CHECK_CLOSE( r[0], 0.9530113, tolerance );
     }
+    {
+        Quantitative<3, T> q(par, trait, &perm);
+        vector<double> r = q.test(locus_data_2);
+        BOOST_REQUIRE_EQUAL( r.size(), size_t(1) );
+        BOOST_CHECK_CLOSE( r[0], 3.887689, tolerance );
+    }
 
     double tolerance_permutation = 5;
     {
@@ -171,6 +177,10 @@ void quantitative_test() {
     uint uint_marker1[5] = {0,0,1,0,2};
     uint uint_marker2[5] = {2,2,1,0,0};
     do_quantitative_test(uint_marker1, uint_marker2);
+
+    char char_marker1[5] = {'0','0','1','0','2'};
+    char char_marker2[5] = {'2','2','1','0','0'};
+    do_quantitative_test(char_marker1, char_marker2);
 }
 
 
