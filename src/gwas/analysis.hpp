@@ -13,6 +13,7 @@
 #include <boost/progress.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include "detail/config.hpp"
 #include "detail/parameter.hpp"
@@ -65,8 +66,6 @@ namespace Permory { namespace gwas {
     class Abstract_analyzer_factory {
         public:
             // Ctor
-            Abstract_analyzer_factory(int& argc, char **& argv)
-                { }
             // Dtor
             virtual ~Abstract_analyzer_factory() { }
 
@@ -87,9 +86,6 @@ namespace Permory { namespace gwas {
     class Default_analyzer_factory : public Abstract_analyzer_factory {
         public:
             // Ctor
-            Default_analyzer_factory(int& argc, char **& argv)
-                : Abstract_analyzer_factory(argc, argv)
-                { }
             // Dtor
             virtual ~Default_analyzer_factory() { }
 
@@ -312,7 +308,8 @@ namespace Permory { namespace gwas {
         }
     }
 
-    void gwas_analysis(detail::Parameter* par, io::Myout& myout, Abstract_analyzer_factory& factory)
+    void gwas_analysis(detail::Parameter* par, io::Myout& myout,
+                        Abstract_analyzer_factory& factory)
     {
         using namespace std;
         using namespace io;

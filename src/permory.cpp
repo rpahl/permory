@@ -37,7 +37,7 @@ int main(int ac, char* av[])
     string config_file;
     std::vector<string> marker_data_files;
 
-    analyzer_factory_t factory(ac, av);
+    hook::Argument_hook()(&ac, &av);
 
     myout << endl;
     myout << "+-----------------+-----------------+------------------+" << endl;
@@ -335,6 +335,7 @@ int main(int ac, char* av[])
     }    
 
     try {
+        analyzer_factory_t factory;
         gwas_analysis(&par, myout, factory);
     }
     catch(std::exception& e)
