@@ -7,9 +7,11 @@
 
 #include <string>
 #include <vector>
+#include <istream>
 
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "detail/config.hpp"
 #include "gwas/locus.hpp"
@@ -41,6 +43,28 @@ namespace Permory
                 ar & theType;
             }
     };
+    //
+    // Helper function to parse commandline arguments for type
+    // Record::Value_type.
+    std::istream& operator>>(std::istream& in, Record::Value_type& out)
+    {
+        using std::string;
+
+        string token;
+        in >> token;
+        if (token == "dichotomous"
+            or token == boost::lexical_cast<string>(Record::dichotomous)) {
+            out = Record::dichotomous;
+        }
+        else if (token == "continuous"
+            or token == boost::lexical_cast<string>(Record::continuous)) {
+            out = Record::continuous;
+        }
+        else {
+            out = Record::undefined;
+        }
+        return in;
+    }
 
     //
     // An individual as part of a clinical trial or association study, etc...

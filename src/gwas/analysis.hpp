@@ -274,6 +274,10 @@ namespace Permory { namespace gwas {
             read_individuals(*par, fn, &v);
         }
         else {
+            if (not (par->val_type == Record::dichotomous)) {
+                throw invalid_argument(
+                        "Need trait file for non dichotomous phenotypes.");
+            }
             // No file so create individuals by specified numbers
             size_t n = par->ncase + par->ncontrol;
             if (n == 0) {
