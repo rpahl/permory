@@ -8,6 +8,7 @@
 #include "statistical/quantitative.hpp"
 #include "test.hpp"
 
+#include "individual.hpp"
 #include "detail/parameter.hpp"
 #include "permutation/perm.hpp"
 #include "gwas/locusdata.hpp"
@@ -21,6 +22,9 @@ using namespace unit_test;
 using namespace Permory::statistic;
 using namespace Permory::detail;
 using namespace Permory::gwas;
+
+using Permory::Individual;
+using Permory::Record;
 
 
 void single_step_counts_test()
@@ -72,6 +76,13 @@ void single_step_counts_test()
 }
 
 
+Individual make_individual(double phenotype) {
+    Individual individual(0);
+    Record record(phenotype);
+    individual.add_measurement(record);
+    return individual;
+}
+
 template<class T, size_t L>
 Locus_data<T> create_locus_data(const T (&list)[L], const Parameter& par) {
     vector<T> v(&list[0], &list[0]+L);
@@ -100,27 +111,27 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
 
     Parameter par;
     par.nperm_block = 100000;
-    vector<T> trait;
+    vector<Individual> trait;
     Permory::permutation::Permutation perm;
+
+    trait.reserve(5);
+    trait.push_back(make_individual(0.8));
+    trait.push_back(make_individual(0.7));
+    trait.push_back(make_individual(0.5));
+    trait.push_back(make_individual(0.1));
+    trait.push_back(make_individual(0.2));
 
     par.useBar = true;
     typedef Quantitative<3, T> check_throw_t;
-    BOOST_CHECK_THROW( check_throw_t(par, trait, &perm), invalid_argument );
+    BOOST_CHECK_THROW( check_throw_t(par, trait.begin(), trait.end(), &perm), invalid_argument );
 
     par.useBar = false;
-
-    trait.resize(5);
-    trait[0] = 0.8;
-    trait[1] = 0.7;
-    trait[2] = 0.5;
-    trait[3] = 0.1;
-    trait[4] = 0.2;
 
     Locus_data<D> locus_data_1 = create_locus_data(marker1, par);
     Locus_data<D> locus_data_2 = create_locus_data(marker2, par);
 
     {
-        Quantitative<3, T> q(par, trait, &perm);
+        Quantitative<3, T> q(par, trait.begin(), trait.end(), &perm);
         vector<pair<T, T> > r = q.make_table(locus_data_1);
         BOOST_CHECK_CLOSE( r[0].first,   0.22   , tolerance );
         BOOST_CHECK_CLOSE( r[0].second,  0.3028 , tolerance );
@@ -131,13 +142,13 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
     }
 
     {
-        Quantitative<3, T> q(par, trait, &perm);
+        Quantitative<3, T> q(par, trait.begin(), trait.end(), &perm);
         vector<double> r = q.test(locus_data_1);
         BOOST_REQUIRE_EQUAL( r.size(), size_t(1) );
         BOOST_CHECK_CLOSE( r[0], 0.9530113, tolerance );
     }
     {
-        Quantitative<3, T> q(par, trait, &perm);
+        Quantitative<3, T> q(par, trait.begin(), trait.end(), &perm);
         vector<double> r = q.test(locus_data_2);
         BOOST_REQUIRE_EQUAL( r.size(), size_t(1) );
         BOOST_CHECK_CLOSE( r[0], 3.887689, tolerance );
@@ -145,7 +156,7 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
 
     double tolerance_permutation = 5;
     {
-        Quantitative<3, T> q(par, trait, &perm);
+        Quantitative<3, T> q(par, trait.begin(), trait.end(), &perm);
         deque<double> orig;
         orig.push_back(q.test(locus_data_1)[0]);
         q.permutation_test(locus_data_1);
@@ -153,7 +164,7 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
         BOOST_CHECK_CLOSE( pvalues[0], 0.45, tolerance_permutation );
     }
     {
-        Quantitative<3, T> q(par, trait, &perm);
+        Quantitative<3, T> q(par, trait.begin(), trait.end(), &perm);
         deque<double> orig;
         orig.push_back(q.test(locus_data_2)[0]);
         q.permutation_test(locus_data_2);
@@ -161,7 +172,7 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
         BOOST_CHECK_CLOSE( pvalues[0], 0.065, tolerance_permutation );
     }
     {
-        Quantitative<3, T> q(par, trait, &perm);
+        Quantitative<3, T> q(par, trait.begin(), trait.end(), &perm);
         deque<double> orig;
         orig.push_back(q.test(locus_data_1)[0]);
         orig.push_back(q.test(locus_data_2)[0]);

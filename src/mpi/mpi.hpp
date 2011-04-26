@@ -45,10 +45,9 @@ namespace Permory { namespace gwas {
             Mpi_analyzer(
                     boost::shared_ptr<mpi::environment> env,
                     boost::shared_ptr<mpi::communicator> world,
-                    detail::Parameter* par, io::Myout& out,
-                    const std::vector<bool>& trait, Gwas* study,
+                    detail::Parameter* par, io::Myout& out, Gwas* study,
                     std::set<char> the_domain=std::set<char>())
-                : Analyzer(par, out, trait, study, the_domain),
+                : Analyzer(par, out, study, the_domain),
                   env_(env), world_(world)
             {
                 // memorize old nperm_total and set per process nperm_total
@@ -97,11 +96,10 @@ namespace Permory { namespace gwas {
 
         private:
             boost::shared_ptr<Analyzer> get_analyzer(
-                    detail::Parameter* par, io::Myout& out,
-                    const std::vector<bool>& trait, Gwas* study,
+                    detail::Parameter* par, io::Myout& out, Gwas* study,
                     std::set<char> the_domain=std::set<char>())
             {
-                boost::shared_ptr<Analyzer> ptr(new Mpi_analyzer(env_, world_, par, out, trait, study, the_domain));
+                boost::shared_ptr<Analyzer> ptr(new Mpi_analyzer(env_, world_, par, out, study, the_domain));
                 return ptr;
             }
 

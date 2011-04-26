@@ -20,6 +20,7 @@
 #include "detail/parameter.hpp"
 #include "detail/pair.hpp"
 #include "gwas/locusdata.hpp"
+#include "gwas/gwas.hpp"
 #include "permutation/booster.hpp"  //Bitset_with_count,
 #include "permutation/perm.hpp"
 #include "statistical/testpool.hpp"
@@ -42,7 +43,8 @@ namespace Permory { namespace statistic {
 
             Quantitative(
                     const detail::Parameter&,
-                    const std::vector<T>& trait,    //quantitative trait
+                    gwas::Gwas::const_inderator ind_begin,//individuals to create
+                    gwas::Gwas::const_inderator ind_end,  // dichotomous trait from
                     const Permutation* pp=0);       //pre-stored permutations
 
             // Inspection
@@ -68,6 +70,9 @@ namespace Permory { namespace statistic {
         private:
             // This function does the "permutation work"
             template<class D> void do_permutation(const gwas::Locus_data<D>&);
+
+            std::vector<T> prepare_trait(gwas::Gwas::const_inderator begin,
+                    gwas::Gwas::const_inderator end);
 
             std::vector<T> trait_;
             double mu_y_;               // mean of phenotypes:
@@ -99,9 +104,10 @@ namespace Permory { namespace statistic {
     template<uint L, class T> inline
         Quantitative<L, T>::Quantitative(
                 const detail::Parameter& par,
-                const std::vector<T>& trait,
+                gwas::Gwas::const_inderator ind_begin,
+                gwas::Gwas::const_inderator ind_end,
                 const Permutation* pp)
-        : trait_(trait.begin(), trait.end()), useBitarithmetic_(par.useBar)
+        : trait_(prepare_trait(ind_begin, ind_end)), useBitarithmetic_(par.useBar)
         {
             if (useBitarithmetic_) {
                 throw std::invalid_argument(
@@ -113,7 +119,7 @@ namespace Permory { namespace statistic {
             nomdenom_buf_.resize(trait_.size());
             for (size_t i = 0; i < trait_.size(); ++i) {
                 const T tmp = trait_[i] - mu_y_;
-                nomdenom_buf_[i] = make_pair(tmp, tmp*tmp);
+                nomdenom_buf_[i] = std::make_pair(tmp, tmp*tmp);
             }
 
             bool yesPermutation = (pp != 0);
@@ -268,6 +274,23 @@ namespace Permory { namespace statistic {
                 git(*permMatrix_, index_[i], extension_[i]);
             }
         }
+
+    template<uint L, class T> std::vector<T>
+        Quantitative<L, T>::prepare_trait(
+                    gwas::Gwas::const_inderator ind_begin,
+                    gwas::Gwas::const_inderator ind_end)
+    {
+        std::vector<T> result;
+        result.reserve(ind_end - ind_begin);
+        for (gwas::Gwas::const_inderator i = ind_begin;
+                i != ind_end;
+                ++i) {
+            result.push_back(i->begin()->val);
+        }
+        return result;
+    }
+
+
 } // namespace statistic
 } // namespace Permory
 

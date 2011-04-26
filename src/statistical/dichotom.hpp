@@ -38,8 +38,9 @@ namespace Permory { namespace statistic {
 
             Dichotom(
                     const detail::Parameter&, 
-                    const std::vector<bool>& trait, //dichotomous trait
-                    const Permutation* pp=0);       //pre-stored permutations
+                    gwas::Gwas::const_inderator ind_begin,//individuals to create
+                    gwas::Gwas::const_inderator ind_end,  // dichotomous trait from
+                    const Permutation* pp=0);       // pre-stored permutations
 
             // Inspection
             size_t size() const { return testPool_.size(); }
@@ -60,6 +61,9 @@ namespace Permory { namespace statistic {
             // This function does the "permutation work"
             template<class D> void do_permutation(const gwas::Locus_data<D>&);
 
+            std::vector<T> prepare_trait(gwas::Gwas::const_inderator begin,
+                    gwas::Gwas::const_inderator end);
+
             std::vector<T> trait_;
             Test_pool<K, L> testPool_;
             T nCases_;
@@ -79,9 +83,10 @@ namespace Permory { namespace statistic {
     template<uint K, uint L, class T> inline 
         Dichotom<K, L, T>::Dichotom(
                 const detail::Parameter& par,
-                const std::vector<bool>& trait,
+                gwas::Gwas::const_inderator ind_begin,
+                gwas::Gwas::const_inderator ind_end,
                 const Permutation* pp) 
-        : trait_(trait.begin(), trait.end()), testPool_(par),
+        : trait_(prepare_trait(ind_begin, ind_end)), testPool_(par),
         useBitarithmetic_(par.useBar) 
         {
             nCases_ = std::accumulate(trait_.begin(), trait_.end(), 0); 
@@ -228,6 +233,18 @@ namespace Permory { namespace statistic {
             boosters_[worst_idx].add_to_buffer(dummy_[worst_idx]);
             boosters_[worst_idx].add_to_buffer(caseFreqs_[worst_idx]);
         }
+
+    template<uint K, uint L, class T> std::vector<T>
+        Dichotom<K, L, T>::prepare_trait(
+                    gwas::Gwas::const_inderator ind_begin,
+                    gwas::Gwas::const_inderator ind_end)
+    {
+        std::vector<T> result(ind_end - ind_begin);
+        transform(ind_begin, ind_end, result.begin(),
+                    std::mem_fun_ref(&Individual::isAffected));
+        return result;
+    }
+
 } // namespace statistic
 } // namespace Permory
 
