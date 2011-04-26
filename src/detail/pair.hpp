@@ -8,31 +8,27 @@
 #include <utility>
 #include <ostream>
 
-namespace Permory { namespace detail {
+template<class T1, class T2>
+std::pair<T1, T2> operator+(
+            const std::pair<T1, T2>& a,
+            const std::pair<T1, T2>& b) {
+    return std::make_pair(a.first + b.first, a.second + b.second);
+}
 
-    template<class T1, class T2>
-    std::pair<T1, T2> operator+(
-                const std::pair<T1, T2>& a,
-                const std::pair<T1, T2>& b) {
-        return std::make_pair(a.first + b.first, a.second + b.second);
-    }
+template<class T1, class T2>
+std::pair<T1, T2>& operator+=(
+            std::pair<T1, T2>& a,
+            const std::pair<T1, T2>& b) {
+    a.first += b.first;
+    a.second += b.second;
+    return a;
+}
 
-    template<class T1, class T2>
-    std::pair<T1, T2>& operator+=(
-                std::pair<T1, T2>& a,
-                const std::pair<T1, T2>& b) {
-        a.first += b.first;
-        a.second += b.second;
-        return a;
-    }
-
-    template<class T1, class T2>
-    std::ostream& operator<<(std::ostream& o, const std::pair<T1, T2>& x) {
-        o << "(" << x.first << "," << x.second << ")";
-        return o;
-    }
-} //namespace detail
-} //namespace Permory
+template<class T1, class T2>
+std::ostream& operator<<(std::ostream& o, const std::pair<T1, T2>& x) {
+    o << "(" << x.first << "," << x.second << ")";
+    return o;
+}
 
 #endif
 

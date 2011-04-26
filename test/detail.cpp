@@ -11,6 +11,7 @@
 #include "test.hpp"
 
 #include <utility>
+#include <valarray>
 
 using namespace std;
 using namespace boost;
@@ -105,6 +106,38 @@ void pair_helper_test() {
     BOOST_CHECK_EQUAL( c.second, 6 );
     BOOST_CHECK_EQUAL( a.first,  1 );
     BOOST_CHECK_EQUAL( a.second, 2 );
+
+    {
+        std::valarray<P> v1(2);
+        v1[0] = a;
+        v1[1] = b;
+
+        std::valarray<P> v2(2);
+        v2[0] = b;
+        v2[1] = b;
+
+        v2 += v1;
+        BOOST_CHECK_EQUAL( v2[0].first,  2 );
+        BOOST_CHECK_EQUAL( v2[0].second, 4 );
+        BOOST_CHECK_EQUAL( v2[1].first,  2 );
+        BOOST_CHECK_EQUAL( v2[1].second, 4 );
+
+        v2[1] += b;
+        BOOST_CHECK_EQUAL( v2[1].first,  3 );
+        BOOST_CHECK_EQUAL( v2[1].second, 6 );
+    }
+
+    {
+        std::vector<P> v;
+        v.push_back(a);
+        v.push_back(b);
+
+        v[0] += b;
+        BOOST_CHECK_EQUAL( v[0].first,  2 );
+        BOOST_CHECK_EQUAL( v[0].second, 4 );
+        BOOST_CHECK_EQUAL( v[1].first,  1 );
+        BOOST_CHECK_EQUAL( v[1].second, 2 );
+    }
 }
 
 
