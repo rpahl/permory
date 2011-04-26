@@ -376,7 +376,7 @@ namespace Permory { namespace gwas {
                 data_domain.insert('1');
                 data_domain.insert('2');
                 boost::shared_ptr<Analyzer> analyzer = factory(par, myout, &study, data_domain);
-                if (par->val_type == Record::continous) {
+                if (par->val_type == Record::continuous) {
                     analyzer->analyze_dichotom<statistic::Quantitative<3>, double>();
                 }
                 else {

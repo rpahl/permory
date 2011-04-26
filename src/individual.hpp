@@ -18,9 +18,9 @@ namespace Permory
 {
     // Data record for an individual at a particular experiment/study
     struct Record {
-            enum Value_type {undefined=0, dichotomous, continous};
+            enum Value_type {undefined=0, dichotomous, continuous};
 
-            Record(double d=0.0, Value_type type = continous)
+            Record(double d=0.0, Value_type type = continuous)
                 : val(d), theType(type)
             {}
             bool operator<(const Record& r) const { return val < r.val; }
@@ -132,14 +132,14 @@ namespace Permory
 
     //
     // Sample of individuals with continuous phenotypes
-    std::vector<Individual> continous_sample(
+    std::vector<Individual> contiunous_sample(
             const std::vector<double>& phenotypes, double c=0)
     {
         std::vector<Individual> v;
         v.reserve(phenotypes.size());
         for (size_t i=0; i<phenotypes.size(); i++) {
             Individual ind(i, "", Individual::nosex, c);
-            Record rec(phenotypes[i], Record::continous);
+            Record rec(phenotypes[i], Record::continuous);
             ind.add_measurement(rec);
             v.push_back(ind);
         }
