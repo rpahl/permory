@@ -318,32 +318,6 @@ namespace Permory { namespace gwas {
         }
     }
 
-    template<class T>
-        void prepare_trait(const Gwas& study, std::vector<T>* result);
-
-    template<> void prepare_trait(const Gwas& study, std::vector<bool>* result)
-    {
-        using namespace std;
-
-        // Create *dichotomous* trait/phenotype data
-        result->resize(study.sample_size());
-        transform(study.ind_begin(), study.ind_end(), result->begin(),
-                mem_fun_ref(&Individual::isAffected));
-    }
-
-    template<> void prepare_trait(const Gwas& study, std::vector<double>* result)
-    {
-        using namespace std;
-
-        // Create *dichotomous* trait/phenotype data
-        result->reserve(study.sample_size());
-        for (Gwas::const_inderator i = study.ind_begin();
-                i != study.ind_end();
-                ++i) {
-            result->push_back(i->begin()->val);
-        }
-    }
-
     void gwas_analysis(detail::Parameter* par, io::Myout& myout,
                         Abstract_analyzer_factory& factory)
     {
