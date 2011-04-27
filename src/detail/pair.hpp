@@ -8,27 +8,83 @@
 #include <utility>
 #include <ostream>
 
-template<class T1, class T2>
-std::pair<T1, T2> operator+(
-            const std::pair<T1, T2>& a,
-            const std::pair<T1, T2>& b) {
-    return std::make_pair(a.first + b.first, a.second + b.second);
-}
+namespace Permory { namespace detail {
 
-template<class T1, class T2>
-std::pair<T1, T2>& operator+=(
-            std::pair<T1, T2>& a,
-            const std::pair<T1, T2>& b) {
-    a.first += b.first;
-    a.second += b.second;
-    return a;
-}
+    //
+    // Specialization of std::pair for usage in PERMORY.
+    //
+    template<class T> struct Pair : public std::pair<T, T>
+    {
+        public:
+            // Ctors
+            Pair() : std::pair<T, T>() { }
+            Pair(T x) : std::pair<T, T>(x, x) { }
+            Pair(T f, T s) : std::pair<T, T>(f, s) { }
+            Pair(const std::pair<T, T>& p) : std::pair<T, T>(p) { }
 
-template<class T1, class T2>
-std::ostream& operator<<(std::ostream& o, const std::pair<T1, T2>& x) {
-    o << "(" << x.first << "," << x.second << ")";
-    return o;
-}
+            // Operators
+            Pair<T> operator+(const Pair<T>& other) const;
+            Pair<T>& operator+=(const Pair<T>& other);
+            Pair<T>& operator-=(const Pair<T>& other);
+            Pair<T>& operator=(const Pair<T>& r);
+            Pair<T>& operator=(const T& r);
+    };
 
+    // ========================================================================
+    // Pair implementations
+    template<class T> Pair<T> Pair<T>::operator+(const Pair<T>& other) const
+    {
+        return Pair(this->first + other.first, this->second + other.second);
+    }
+
+    template<class T> Pair<T>& Pair<T>::operator+=(const Pair<T>& other)
+    {
+        this->first += other.first;
+        this->second += other.second;
+        return *this;
+    }
+
+    template<class T> Pair<T>& Pair<T>::operator-=(const Pair<T>& other)
+    {
+        this->first -= other.first;
+        this->second -= other.second;
+        return *this;
+    }
+
+    template<class T> Pair<T>& Pair<T>::operator=(const Pair<T>& r)
+    {
+        this->first = r.first;
+        this->second = r.second;
+        return *this;
+    }
+
+    template<class T> Pair<T>& Pair<T>::operator=(const T& r)
+    {
+        this->first = r;
+        this->second = r;
+        return *this;
+    }
+
+    // None-Class Functions
+    // ========================================================================
+
+    //
+    // Helper Funktion to create instances of Pair.
+    template<class T> Pair<T> make_pair(T a, T b)
+    {
+        return Pair<T>(a, b);
+    }
+
+    //
+    // Make instances of Pair printable to streams.
+    template<class T>
+    std::ostream& operator<<(std::ostream& o, const Pair<T>& x)
+    {
+        o << "(" << x.first << "," << x.second << ")";
+        return o;
+    }
+
+} // namespace detail
+} // namespace Permory
 #endif
 

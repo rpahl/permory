@@ -9,7 +9,6 @@
 #include <numeric>
 #include <set>
 #include <vector>
-#include <utility> // pair
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
@@ -35,7 +34,7 @@ namespace Permory { namespace statistic {
     template<uint L, class T = double> class Quantitative {
         public:
 
-            typedef std::pair<T, T> element_t;
+            typedef Pair<T> element_t;
 
             // Iterator pass through
             typedef typename std::vector<double>::const_iterator const_iterator;
@@ -87,15 +86,16 @@ namespace Permory { namespace statistic {
                                         // nominator-denominator buffer:
                                         //   first  = \sum_{i=1}^{N} (Y_i - \mu_y)
                                         //   second = \sum_{i=1}^{N} (Y_i - \mu_y)^2
+            element_t sum_;             // sum of all nomdenom_buf_ elements
 
             std::vector<double> tMax_;  //max test statistics
-
-            boost::shared_ptr<Perm_matrix<element_t> > permMatrix_;
 
             Matrix<element_t> extension_;
                                         // contains the intermediate
                                         // result (extension) of the nominator
                                         // and denominator
+
+            boost::ptr_vector<Perm_boost<element_t> > boosters_;
 
             // For caching purpose
             bool useBitarithmetic_;
@@ -120,8 +120,10 @@ namespace Permory { namespace statistic {
             nomdenom_buf_.resize(trait_.size());
             for (size_t i = 0; i < trait_.size(); ++i) {
                 const T tmp = trait_[i] - mu_y_;
-                nomdenom_buf_[i] = std::make_pair(tmp, tmp*tmp);
+                nomdenom_buf_[i] = make_pair(tmp, tmp*tmp);
             }
+            sum_ = std::accumulate(nomdenom_buf_.begin(), nomdenom_buf_.end(),
+                                    make_pair(0.,0.));
 
             bool yesPermutation = (pp != 0);
             if (yesPermutation) {
@@ -138,7 +140,13 @@ namespace Permory { namespace statistic {
 
         boost::shared_ptr<Perm_matrix<element_t> > pmat(
                 new Perm_matrix<element_t>(nperm, *pp, nomdenom_buf_, useBitarithmetic_));
-        permMatrix_.swap(pmat);
+
+        // Prepare permutation booster
+        boosters_.clear();
+        boosters_.reserve(L+1);
+        for (uint i=0; i<L+1; i++) {
+            boosters_.push_back(new Perm_boost<element_t>(pmat, tail_size));
+        }
     }
 
     template<uint L, class T>
@@ -261,6 +269,10 @@ namespace Permory { namespace statistic {
         Quantitative<L, T>::do_permutation(const gwas::Locus_data<D>& data)
         {
             std::vector<int> index_[L+1];   //L+1 integer vectors
+            Bitset_with_count dummy_[L+1];  //L+1 bitsets with cached bit counts
+            uint boost_index[L+1];  // see below
+            size_t worst_idx = 0;
+            size_t maxcnt = 0;
 
             typename gwas::Locus_data<D>::unique_iterator
                 it = data.unique_begin();
@@ -270,10 +282,41 @@ namespace Permory { namespace statistic {
                 index_[i].clear();
                 index_[i].reserve(cnt);
                 index_code<D>(index_[i], data.begin(), data.end(), allelic_code);
-                ++it;
+                dummy_[i] = dummy_code<D>(data.begin(), data.end(), allelic_code);
 
-                git(*permMatrix_, index_[i], extension_[i]);
+                // Determine index of most similar dummy code in the
+                // booster's buffer. If the smallest distance between this
+                // dummy code and the most similar one is smaller than 'cnt',
+                // 'cnt' will contain this distance after the call.
+                boost_index[i] = boosters_[i].find_most_similar(dummy_[i], cnt);
+
+                // Keep track of the worst boostable element, which is the one
+                // that shows both highest occurences of the code and the
+                // highest distance to "neighboured" dummy codes
+                if (cnt > maxcnt) {
+                    maxcnt = cnt;
+                    worst_idx = i;
+                }
+                it++;
             }
+
+            // Permute for each allelic code, except the one that can be least
+            // optimized/boosted for permutation. For this, the frequency is
+            // simply derived via the marginal sum.
+            extension_[worst_idx] = sum_; //init with marginal sum
+            for (uint i=0; i < L+1; i++) {
+                    boosters_[i].permute(
+                            index_[i],          //index coded data
+                            dummy_[i],          //dummy coded data
+                            boost_index[i],     //index into booster's buffer
+                            &extension_[i]);    //resulting sums
+                    extension_[worst_idx] -= extension_[i];
+            }
+            // Since it was left out, the dummy code and the resulting case
+            // frequencies of the skipped code are added post hoc "by hand"
+            // to the buffer of the booster.
+            boosters_[worst_idx].add_to_buffer(dummy_[worst_idx]);
+            boosters_[worst_idx].add_to_buffer(extension_[worst_idx]);
         }
 
     template<uint L, class T> std::vector<T>

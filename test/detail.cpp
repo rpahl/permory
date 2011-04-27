@@ -91,7 +91,7 @@ void deque_concat_test()
 
 void pair_helper_test() {
     typedef int T;
-    typedef pair<T, T> P;
+    typedef Pair<T> P;
 
     P a(1,2);
     P b(1,2);
@@ -137,6 +137,58 @@ void pair_helper_test() {
         BOOST_CHECK_EQUAL( v[0].second, 4 );
         BOOST_CHECK_EQUAL( v[1].first,  1 );
         BOOST_CHECK_EQUAL( v[1].second, 2 );
+    }
+
+    {
+        P x(1, 2);
+        x = 0;
+        BOOST_CHECK_EQUAL( x.first, 0 );
+        BOOST_CHECK_EQUAL( x.second, 0 );
+
+        x = 1.;
+        BOOST_CHECK_EQUAL( x.first, 1 );
+        BOOST_CHECK_EQUAL( x.second, 1 );
+    }
+    {
+        Pair<double> x(1., 2.);
+        x = 0;
+        BOOST_CHECK_EQUAL( x.first, 0 );
+        BOOST_CHECK_EQUAL( x.second, 0 );
+
+        x = 1.;
+        BOOST_CHECK_EQUAL( x.first, 1 );
+        BOOST_CHECK_EQUAL( x.second, 1 );
+    }
+    {
+        Pair<double> x = 1;
+        BOOST_CHECK_EQUAL( x.first, 1. );
+        BOOST_CHECK_EQUAL( x.second, 1. );
+    }
+    {
+        Pair<double> x = 1.;
+        BOOST_CHECK_EQUAL( x.first, 1. );
+        BOOST_CHECK_EQUAL( x.second, 1. );
+    }
+
+    {
+        pair<T, T> op = std::make_pair(1, 2);
+        P p(op);
+        BOOST_CHECK_EQUAL( p.first,  1 );
+        BOOST_CHECK_EQUAL( p.second, 2 );
+    }
+    {
+        pair<T, T> op(1, 2);
+        P p;
+        p = op;
+        BOOST_CHECK_EQUAL( p.first,  1 );
+        BOOST_CHECK_EQUAL( p.second, 2 );
+    }
+    {
+        P a(10, 7);
+        P b(5, 2);
+        a -= b;
+        BOOST_CHECK_EQUAL( a.first,  5 );
+        BOOST_CHECK_EQUAL( a.second, 5 );
     }
 }
 

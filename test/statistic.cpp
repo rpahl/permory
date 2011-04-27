@@ -14,7 +14,6 @@
 #include "gwas/locusdata.hpp"
 
 #include <vector>
-#include <utility>
 
 using namespace std;
 using namespace boost;
@@ -132,7 +131,7 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
 
     {
         Quantitative<3, T> q(par, trait.begin(), trait.end(), &perm);
-        vector<pair<T, T> > r = q.make_table(locus_data_1);
+        vector<Pair<T> > r = q.make_table(locus_data_1);
         BOOST_CHECK_CLOSE( r[0].first,   0.22   , tolerance );
         BOOST_CHECK_CLOSE( r[0].second,  0.3028 , tolerance );
         BOOST_CHECK_CLOSE( r[1].first,   0.04   , tolerance );

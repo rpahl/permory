@@ -14,7 +14,6 @@
 
 #include <vector>
 #include <valarray>
-#include <utility>
 
 using namespace std;
 using namespace boost;
@@ -46,7 +45,7 @@ void git_test()
     }
 
     {
-        typedef pair<double, double> P;
+        typedef Pair<double> P;
         P d[] = {
                 make_pair(1., 2.), make_pair(1., 2.), make_pair(1., 2.),
                 make_pair(1., 2.), make_pair(1., 2.)
