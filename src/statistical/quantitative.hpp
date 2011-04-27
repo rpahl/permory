@@ -215,7 +215,9 @@ namespace Permory { namespace statistic {
     {
         double nominator = 0.;
         double denominator = denom_invariant_;
-        for (size_t i = 0; i < tab.size(); ++i) {
+        // Skip index 0 as product in nominator and denominator will always
+        // be 0.
+        for (size_t i = 1; i < tab.size(); ++i) {
             element_t x = tab[i];
             nominator += i * x.first;
             denominator += (i * i - 2 * i * mu_j_) * x.second;
