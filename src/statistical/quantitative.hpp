@@ -27,6 +27,7 @@
 
 namespace Permory { namespace statistic {
     using namespace permutation;
+    using namespace Permory::detail;
 
     //
     // Analyze genotype data with binary/dichotomous trait
@@ -42,7 +43,7 @@ namespace Permory { namespace statistic {
             const_iterator tmax_end() const { return tMax_.end(); }
 
             Quantitative(
-                    const detail::Parameter&,
+                    const Parameter&,
                     gwas::Gwas::const_inderator ind_begin,//individuals to create
                     gwas::Gwas::const_inderator ind_end,  // dichotomous trait from
                     const Permutation* pp=0);       //pre-stored permutations
@@ -91,7 +92,7 @@ namespace Permory { namespace statistic {
 
             boost::shared_ptr<Perm_matrix<element_t> > permMatrix_;
 
-            detail::Matrix<element_t> extension_;
+            Matrix<element_t> extension_;
                                         // contains the intermediate
                                         // result (extension) of the nominator
                                         // and denominator
@@ -103,7 +104,7 @@ namespace Permory { namespace statistic {
     // Quantitative implementations
     template<uint L, class T> inline
         Quantitative<L, T>::Quantitative(
-                const detail::Parameter& par,
+                const Parameter& par,
                 gwas::Gwas::const_inderator ind_begin,
                 gwas::Gwas::const_inderator ind_end,
                 const Permutation* pp)
