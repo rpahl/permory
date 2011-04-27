@@ -312,6 +312,7 @@ int main(int ac, char* av[])
         else {
             par.tests.insert(trend);
         }
+        par.useBar = par.val_type == Record::dichotomous;
 
         if (par.min_maf >= par.max_maf) {
             cerr << errpre << "Bad maf filter specification will left no " <<
