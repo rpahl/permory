@@ -307,12 +307,14 @@ namespace Permory { namespace statistic {
             // simply derived via the marginal sum.
             extension_[worst_idx] = sum_; //init with marginal sum
             for (uint i=0; i < L+1; i++) {
+                if (i != worst_idx) {
                     boosters_[i].permute(
                             index_[i],          //index coded data
                             dummy_[i],          //dummy coded data
                             boost_index[i],     //index into booster's buffer
                             &extension_[i]);    //resulting sums
                     extension_[worst_idx] -= extension_[i];
+                }
             }
             // Since it was left out, the dummy code and the resulting case
             // frequencies of the skipped code are added post hoc "by hand"
