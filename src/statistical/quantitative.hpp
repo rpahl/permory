@@ -99,6 +99,8 @@ namespace Permory { namespace statistic {
 
             // For caching purpose
             bool useBitarithmetic_;
+            std::vector<int> index_[L+1];   //L+1 integer vectors
+            Bitset_with_count dummy_[L+1];  //L+1 bitsets with cached bit counts
     };
     // ========================================================================
     // Quantitative implementations
@@ -270,8 +272,6 @@ namespace Permory { namespace statistic {
     template<uint L, class T> template<class D> inline void
         Quantitative<L, T>::do_permutation(const gwas::Locus_data<D>& data)
         {
-            std::vector<int> index_[L+1];   //L+1 integer vectors
-            Bitset_with_count dummy_[L+1];  //L+1 bitsets with cached bit counts
             uint boost_index[L+1];  // see below
             size_t worst_idx = 0;
             size_t maxcnt = 0;
