@@ -279,12 +279,41 @@ void quantitative_test() {
 }
 
 
+void teststat_test() {
+    {
+        Con_tab<2,3> contab;
+        contab[0][0] = 0;
+        contab[0][1] = 0;
+        contab[0][2] = 0;
+        contab[1][0] = 0;
+        contab[1][1] = 0;
+        contab[1][2] = 0;
+
+        Trend tt;
+        BOOST_CHECK_EQUAL( tt(contab), 0 );
+    }
+    {
+        Con_tab<2,3> contab;
+        contab[0][0] = 0;
+        contab[0][1] = 0;
+        contab[0][2] = 100;
+        contab[1][0] = 100;
+        contab[1][1] = 0;
+        contab[1][2] = 0;
+
+        Trend tt;
+        BOOST_CHECK_EQUAL( tt(contab), 200 );
+    }
+}
+
+
 test_suite* init_unit_test_suite( int argc, char* argv[] )
 {
     test_suite *test = BOOST_TEST_SUITE("Functions and classes from src/statistical");
 
     test->add(BOOST_TEST_CASE(&single_step_counts_test));
     test->add(BOOST_TEST_CASE(&quantitative_test));
+    test->add(BOOST_TEST_CASE(&teststat_test));
 
     return test;
 }

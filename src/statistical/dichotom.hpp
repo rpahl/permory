@@ -65,7 +65,7 @@ namespace Permory { namespace statistic {
                     gwas::Gwas::const_inderator end);
 
             std::vector<T> trait_;
-            Test_pool<K, L> testPool_;
+            Test_pool<Con_tab<K, L> > testPool_;
             T nCases_;
             detail::Matrix<T> caseFreqs_;   //freqs for all permutations 
                                             //(one row per genotype)
@@ -140,7 +140,7 @@ namespace Permory { namespace statistic {
                         trait_.begin(), trait_.end(), data.begin(), data.end());
             }
             std::vector<double> v(testPool_.size());
-            for_each_test<K,L>(*tab, testPool_.begin(), testPool_.end(), v.begin());
+            for_each_test(*tab, testPool_.begin(), testPool_.end(), v.begin());
             delete tab;
             return v;
         }
@@ -176,7 +176,7 @@ namespace Permory { namespace statistic {
             // For each permutation i (i.e. for each obtained contingency 
             // table) compute the max over all test statistics, say max(i), and
             // then update tMax_[i] = max(tMax_[i], max(i))
-            for_each_test_and_tab<K,L>(con_tabs_, testPool_, tMax_.begin());
+            for_each_test_and_tab(con_tabs_, testPool_, tMax_.begin());
             //con_tabs_[0].print();//XXX
         }
 

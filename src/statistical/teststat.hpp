@@ -11,24 +11,24 @@
 
 namespace Permory { namespace statistic {
 
-    template<uint K, uint L> class Test_stat {
+    template<class T> class Test_stat {
         public: 
             virtual ~Test_stat(){}
-            double operator()(const Con_tab<K,L>& tab) const {
+            double operator()(const T& tab) const {
                 return do_operator(tab);
             }
         private:
-            virtual double do_operator(const Con_tab<K,L>&) const = 0;
+            virtual double do_operator(const T&) const = 0;
     };
 
     //! @brief Standard trend test with pooled variance estimator
-    class Trend : public Test_stat<2,3> {
+    class Trend : public Test_stat<Con_tab<2,3> > {
         private:
             double do_operator(const Con_tab<2,3>& ct) const; 
     };
 
     //! @brief Trend test extended for different weights and variance estimators
-    class Trend_ext : public Test_stat<2,3> {
+    class Trend_ext : public Test_stat<Con_tab<2,3> > {
         public:
             Trend_ext(const detail::Parameter& par) : ve(par.ve) { 
                 w[0] = par.w[0]; 
@@ -41,7 +41,7 @@ namespace Permory { namespace statistic {
             double w[3];                //weights
     };
 
-    class Chi_squ : public Test_stat<2,2> {
+    class Chi_squ : public Test_stat<Con_tab<2,2> > {
         private:
             double do_operator(const Con_tab<2,2>& ct) const;
     };
