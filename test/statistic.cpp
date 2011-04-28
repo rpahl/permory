@@ -82,10 +82,37 @@ Individual make_individual(double phenotype) {
     return individual;
 }
 
+template<class T> set<T> create_domain();
+template<> set<uint> create_domain() {
+    set<uint> result;
+    result.insert(0);
+    result.insert(1);
+    result.insert(2);
+    return result;
+}
+template<> set<char> create_domain() {
+    set<char> result;
+    result.insert('0');
+    result.insert('1');
+    result.insert('2');
+    return result;
+}
+
 template<class T, size_t L>
 Locus_data<T> create_locus_data(const T (&list)[L], const Parameter& par) {
     vector<T> v(&list[0], &list[0]+L);
-    return Locus_data<T>(v, par.undef_allele_code);
+    Locus_data<T> locus_data(v, par.undef_allele_code);
+    locus_data.add_to_domain(create_domain<T>());
+    return locus_data;
+}
+
+template<class T, size_t S, size_t L>
+vector<Locus_data<T> > create_locus_datas(const T (&list)[S][L], const Parameter& par) {
+    vector<Locus_data<T> > result;
+    for (size_t i = 0; i < S; ++i) {
+        result.push_back(create_locus_data(list[i], par));
+    }
+    return result;
 }
 
 template<class T, class Q>
@@ -103,6 +130,26 @@ deque<double> calculate_pvalue(const deque<double>& orig, Quantitative<3, T>& q,
     return pvalues;
 }
 
+vector<Individual> create_trait() {
+    vector<Individual> result;
+    result.reserve(5);
+    result.push_back(make_individual(0.8));
+    result.push_back(make_individual(0.7));
+    result.push_back(make_individual(0.5));
+    result.push_back(make_individual(0.1));
+    result.push_back(make_individual(0.2));
+    return result;
+}
+
+template<class T, class D, uint K>
+deque<T> create_orig(const vector<Locus_data<D> > data, Quantitative<K, T> &q) {
+    deque<T> result;
+    BOOST_FOREACH(Locus_data<D> locus_data, data) {
+        result.push_back(q.test(locus_data)[0]);
+    }
+    return result;
+}
+
 template<class D, size_t S>
 void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
     typedef double T;
@@ -110,15 +157,8 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
 
     Parameter par;
     par.nperm_block = 100000;
-    vector<Individual> trait;
+    vector<Individual> trait(create_trait());
     Permory::permutation::Permutation perm;
-
-    trait.reserve(5);
-    trait.push_back(make_individual(0.8));
-    trait.push_back(make_individual(0.7));
-    trait.push_back(make_individual(0.5));
-    trait.push_back(make_individual(0.1));
-    trait.push_back(make_individual(0.2));
 
     par.useBar = true;
     typedef Quantitative<3, T> check_throw_t;
@@ -191,6 +231,51 @@ void quantitative_test() {
     char char_marker1[5] = {'0','0','1','0','2'};
     char char_marker2[5] = {'2','2','1','0','0'};
     do_quantitative_test(char_marker1, char_marker2);
+
+    { // Test with boosters.
+        typedef double T;
+        typedef char D;
+
+        Parameter par;
+        par.useBar = false;
+        par.nperm_block = 100000;
+        const double tolerance = 0.0001;
+        const double tolerance_permutation = 5;
+
+        char char_markers[6][5] = {
+                {'2','2','1','0','0'},
+                {'2','2','1','0','1'},
+                {'2','1','0','0','0'},
+                {'0','0','1','0','2'},
+                {'0','0','0','0','2'},
+                {'0','0','1','1','2'}
+            };
+
+        vector<Individual> trait(create_trait());
+        vector<Locus_data<D> > data = create_locus_datas(char_markers, par);
+        Permory::permutation::Permutation perm(134687313);
+        Quantitative<3, T> q(par, trait.begin(), trait.end(), &perm);
+
+        deque<T> orig(create_orig(data, q));
+        BOOST_CHECK_CLOSE( orig[0], 3.8876890, tolerance );
+        BOOST_CHECK_CLOSE( orig[1], 2.9429790, tolerance );
+        BOOST_CHECK_CLOSE( orig[2], 2.7537741, tolerance );
+        BOOST_CHECK_CLOSE( orig[3], 0.9530113, tolerance );
+        BOOST_CHECK_CLOSE( orig[4], 1.2193362, tolerance );
+        BOOST_CHECK_CLOSE( orig[5], 3.3058471, tolerance );
+
+        BOOST_FOREACH(Locus_data<D> l, data) {
+            q.permutation_test(l);
+        }
+        deque<double> pvalues = calculate_pvalue<T, D>(orig, q, par);
+
+        BOOST_CHECK_CLOSE( pvalues[0], 0.066, tolerance_permutation );
+        BOOST_CHECK_CLOSE( pvalues[1], 0.332, tolerance_permutation );
+        BOOST_CHECK_CLOSE( pvalues[2], 0.398, tolerance_permutation );
+        BOOST_CHECK_CLOSE( pvalues[3], 0.899, tolerance_permutation );
+        BOOST_CHECK_CLOSE( pvalues[4], 0.833, tolerance_permutation );
+        BOOST_CHECK_CLOSE( pvalues[5], 0.233, tolerance_permutation );
+    }
 }
 
 
