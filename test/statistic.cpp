@@ -130,7 +130,8 @@ deque<double> calculate_pvalue(const deque<double>& orig, Quantitative<3, T>& q,
     return pvalues;
 }
 
-vector<Individual> create_trait() {
+template<class T> vector<T> create_trait();
+template<> vector<Individual> create_trait() {
     vector<Individual> result;
     result.reserve(5);
     result.push_back(make_individual(0.8));
@@ -138,6 +139,16 @@ vector<Individual> create_trait() {
     result.push_back(make_individual(0.5));
     result.push_back(make_individual(0.1));
     result.push_back(make_individual(0.2));
+    return result;
+}
+template<> vector<double> create_trait() {
+    vector<double> result;
+    result.reserve(5);
+    result.push_back(0.8);
+    result.push_back(0.7);
+    result.push_back(0.5);
+    result.push_back(0.1);
+    result.push_back(0.2);
     return result;
 }
 
@@ -157,7 +168,7 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
 
     Parameter par;
     par.nperm_block = 100000;
-    vector<Individual> trait(create_trait());
+    vector<Individual> trait(create_trait<Individual>());
     Permory::permutation::Permutation perm;
 
     par.useBar = true;
@@ -251,7 +262,7 @@ void quantitative_test() {
                 {'0','0','1','1','2'}
             };
 
-        vector<Individual> trait(create_trait());
+        vector<Individual> trait(create_trait<Individual>());
         vector<Locus_data<D> > data = create_locus_datas(char_markers, par);
         Permory::permutation::Permutation perm(134687313);
         Quantitative<3, T> q(par, trait.begin(), trait.end(), &perm);
@@ -280,6 +291,8 @@ void quantitative_test() {
 
 
 void teststat_test() {
+    //
+    // Dichotom
     {
         Con_tab<2,3> contab;
         contab[0][0] = 0;
@@ -303,6 +316,51 @@ void teststat_test() {
 
         Trend tt;
         BOOST_CHECK_EQUAL( tt(contab), 200 );
+    }
+
+    //
+    // Quantitative
+    {
+        const double tolerance = 0.0001;
+        typedef double T;
+        typedef Pair<T> P;
+
+        Parameter par;
+        par.val_type = Record::continuous;
+        par.useBar = false;
+
+        vector<double> trait(create_trait<double>());
+
+        Trend_continuous<T> test(trait);
+
+        BOOST_CHECK_CLOSE( test.get_mu_y(), 0.46, tolerance );
+
+        const vector<P> buffer(test.get_buffer());
+        BOOST_CHECK_CLOSE( buffer[0].first,  0.34,   tolerance );
+        BOOST_CHECK_CLOSE( buffer[0].second, 0.1156, tolerance );
+        BOOST_CHECK_CLOSE( buffer[1].first,  0.24,   tolerance );
+        BOOST_CHECK_CLOSE( buffer[1].second, 0.0576, tolerance );
+        BOOST_CHECK_CLOSE( buffer[2].first,  0.04,   tolerance );
+        BOOST_CHECK_CLOSE( buffer[2].second, 0.0016, tolerance );
+        BOOST_CHECK_CLOSE( buffer[3].first, -0.36,   tolerance );
+        BOOST_CHECK_CLOSE( buffer[3].second, 0.1296, tolerance );
+        BOOST_CHECK_CLOSE( buffer[4].first, -0.26,   tolerance );
+        BOOST_CHECK_CLOSE( buffer[4].second, 0.0676, tolerance );
+
+        char marker[5] = {'0','0','1','0','2'};
+        Locus_data<char> locus_data = create_locus_data(marker, par);
+
+        test.update(locus_data);
+
+        BOOST_CHECK_CLOSE( test.get_mu_j(), 0.6, tolerance );
+        BOOST_CHECK_CLOSE( test.get_denom_invariant(), 0.13392, tolerance );
+
+        vector<P> sums(3);
+        sums[0] = buffer[0] + buffer[1] + buffer[3];
+        sums[1] = buffer[2];
+        sums[2] = buffer[4];
+        T result = test(sums);
+        BOOST_CHECK_CLOSE( result, 0.9530113, tolerance );
     }
 }
 

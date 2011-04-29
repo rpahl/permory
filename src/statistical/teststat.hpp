@@ -1,15 +1,23 @@
 // Copyright (c) 2010 Roman Pahl
+//               2011 Volker Steiß
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 #ifndef permory_teststat_hpp
 #define permory_teststat_hpp
 
+#include <vector>
+
 #include "detail/config.hpp"
 #include "detail/parameter.hpp"
+#include "detail/pair.hpp"
 #include "statistical/contab.hpp"
+#include "gwas/locusdata.hpp"
 
 namespace Permory { namespace statistic {
+
+    using Permory::detail::Pair;
+    using Permory::gwas::Locus_data;
 
     template<class T> class Test_stat {
         public: 
@@ -44,6 +52,48 @@ namespace Permory { namespace statistic {
     class Chi_squ : public Test_stat<Con_tab<2,2> > {
         private:
             double do_operator(const Con_tab<2,2>& ct) const;
+    };
+
+
+    template<class T>
+    class Trend_continuous : public Test_stat<std::vector<Pair<T> > > {
+        public:
+            // Ctors
+            Trend_continuous(const std::vector<T>& trait)
+                    : mu_y_(calculate_mu_y(trait)),
+                      nomdenom_buf_(create_buffer(trait))
+                { }
+
+            // Inspectors
+            T get_mu_y() const { return mu_y_; }
+            const std::vector<Pair<T> > get_buffer() const
+                { return nomdenom_buf_; }
+            T get_mu_j() const { return mu_j_; }
+            T get_denom_invariant() const { return denom_invariant_; }
+
+            // Modifiers
+            template<class D> void update(const Locus_data<D>& data);
+
+        protected:
+            void calculate_denom_invariant();
+            T calculate_mu_y(const std::vector<T>& trait);
+            template<class D> T calculate_mu_j(const Locus_data<D>& data) const;
+
+        private:
+            double do_operator(const std::vector<Pair<T> >& tab) const;
+
+            std::vector<Pair<T> > create_buffer(const std::vector<T>& trait);
+
+            T mu_y_;            // mean of phenotypes:
+                                //   1/N * \sum_{i=1}^{N} Y_i
+            T mu_j_;            // mean of genotypes of marker j:
+                                //   1/N * \sum_{i=1}^{M} X_ji
+            std::vector<Pair<T> > nomdenom_buf_;
+                                // nominator-denominator buffer:
+                                //   first  = \sum_{i=1}^{N} (Y_i - \mu_y)
+                                //   second = \sum_{i=1}^{N} (Y_i - \mu_y)^2
+            T denom_invariant_; // invariant summand of denominator in marker j:
+                                //   \mu_j^2 * \sum_{i=1}^{N} (Y_i - \mu_y)^2
     };
 
     // ========================================================================
@@ -151,6 +201,69 @@ namespace Permory { namespace statistic {
             return 0;
         }
     }
+
+
+    template<class T>
+    void Trend_continuous<T>::calculate_denom_invariant()
+    {
+        typedef Pair<T> P;
+        denom_invariant_ = 0;
+        BOOST_FOREACH(P x, nomdenom_buf_) {
+            denom_invariant_ += x.second;
+        }
+        denom_invariant_ *= mu_j_ * mu_j_;
+    }
+
+    template<class T>
+    T Trend_continuous<T>::calculate_mu_y(const std::vector<T>& trait)
+    {
+        return std::accumulate(trait.begin(), trait.end(), T(0)) / trait.size();
+    }
+
+    template<class T> std::vector<Pair<T> >
+        Trend_continuous<T>::create_buffer(const std::vector<T>& trait)
+    {
+        std::vector<Pair<T> > result(trait.size());
+        for (size_t i = 0; i < trait.size(); ++i) {
+            const T tmp = trait[i] - mu_y_;
+            result[i] = make_pair(tmp, tmp*tmp);
+        }
+        return result;
+    }
+
+    template<class T> template<class D>
+    T Trend_continuous<T>::calculate_mu_j(const Locus_data<D>& data) const
+    {
+        gwas::Locus_data<uint> *numeric = data.as_numeric();
+        T temp = std::accumulate(numeric->begin(), numeric->end(), 0.)
+               / numeric->size();
+        delete numeric;
+        return temp;
+    }
+
+    template<class T> template<class D>
+    void Trend_continuous<T>::update(const Locus_data<D>& data)
+    {
+        mu_j_ = calculate_mu_j(data);
+        calculate_denom_invariant();
+    }
+
+    template<class T>
+    double Trend_continuous<T>::do_operator(const std::vector<Pair<T> >& tab) const
+    {
+        double nominator = 0.;
+        double denominator = denom_invariant_;
+        // Skip index 0 as product in nominator and denominator will always
+        // be 0.
+        for (size_t i = 1; i < tab.size(); ++i) {
+            detail::Pair<T> x = tab[i];
+            nominator += i * x.first;
+            denominator += (i * i - 2 * i * mu_j_) * x.second;
+        }
+        nominator *= nominator;
+        return (nominator / denominator);
+    }
+
 
 } // namespace statistic
 } // namespace Permory
