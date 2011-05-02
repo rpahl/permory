@@ -1,4 +1,5 @@
 // Copyright (c) 2010 Roman Pahl
+//               2011 Volker Steiß
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
@@ -32,6 +33,7 @@ namespace Permory { namespace statistic {
 
             // Modifier
             void add(const detail::Parameter&);
+            void add(Test_stat<T>*);
             void remove(const std::set<detail::Test_type>&);
         private:
             boost::ptr_vector<Test_stat<T> > ts_;
@@ -75,6 +77,12 @@ namespace Permory { namespace statistic {
             }
         }
     }
+
+    template<class T> inline void Test_pool<T>::add(Test_stat<T>* ts)
+    {
+        ts_.push_back(ts);
+    }
+
     template<class T> inline void Test_pool<T>::remove(
             const std::set<detail::Test_type>& tests)
     {
