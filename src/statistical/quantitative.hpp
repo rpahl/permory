@@ -54,16 +54,12 @@ namespace Permory { namespace statistic {
                     const Permutation* pp,  //creates the permutations
                     size_t nperm,           //number of permutations
                     size_t tail_size);      //parameter of the permutation booster
-            template<class D> void calculate_mu_j(const gwas::Locus_data<D>& data);
-            void calculate_mu_j(const gwas::Locus_data<char>& data);
-            void calculate_denom_invariant();
 
             // Conversion
             // Compute test statistics for the data
             template<class D> std::vector<double> test(const gwas::Locus_data<D>&);
             template<class D> std::vector<element_t>
                 make_table(const gwas::Locus_data<D>&);
-            void test_for_tab(std::vector<element_t>&, std::vector<double>*);
             // Compute permutation test statistics
             template<class D> void permutation_test(const gwas::Locus_data<D>&);
 
@@ -75,14 +71,9 @@ namespace Permory { namespace statistic {
                     gwas::Gwas::const_inderator end);
 
             std::vector<T> trait_;
-            double mu_y_;               // mean of phenotypes:
-                                        //   1/N * \sum_{i=1}^{N} Y_i
-            double mu_j_;               // mean of genotypes of marker j:
-                                        //   1/N * \sum_{i=1}^{M} X_ji
-            double denom_invariant_;    // invariant summand of denominator in
-                                        // marker j:
-                                        //   \mu_j^2 * \sum_{i=1}^{N} (Y_i - \mu_y)^2
-            std::vector<element_t> nomdenom_buf_;
+            Trend_continuous<T> *test_stat_;
+            Test_pool<std::vector<element_t> > testPool_;
+            const std::vector<element_t>& nomdenom_buf_;
                                         // nominator-denominator buffer:
                                         //   first  = \sum_{i=1}^{N} (Y_i - \mu_y)
                                         //   second = \sum_{i=1}^{N} (Y_i - \mu_y)^2
@@ -98,6 +89,7 @@ namespace Permory { namespace statistic {
             boost::ptr_vector<Perm_boost<element_t> > boosters_;
 
             // For caching purpose
+            std::vector<std::vector<element_t> > tabs_;
             bool useBitarithmetic_;
             std::vector<int> index_[L+1];   //L+1 integer vectors
             Bitset_with_count dummy_[L+1];  //L+1 bitsets with cached bit counts
@@ -110,20 +102,18 @@ namespace Permory { namespace statistic {
                 gwas::Gwas::const_inderator ind_begin,
                 gwas::Gwas::const_inderator ind_end,
                 const Permutation* pp)
-        : trait_(prepare_trait(ind_begin, ind_end)), useBitarithmetic_(par.useBar)
+        : trait_(prepare_trait(ind_begin, ind_end)),
+          test_stat_(new Trend_continuous<T>(trait_)),
+          nomdenom_buf_(test_stat_->get_buffer()),
+          useBitarithmetic_(par.useBar)
         {
             if (useBitarithmetic_) {
                 throw std::invalid_argument(
                     "Bit arithmetics not allowed for quantitative phenotypes!");
             }
 
-            mu_y_ = std::accumulate(trait_.begin(), trait_.end(), 0.)
-                  / trait_.size();
-            nomdenom_buf_.resize(trait_.size());
-            for (size_t i = 0; i < trait_.size(); ++i) {
-                const T tmp = trait_[i] - mu_y_;
-                nomdenom_buf_[i] = make_pair(tmp, tmp*tmp);
-            }
+            testPool_.add(test_stat_); // NOTE: Pointer will be deleted by
+                                       // Test_pool.
             sum_ = std::accumulate(nomdenom_buf_.begin(), nomdenom_buf_.end(),
                                     make_pair(0.,0.));
 
@@ -137,6 +127,11 @@ namespace Permory { namespace statistic {
         void Quantitative<L, T>::renew_permutations(const Permutation* pp, size_t nperm,
                 size_t tail_size)
     {
+        tabs_.resize(nperm);
+        for (size_t i = 0; i < tabs_.size(); ++i) {
+            tabs_[i].resize(L+1);
+        }
+
         tMax_.clear();
         tMax_.resize(nperm);
 
@@ -149,32 +144,6 @@ namespace Permory { namespace statistic {
         for (uint i=0; i<L+1; i++) {
             boosters_.push_back(new Perm_boost<element_t>(pmat, tail_size));
         }
-    }
-
-    template<uint L, class T>
-    template<class D> void Quantitative<L, T>::calculate_mu_j(
-                const gwas::Locus_data<D>& data)
-    {
-        mu_j_ = std::accumulate(data.begin(), data.end(), 0.) / data.size();
-    }
-
-    template<uint L, class T> void Quantitative<L, T>::calculate_mu_j(
-                const gwas::Locus_data<char>& data)
-    {
-        gwas::Locus_data<uint> *numeric = data.as_numeric();
-        calculate_mu_j<uint>(*numeric);
-        delete numeric;
-    }
-
-    template<uint L, class T>
-    void Quantitative<L, T>::calculate_denom_invariant()
-    {
-        typedef element_t P;
-        denom_invariant_ = 0;
-        BOOST_FOREACH(P x, nomdenom_buf_) {
-            denom_invariant_ += x.second;
-        }
-        denom_invariant_ *= mu_j_ * mu_j_;
     }
 
     template<uint L, class T> template<class D> inline
@@ -210,24 +179,6 @@ namespace Permory { namespace statistic {
             return result;
         }
 
-    template<uint L, class T>
-        void Quantitative<L, T>::test_for_tab(
-                std::vector<element_t>& tab,
-                std::vector<double> *result)
-    {
-        double nominator = 0.;
-        double denominator = denom_invariant_;
-        // Skip index 0 as product in nominator and denominator will always
-        // be 0.
-        for (size_t i = 1; i < tab.size(); ++i) {
-            element_t x = tab[i];
-            nominator += i * x.first;
-            denominator += (i * i - 2 * i * mu_j_) * x.second;
-        }
-        nominator *= nominator;
-        result->push_back(nominator / denominator);
-    }
-
     template<uint L, class T> template<class D> inline
         std::vector<double> Quantitative<L, T>::test(const gwas::Locus_data<D>& data)
         {
@@ -239,34 +190,38 @@ namespace Permory { namespace statistic {
             else {
                 tab = make_table(data);
             }
-            calculate_mu_j(data);
-            calculate_denom_invariant();
-            std::vector<double> v;
-            test_for_tab(tab, &v);
+            test_stat_->update(data);
+            std::vector<double> v(testPool_.size());
+            for_each_test(tab, testPool_.begin(), testPool_.end(), v.begin());
             return v;
         }
 
     template<uint L, class T> template<class D> inline void
         Quantitative<L, T>::permutation_test(const gwas::Locus_data<D>& data)
         {
-            calculate_mu_j(data);
-            calculate_denom_invariant();
+            test_stat_->update(data);
             extension_.resize(L+1, tMax_.size());  // one extra row for missings
 
             do_permutation(data);
 
-            std::vector<double> result;
-            result.reserve(extension_.ncol());
-            for (size_t i = 0; i < extension_.ncol(); ++i) {
-                std::vector<element_t> tab(extension_.nrow());
-                for (size_t j = 0; j < tab.size(); ++j) {
-                    tab[j] = extension_[j][i];
+            // Fill tables
+            uint j = 0; //row index of matrix with case frequency results
+            uint c = 0; //column index of contingency table
+
+            // the unique_iterator is defined in discretedata.hpp:
+            // std::map<elem_type, count_type> unique_;//unique elements with counts
+            typename gwas::Locus_data<D>::unique_iterator uniques = data.unique_begin();
+            for (; uniques!=data.unique_end(); uniques++) {
+                bool ok = not (uniques->first == data.get_undef());
+                if (ok) {
+                    for (uint t=0; t < tabs_.size(); ++t) {
+                        tabs_[t][c] = extension_[j][t];
+                    }
+                    c++;
                 }
-                test_for_tab(tab, &result);
+                j++;
             }
-            for (size_t i = 0; i < result.size(); ++i) {
-                tMax_[i] = std::max(tMax_[i], result[i]);
-            }
+            for_each_test_and_tab(tabs_, testPool_, tMax_.begin());
         }
 
     template<uint L, class T> template<class D> inline void

@@ -66,7 +66,7 @@ namespace Permory { namespace statistic {
 
             // Inspectors
             T get_mu_y() const { return mu_y_; }
-            const std::vector<Pair<T> > get_buffer() const
+            const std::vector<Pair<T> >& get_buffer() const
                 { return nomdenom_buf_; }
             T get_mu_j() const { return mu_j_; }
             T get_denom_invariant() const { return denom_invariant_; }
@@ -77,6 +77,7 @@ namespace Permory { namespace statistic {
         protected:
             void calculate_denom_invariant();
             T calculate_mu_y(const std::vector<T>& trait);
+            T calculate_mu_j(const Locus_data<uint>& data) const;
             template<class D> T calculate_mu_j(const Locus_data<D>& data) const;
 
         private:
@@ -231,6 +232,11 @@ namespace Permory { namespace statistic {
         return result;
     }
 
+    template<class T>
+    T Trend_continuous<T>::calculate_mu_j(const Locus_data<uint>& data) const
+    {
+        return std::accumulate(data.begin(), data.end(), 0.) / data.size();
+    }
     template<class T> template<class D>
     T Trend_continuous<T>::calculate_mu_j(const Locus_data<D>& data) const
     {
