@@ -204,7 +204,7 @@ namespace Permory { namespace statistic {
     }
 
 
-    template<class T>
+    template<class T> inline
     void Trend_continuous<T>::calculate_denom_invariant()
     {
         typedef Pair<T> P;
@@ -215,13 +215,13 @@ namespace Permory { namespace statistic {
         denom_invariant_ *= mu_j_ * mu_j_;
     }
 
-    template<class T>
+    template<class T> inline
     T Trend_continuous<T>::calculate_mu_y(const std::vector<T>& trait)
     {
         return std::accumulate(trait.begin(), trait.end(), T(0)) / trait.size();
     }
 
-    template<class T> std::vector<Pair<T> >
+    template<class T> std::vector<Pair<T> > inline
         Trend_continuous<T>::create_buffer(const std::vector<T>& trait)
     {
         std::vector<Pair<T> > result(trait.size());
@@ -232,12 +232,12 @@ namespace Permory { namespace statistic {
         return result;
     }
 
-    template<class T>
+    template<class T> inline
     T Trend_continuous<T>::calculate_mu_j(const Locus_data<uint>& data) const
     {
         return std::accumulate(data.begin(), data.end(), 0.) / data.size();
     }
-    template<class T> template<class D>
+    template<class T> template<class D> inline
     T Trend_continuous<T>::calculate_mu_j(const Locus_data<D>& data) const
     {
         gwas::Locus_data<uint> *numeric = data.as_numeric();
@@ -247,14 +247,14 @@ namespace Permory { namespace statistic {
         return temp;
     }
 
-    template<class T> template<class D>
+    template<class T> template<class D> inline
     void Trend_continuous<T>::update(const Locus_data<D>& data)
     {
         mu_j_ = calculate_mu_j(data);
         calculate_denom_invariant();
     }
 
-    template<class T>
+    template<class T> inline
     double Trend_continuous<T>::do_operator(const std::vector<Pair<T> >& tab) const
     {
         double nominator = 0.;
