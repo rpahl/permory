@@ -127,6 +127,7 @@ namespace Permory { namespace statistic {
                         dd.push_back(*it);
                         tt.push_back(t);
                     }
+                    it++;
                 }
                 tab = make_Con_tab<T,D,K,L>(tt.begin(), tt.end(), dd.begin(), dd.end());
             }
