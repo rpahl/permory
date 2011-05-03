@@ -151,6 +151,16 @@ template<> vector<double> create_trait() {
     result.push_back(0.2);
     return result;
 }
+template<> vector<Pair<double> > create_trait() {
+    vector<Pair<double> > result;
+    result.reserve(5);
+    result.push_back(make_pair( 0.34, 0.1156));
+    result.push_back(make_pair( 0.24, 0.0576));
+    result.push_back(make_pair( 0.04, 0.0016));
+    result.push_back(make_pair(-0.36, 0.1296));
+    result.push_back(make_pair(-0.26, 0.0676));
+    return result;
+}
 
 template<class T, class D, uint K>
 deque<T> create_orig(const vector<Locus_data<D> > data, Quantitative<K, T> &q) {
@@ -169,6 +179,7 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
     Parameter par;
     par.nperm_block = 100000;
     vector<Individual> trait(create_trait<Individual>());
+    vector<Pair<T> > trait_pair = create_trait<Pair<T> >();
     Permory::permutation::Permutation perm;
 
     par.useBar = true;
@@ -182,7 +193,10 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
 
     {
         Quantitative<3, T> q(par, trait.begin(), trait.end(), &perm);
-        vector<Pair<T> > r = q.make_table(locus_data_1);
+        vector<Pair<T> > r;
+        q.make_table<D>(trait_pair.begin(), trait_pair.end(),
+                        locus_data_1.begin(), locus_data_1.end(),
+                        r);
         BOOST_CHECK_CLOSE( r[0].first,   0.22   , tolerance );
         BOOST_CHECK_CLOSE( r[0].second,  0.3028 , tolerance );
         BOOST_CHECK_CLOSE( r[1].first,   0.04   , tolerance );

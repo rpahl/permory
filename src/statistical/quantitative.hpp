@@ -58,8 +58,12 @@ namespace Permory { namespace statistic {
             // Conversion
             // Compute test statistics for the data
             template<class D> std::vector<double> test(const gwas::Locus_data<D>&);
-            template<class D> std::vector<element_t>
-                make_table(const gwas::Locus_data<D>&);
+            template<class D> void
+                make_table(typename std::vector<element_t>::const_iterator,
+                           typename std::vector<element_t>::const_iterator,
+                           typename std::vector<D>::const_iterator,
+                           typename std::vector<D>::const_iterator,
+                           std::vector<element_t>& tab);
             // Compute permutation test statistics
             template<class D> void permutation_test(const gwas::Locus_data<D>&);
 
@@ -69,6 +73,11 @@ namespace Permory { namespace statistic {
 
             std::vector<T> prepare_trait(gwas::Gwas::const_inderator begin,
                     gwas::Gwas::const_inderator end);
+
+            // Corrects wrong sum tables which appear if genotypes are missing
+            // in markers.
+            template<class D> void correct_tab(const Locus_data<D>&,
+                    std::vector<element_t>&);
 
             std::vector<T> trait_;
             Trend_continuous<T> *test_stat_;
@@ -146,38 +155,29 @@ namespace Permory { namespace statistic {
         }
     }
 
-    template<uint L, class T> template<class D> inline
-        std::vector<typename Quantitative<L, T>::element_t>
-        Quantitative<L, T>::make_table(const gwas::Locus_data<D>& data)
-        {
-            using namespace std;
+    template<uint L, class T> template<class D> inline void
+        Quantitative<L, T>::make_table(
+            typename std::vector<element_t>::const_iterator it_buf,
+            typename std::vector<element_t>::const_iterator buf_end,
+            typename std::vector<D>::const_iterator it_data,
+            typename std::vector<D>::const_iterator data_end,
+            std::vector<element_t>& result)
+    {
+        using namespace std;
 
-            vector<element_t> result;
-            result.resize(L);
-            typename vector<element_t>::const_iterator
-                it = nomdenom_buf_.begin();
-            typename gwas::Locus_data<D>::const_iterator
-                it_data = data.begin();
+        result.resize(L);
 
-            map<typename gwas::Locus_data<D>::elem_t, size_t> indices;
-            {
-                size_t i = 0;
-                for(typename gwas::Locus_data<D>::unique_iterator
-                            it_unique = data.unique_begin();
-                        it_unique != data.unique_end();
-                        ++it_unique) {
-                    indices[it_unique->first] = i++;
-                }
-            }
+        set<D> unique(it_data, data_end);
+        vector<D> indexed(unique.begin(), unique.end());
 
-            assert(indices.size() <= L+1);
-            while (it != nomdenom_buf_.end() && it_data != data.end()) {
-                uint index = indices[*it_data++];
-                assert(index < result.size());
-                result[index] += *it++;
-            }
-            return result;
+        assert(indexed.size() <= L);
+        while (it_buf != buf_end && it_data != data_end) {
+            uint index = distance(indexed.begin(),
+                            find(indexed.begin(), indexed.end(), *it_data++));
+            assert(index < result.size());
+            result[index] += *it_buf++;
         }
+    }
 
     template<uint L, class T> template<class D> inline
         std::vector<double> Quantitative<L, T>::test(const gwas::Locus_data<D>& data)
@@ -188,7 +188,13 @@ namespace Permory { namespace statistic {
                 throw std::runtime_error("Not implementet yet.");
             }
             else {
-                tab = make_table(data);
+                make_table<D>(nomdenom_buf_.begin(), nomdenom_buf_.end(),
+                              data.begin(), data.end(), tab);
+            }
+            bool correction_needed =
+                    data.domain_cardinality() != data.data_cardinality();
+            if (correction_needed) {
+                correct_tab<D>(data, tab);
             }
             test_stat_->update(data);
             std::vector<double> v(testPool_.size());
@@ -291,6 +297,26 @@ namespace Permory { namespace statistic {
             result.push_back(i->begin()->val);
         }
         return result;
+    }
+    template<uint L, class T> template<class D> inline void
+        Quantitative<L, T>::correct_tab(const Locus_data<D>& data,
+                    std::vector<element_t>& tab)
+    {
+        using std::vector;
+
+        vector<element_t> result;
+        typename vector<element_t>::const_iterator it_tab = tab.begin();
+        for (typename Locus_data<D>::unique_iterator it = data.unique_begin();
+             it != data.unique_end();
+             ++it) {
+            if (it->second == 0) {
+                result.push_back(make_pair<T>(0, 0));
+            }
+            else {
+                result.push_back(*it_tab++);
+            }
+        }
+        tab.swap(result);
     }
 
 
