@@ -1,4 +1,5 @@
 // Copyright (c) 2010 Roman Pahl
+//               2011 Volker Steiß
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
@@ -59,6 +60,11 @@ namespace Permory { namespace statistic {
         private:
             // This function does the "permutation work"
             template<class D> void do_permutation(const gwas::Locus_data<D>&);
+
+            // Corrects wrong sums in contingency table which appear if
+            // not all genotype values are present in marker.
+            template<class D> void correct_tab(const gwas::Locus_data<D>&,
+                    Con_tab<K, L>*&);
 
             std::vector<T> trait_;
             Test_pool<K, L> testPool_;
@@ -135,6 +141,13 @@ namespace Permory { namespace statistic {
                 tab = make_Con_tab<T,D,K,L>(
                         trait_.begin(), trait_.end(), data.begin(), data.end());
             }
+            bool correction_needed =
+                    data.domain_cardinality() !=
+                    (data.data_cardinality() + (data.hasMissings() ? 0 : 1));
+            if (correction_needed) {
+                correct_tab<D>(data, tab);
+            }
+
             std::vector<double> v(testPool_.size());
             for_each_test<K,L>(*tab, testPool_.begin(), testPool_.end(), v.begin());
             delete tab;
@@ -229,6 +242,36 @@ namespace Permory { namespace statistic {
             boosters_[worst_idx].add_to_buffer(dummy_[worst_idx]);
             boosters_[worst_idx].add_to_buffer(caseFreqs_[worst_idx]);
         }
+
+    template<uint K, uint L, class T> template<class D> inline void
+        Dichotom<K, L, T>::correct_tab(const gwas::Locus_data<D>& data,
+                Con_tab<K, L>*& tab)
+        {
+            using gwas::Locus_data;
+
+            Con_tab<K, L> *result = new Con_tab<K, L>();
+            size_t col = 0;
+            size_t col_result = 0;
+            typename Locus_data<D>::unique_iterator it = data.unique_begin();
+            do {
+                while (col_result < L && it->second == 0) {
+                    ++col_result;
+                    ++it;
+                }
+                if (col_result < L) {
+                    for (uint row = 0; row < K; ++row) {
+                        result->assign(row, col_result, tab->at(row, col));
+                    }
+                    ++it;
+                    ++col_result;
+                    ++col;
+                }
+            } while (col_result < L);
+
+            delete tab;
+            tab = result;
+        }
+
 } // namespace statistic
 } // namespace Permory
 
