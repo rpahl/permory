@@ -1,4 +1,5 @@
 // Copyright (c) 2010 Roman Pahl
+//               2011 Volker Steiß
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
@@ -126,13 +127,13 @@ namespace Permory { namespace gwas {
         if (i >= 1 && i <= 22) {
             return Locus::Chr(i);
         }
-        if (s == "X")
+        if (s == "X" || s == "23")
             return Locus::X;
-        else if (s == "Y")
+        else if (s == "Y" || s == "24")
             return Locus::Y;
-        else if (s == "XY")
+        else if (s == "XY" || s == "25")
             return Locus::XY;
-        else if (s == "MT")
+        else if (s == "MT" || s == "26")
             return Locus::MT;
         else
             return Locus::none;
