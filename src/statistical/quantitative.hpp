@@ -202,7 +202,8 @@ namespace Permory { namespace statistic {
                               data.begin(), data.end(), tab);
             }
             bool correction_needed =
-                    data.domain_cardinality() != data.data_cardinality();
+                    data.domain_cardinality() !=
+                    (data.data_cardinality() + (data.hasMissings() ? 0 : 1));
             if (correction_needed) {
                 correct_tab<D>(data, tab);
             }
