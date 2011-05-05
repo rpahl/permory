@@ -7,7 +7,11 @@
 #include "detail/vector.hpp"
 #include "detail/matrix.hpp"
 #include "detail/functors.hpp"
+#include "detail/pair.hpp"
 #include "test.hpp"
+
+#include <utility>
+#include <valarray>
 
 using namespace std;
 using namespace boost;
@@ -85,6 +89,110 @@ void deque_concat_test()
 }
 
 
+void pair_helper_test() {
+    typedef int T;
+    typedef Pair<T> P;
+
+    P a(1,2);
+    P b(1,2);
+    P c;
+
+    c = a + b;
+    BOOST_CHECK_EQUAL( c.first,  2 );
+    BOOST_CHECK_EQUAL( c.second, 4 );
+
+    c += a;
+    BOOST_CHECK_EQUAL( c.first,  3 );
+    BOOST_CHECK_EQUAL( c.second, 6 );
+    BOOST_CHECK_EQUAL( a.first,  1 );
+    BOOST_CHECK_EQUAL( a.second, 2 );
+
+    {
+        std::valarray<P> v1(2);
+        v1[0] = a;
+        v1[1] = b;
+
+        std::valarray<P> v2(2);
+        v2[0] = b;
+        v2[1] = b;
+
+        v2 += v1;
+        BOOST_CHECK_EQUAL( v2[0].first,  2 );
+        BOOST_CHECK_EQUAL( v2[0].second, 4 );
+        BOOST_CHECK_EQUAL( v2[1].first,  2 );
+        BOOST_CHECK_EQUAL( v2[1].second, 4 );
+
+        v2[1] += b;
+        BOOST_CHECK_EQUAL( v2[1].first,  3 );
+        BOOST_CHECK_EQUAL( v2[1].second, 6 );
+    }
+
+    {
+        std::vector<P> v;
+        v.push_back(a);
+        v.push_back(b);
+
+        v[0] += b;
+        BOOST_CHECK_EQUAL( v[0].first,  2 );
+        BOOST_CHECK_EQUAL( v[0].second, 4 );
+        BOOST_CHECK_EQUAL( v[1].first,  1 );
+        BOOST_CHECK_EQUAL( v[1].second, 2 );
+    }
+
+    {
+        P x(1, 2);
+        x = 0;
+        BOOST_CHECK_EQUAL( x.first, 0 );
+        BOOST_CHECK_EQUAL( x.second, 0 );
+
+        x = 1.;
+        BOOST_CHECK_EQUAL( x.first, 1 );
+        BOOST_CHECK_EQUAL( x.second, 1 );
+    }
+    {
+        Pair<double> x(1., 2.);
+        x = 0;
+        BOOST_CHECK_EQUAL( x.first, 0 );
+        BOOST_CHECK_EQUAL( x.second, 0 );
+
+        x = 1.;
+        BOOST_CHECK_EQUAL( x.first, 1 );
+        BOOST_CHECK_EQUAL( x.second, 1 );
+    }
+    {
+        Pair<double> x = 1;
+        BOOST_CHECK_EQUAL( x.first, 1. );
+        BOOST_CHECK_EQUAL( x.second, 1. );
+    }
+    {
+        Pair<double> x = 1.;
+        BOOST_CHECK_EQUAL( x.first, 1. );
+        BOOST_CHECK_EQUAL( x.second, 1. );
+    }
+
+    {
+        pair<T, T> op = std::make_pair(1, 2);
+        P p(op);
+        BOOST_CHECK_EQUAL( p.first,  1 );
+        BOOST_CHECK_EQUAL( p.second, 2 );
+    }
+    {
+        pair<T, T> op(1, 2);
+        P p;
+        p = op;
+        BOOST_CHECK_EQUAL( p.first,  1 );
+        BOOST_CHECK_EQUAL( p.second, 2 );
+    }
+    {
+        P a(10, 7);
+        P b(5, 2);
+        a -= b;
+        BOOST_CHECK_EQUAL( a.first,  5 );
+        BOOST_CHECK_EQUAL( a.second, 5 );
+    }
+}
+
+
 test_suite* init_unit_test_suite( int argc, char* argv[] )
 {
     test_suite *test = BOOST_TEST_SUITE("Functions and classes from src/detail");
@@ -93,6 +201,8 @@ test_suite* init_unit_test_suite( int argc, char* argv[] )
     test->add(BOOST_TEST_CASE(&matrix_class_test));
 
     test->add(BOOST_TEST_CASE(&deque_concat_test));
+
+    test->add(BOOST_TEST_CASE(&pair_helper_test));
 
     return test;
 }

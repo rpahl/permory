@@ -13,6 +13,7 @@
 #include <boost/progress.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include "detail/config.hpp"
 #include "detail/parameter.hpp"
@@ -26,6 +27,7 @@
 #include "read_locus_data.hpp"
 #include "result_output.hpp"
 #include "statistical/dichotom.hpp"
+#include "statistical/quantitative.hpp"
 #include "statistical/pvalue.hpp"
 
 namespace Permory { namespace gwas {
@@ -35,17 +37,15 @@ namespace Permory { namespace gwas {
             // Ctor
             Analyzer(
                     detail::Parameter* par, io::Myout& out,
-                    const std::vector<bool>& trait, Gwas* study,
-                    std::set<char> the_domain=std::set<char>())
-                : par_(par), out_(out), trait_(trait), study_(study),
-                  domain_(the_domain)
+                    Gwas* study, std::set<char> the_domain=std::set<char>())
+                : par_(par), out_(out), study_(study), domain_(the_domain)
                 { init_filters(); }
 
             // Dtor
             virtual ~Analyzer() { }
 
             // Modifiers
-            template<uint K, uint L> void analyze_dichotom();
+            template<class S, class T> void analyze_dichotom();
 
         protected:
             virtual void output_results(std::deque<double>& tmax);
@@ -53,7 +53,6 @@ namespace Permory { namespace gwas {
 
             detail::Parameter* par_;
             io::Myout& out_;
-            const std::vector<bool>& trait_;
             Gwas* study_;
             std::set<char> domain_;
 
@@ -65,41 +64,33 @@ namespace Permory { namespace gwas {
     class Abstract_analyzer_factory {
         public:
             // Ctor
-            Abstract_analyzer_factory(int& argc, char **& argv)
-                { }
             // Dtor
             virtual ~Abstract_analyzer_factory() { }
 
             boost::shared_ptr<Analyzer> operator()(
-                    detail::Parameter* par, io::Myout& out,
-                    const std::vector<bool>& trait, Gwas* study,
+                    detail::Parameter* par, io::Myout& out, Gwas* study,
                     std::set<char> the_domain=std::set<char>())
             {
-                return get_analyzer(par, out, trait, study, the_domain);
+                return get_analyzer(par, out, study, the_domain);
             }
 
         private:
             virtual boost::shared_ptr<Analyzer> get_analyzer(
-                    detail::Parameter* par, io::Myout& out,
-                    const std::vector<bool>& trait, Gwas* study,
+                    detail::Parameter* par, io::Myout& out, Gwas* study,
                     std::set<char> the_domain=std::set<char>()) = 0;
     };
     class Default_analyzer_factory : public Abstract_analyzer_factory {
         public:
             // Ctor
-            Default_analyzer_factory(int& argc, char **& argv)
-                : Abstract_analyzer_factory(argc, argv)
-                { }
             // Dtor
             virtual ~Default_analyzer_factory() { }
 
         private:
             boost::shared_ptr<Analyzer> get_analyzer(
-                    detail::Parameter* par, io::Myout& out,
-                    const std::vector<bool>& trait, Gwas* study,
+                    detail::Parameter* par, io::Myout& out, Gwas* study,
                     std::set<char> the_domain=std::set<char>())
             {
-                boost::shared_ptr<Analyzer> ptr(new Analyzer(par, out, trait, study, the_domain));
+                boost::shared_ptr<Analyzer> ptr(new Analyzer(par, out, study, the_domain));
                 return ptr;
             }
     };
@@ -109,7 +100,7 @@ namespace Permory { namespace gwas {
 
     //
     //  Compute test statistics and perform permutation test
-    template<uint K, uint L> void Analyzer::analyze_dichotom()
+    template<class S, class T> void Analyzer::analyze_dichotom()
     {
         using namespace std;
         using namespace boost;
@@ -125,9 +116,20 @@ namespace Permory { namespace gwas {
             pprogress.reset(new progress_display(m*size_t(d), std::cout, "","",""));
         }
 
+        vector<Individual> trait(study_->ind_begin(), study_->ind_end());
+        // If allelic analyis, double trait status for each of the two alleles
+        if (par_->marker_type == allelic) {
+            vector<Individual> tmp;
+            tmp.reserve(trait.size()*2);
+            BOOST_FOREACH(Individual b, trait) {
+                tmp.push_back(b);
+                tmp.push_back(b);
+            }
+            trait.swap(tmp);
+        }
 
         deque<double> tmax;     //holds the maximum test statistic per permutation
-        statistic::Dichotom<K,L> stat(*par_, trait_); //computes all statistic stuff
+        S stat(*par_, trait.begin(), trait.end());   //computes all statistic stuff
         permutation::Permutation pp(par_->seed);     //does the shuffling/permutation
         Gwas::iterator itLocus = study_->begin();    //points to current locus
 
@@ -154,18 +156,18 @@ namespace Permory { namespace gwas {
                     }
 
                     if (par_->marker_type == genotype) {
-                        if (data.size() == 2*trait_.size()) {
+                        if (data.size() == 2*trait.size()) {
                             data = data.condense_alleles_to_genotypes(2);
                         }
                         // Ensure that all possible genotypes appear in the domain
                         data.add_to_domain(domain_);
                     }
 
-                    if (data.size() != trait_.size()) {
+                    if (data.size() != trait.size()) {
                         // Provide some more information in case of this error
                         // as it may be hard to spot in large data sets
                         throw Data_length_mismatch_error(
-                                itLocus->id(), trait_.size(), data.size());
+                                itLocus->id(), trait.size(), data.size());
                     }
 
                     // The non-permutation stuff needs only to be done once 
@@ -272,6 +274,10 @@ namespace Permory { namespace gwas {
             read_individuals(*par, fn, &v);
         }
         else {
+            if (not (par->val_type == Record::dichotomous)) {
+                throw invalid_argument(
+                        "Need trait file for non dichotomous phenotypes.");
+            }
             // No file so create individuals by specified numbers
             size_t n = par->ncase + par->ncontrol;
             if (n == 0) {
@@ -312,35 +318,23 @@ namespace Permory { namespace gwas {
         }
     }
 
-    void gwas_analysis(detail::Parameter* par, io::Myout& myout, Abstract_analyzer_factory& factory)
+    void gwas_analysis(detail::Parameter* par, io::Myout& myout,
+                        Abstract_analyzer_factory& factory)
     {
         using namespace std;
         using namespace io;
 
         // Phenotype data (either read in or create)
         Gwas study(create_study_sample(par, myout)); 
-        if (not par->fn_trait.empty()) {
-            myout << normal << stdpre << "Found ";
-        }
-        else {
-            myout << normal << stdpre << "Created ";
-        }
-        myout << study.ncase() << " cases and " << study.ncontrol() << 
-            " controls." << endl;
-
-        // Create *dichotomous* trait/phenotype data
-        vector<bool> trait(study.sample_size());
-        transform(study.ind_begin(), study.ind_end(), trait.begin(),
-                mem_fun_ref(&Individual::isAffected));
-        // If allelic analyis, double trait status for each of the two alleles
-        if (par->marker_type == allelic) {   
-            vector<bool> tmp;
-            tmp.reserve(trait.size()*2);
-            BOOST_FOREACH(bool b, trait) {
-                tmp.push_back(b);
-                tmp.push_back(b);
+        if (par->val_type == Record::dichotomous) {
+            if (not par->fn_trait.empty()) {
+                myout << normal << stdpre << "Found ";
             }
-            trait.swap(tmp);
+            else {
+                myout << normal << stdpre << "Created ";
+            }
+            myout << study.ncase() << " cases and " << study.ncontrol() <<
+                " controls." << endl;
         }
 
         // Loci information read in
@@ -359,13 +353,18 @@ namespace Permory { namespace gwas {
                 data_domain.insert('0');
                 data_domain.insert('1');
                 data_domain.insert('2');
-                boost::shared_ptr<Analyzer> analyzer = factory(par, myout, trait, &study, data_domain);
-                analyzer->analyze_dichotom<2,3>();
+                boost::shared_ptr<Analyzer> analyzer = factory(par, myout, &study, data_domain);
+                if (par->val_type == Record::continuous) {
+                    analyzer->analyze_dichotom<statistic::Quantitative<3>, double>();
+                }
+                else {
+                    analyzer->analyze_dichotom<statistic::Dichotom<2,3>, bool>();
+                }
                 break;
             }
             case allelic: //2x2 contingency table analysis
-                boost::shared_ptr<Analyzer> analyzer = factory(par, myout, trait, &study);
-                analyzer->analyze_dichotom<2,2>();
+                boost::shared_ptr<Analyzer> analyzer = factory(par, myout, &study);
+                analyzer->analyze_dichotom<statistic::Dichotom<2,2>, bool>();
                 break;
         }
     }

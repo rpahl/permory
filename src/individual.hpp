@@ -7,9 +7,11 @@
 
 #include <string>
 #include <vector>
+#include <istream>
 
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "detail/config.hpp"
 #include "gwas/locus.hpp"
@@ -18,9 +20,9 @@ namespace Permory
 {
     // Data record for an individual at a particular experiment/study
     struct Record {
-            enum Value_type {undefined=0, dichotomous, continous};
+            enum Value_type {undefined=0, dichotomous, continuous};
 
-            Record(double d=0.0, Value_type type = continous)
+            Record(double d=0.0, Value_type type = continuous)
                 : val(d), theType(type)
             {}
             bool operator<(const Record& r) const { return val < r.val; }
@@ -41,6 +43,28 @@ namespace Permory
                 ar & theType;
             }
     };
+    //
+    // Helper function to parse commandline arguments for type
+    // Record::Value_type.
+    std::istream& operator>>(std::istream& in, Record::Value_type& out)
+    {
+        using std::string;
+
+        string token;
+        in >> token;
+        if (token == "dichotomous"
+            or token == boost::lexical_cast<string>(Record::dichotomous)) {
+            out = Record::dichotomous;
+        }
+        else if (token == "continuous"
+            or token == boost::lexical_cast<string>(Record::continuous)) {
+            out = Record::continuous;
+        }
+        else {
+            out = Record::undefined;
+        }
+        return in;
+    }
 
     //
     // An individual as part of a clinical trial or association study, etc...
@@ -132,14 +156,14 @@ namespace Permory
 
     //
     // Sample of individuals with continuous phenotypes
-    std::vector<Individual> continous_sample(
+    std::vector<Individual> contiunous_sample(
             const std::vector<double>& phenotypes, double c=0)
     {
         std::vector<Individual> v;
         v.reserve(phenotypes.size());
         for (size_t i=0; i<phenotypes.size(); i++) {
             Individual ind(i, "", Individual::nosex, c);
-            Record rec(phenotypes[i], Record::continous);
+            Record rec(phenotypes[i], Record::continuous);
             ind.add_measurement(rec);
             v.push_back(ind);
         }

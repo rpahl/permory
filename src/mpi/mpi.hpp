@@ -11,7 +11,7 @@
 
 //#include <boost/progress.hpp>
 //#include <boost/ptr_container/ptr_vector.hpp>
-//#include <boost/shared_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <boost/mpi/environment.hpp>
 #include <boost/mpi/communicator.hpp>
@@ -43,11 +43,11 @@ namespace Permory { namespace gwas {
         public:
             // Ctor
             Mpi_analyzer(
-                    mpi::environment& env, mpi::communicator& world,
-                    detail::Parameter* par, io::Myout& out,
-                    const std::vector<bool>& trait, Gwas* study,
+                    boost::shared_ptr<mpi::environment> env,
+                    boost::shared_ptr<mpi::communicator> world,
+                    detail::Parameter* par, io::Myout& out, Gwas* study,
                     std::set<char> the_domain=std::set<char>())
-                : Analyzer(par, out, trait, study, the_domain),
+                : Analyzer(par, out, study, the_domain),
                   env_(env), world_(world)
             {
                 // memorize old nperm_total and set per process nperm_total
@@ -55,9 +55,9 @@ namespace Permory { namespace gwas {
                 par_->nperm_total = nperm_per_process();
 
                 // different seed for all processes
-                par_->seed += world_.rank();
+                par_->seed += world_->rank();
 
-                if (world_.rank() > 0) {
+                if (world_->rank() > 0) {
                     par_->quiet = true;
                     par_->verbose = false;
                 }
@@ -75,8 +75,8 @@ namespace Permory { namespace gwas {
             virtual void output_results(std::deque<double> tmax);
 
         private:
-            mpi::environment& env_;
-            mpi::communicator& world_;
+            boost::shared_ptr<mpi::environment> env_;
+            boost::shared_ptr<mpi::communicator> world_;
 
             size_t orig_nperm_total_;
     };
@@ -84,35 +84,39 @@ namespace Permory { namespace gwas {
     class Mpi_analyzer_factory : public Abstract_analyzer_factory {
         public:
             // Ctor
-            Mpi_analyzer_factory(int& argc, char **& argv)
-                : Abstract_analyzer_factory(argc, argv), env_(argc, argv)
-                { }
-
             // Dtor
             virtual ~Mpi_analyzer_factory() { }
 
+            // Modifiers
+            static void init_mpi(int *argc, char ***argv)
+            {
+                env_ = boost::shared_ptr<mpi::environment>(new mpi::environment(*argc, *argv));
+                world_ = boost::shared_ptr<mpi::communicator>(new mpi::communicator());
+            }
+
         private:
             boost::shared_ptr<Analyzer> get_analyzer(
-                    detail::Parameter* par, io::Myout& out,
-                    const std::vector<bool>& trait, Gwas* study,
+                    detail::Parameter* par, io::Myout& out, Gwas* study,
                     std::set<char> the_domain=std::set<char>())
             {
-                boost::shared_ptr<Analyzer> ptr(new Mpi_analyzer(env_, world_, par, out, trait, study, the_domain));
+                boost::shared_ptr<Analyzer> ptr(new Mpi_analyzer(env_, world_, par, out, study, the_domain));
                 return ptr;
             }
 
-            mpi::environment env_;
-            mpi::communicator world_;
+            static boost::shared_ptr<mpi::environment> env_;
+            static boost::shared_ptr<mpi::communicator> world_;
     };
+    boost::shared_ptr<mpi::environment> Mpi_analyzer_factory::env_;
+    boost::shared_ptr<mpi::communicator> Mpi_analyzer_factory::world_;
 
     // Analyzer implementation
     // ========================================================================
 
     size_t Mpi_analyzer::nperm_per_process() const
     {
-        size_t per_process = par_->nperm_total / world_.size();
-        return world_.rank() == 0
-                     ? par_->nperm_total - size_t(per_process * (world_.size() - 1))
+        size_t per_process = par_->nperm_total / world_->size();
+        return world_->rank() == 0
+                     ? par_->nperm_total - size_t(per_process * (world_->size() - 1))
                      : per_process;
     }
 
@@ -126,10 +130,10 @@ namespace Permory { namespace gwas {
 
         sort(tmax.begin(), tmax.end());
 
-        if (world_.rank() == 0) {
+        if (world_->rank() == 0) {
             boost::timer t;
             deque<double> tmax_result;
-            reduce(world_, tmax, tmax_result, deque_concat<double>(), 0);
+            reduce(*world_, tmax, tmax_result, deque_concat<double>(), 0);
             out_ << all << io::stdpre << "Runtime reduce: " << t.elapsed() << " s" << endl;
             t.restart();
             par_->nperm_total = orig_nperm_total_;  // reset nperm_total for correct output calculations
@@ -137,11 +141,20 @@ namespace Permory { namespace gwas {
             out_ << all << io::stdpre << "Runtime output: " << t.elapsed() << " s" << endl;
         }
         else {
-            reduce(world_, tmax, deque_concat<double>(), 0);
+            reduce(*world_, tmax, deque_concat<double>(), 0);
         }
     }
 
 } // namespace gwas
+
+namespace hook {
+    class MPI { };
+
+    template<> void Argument_hook_impl<MPI>::operator()(int *argc, char ***argv)
+    {
+        gwas::Mpi_analyzer_factory::init_mpi(argc, argv);
+    }
+} // namespace hook
 } // namespace Permory
 
 #endif // include guard

@@ -14,6 +14,7 @@
 #include "detail/config.hpp"
 #include "detail/matrix.hpp" 
 #include "detail/vector.hpp" 
+#include "detail/pair.hpp"
 #include "permutation/perm_matrix.hpp"
 #include "recode.hpp"
 

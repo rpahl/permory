@@ -58,8 +58,10 @@ namespace Permory { namespace gwas {
             }
 
             // Get the phenotype
-            i = boost::lexical_cast<int>(v[5]);
-            has2 = has2 || (i == 2);    
+            if (par.val_type == Record::dichotomous) {
+                i = boost::lexical_cast<int>(v[5]);
+                has2 = has2 || (i == 2);
+            }
             Record r(boost::lexical_cast<double>(v[5]), par.val_type);
             if (v[5] == par.undef_phenotype_code) { 
                 r.theType = Record::undefined; 
@@ -143,7 +145,9 @@ namespace Permory { namespace gwas {
                             // Presto uses 1 (unaffected) and 2 (affected), but
                             // we use 0 (unaffected) and 1 (affected), thus
                             // subract 1
-                            val--;  
+                            if (par.val_type == Record::dichotomous) {
+                                val--;
+                            }
                             Record r(val, par.val_type);
                             ind.add_measurement(r);
                             individuals->push_back(ind);

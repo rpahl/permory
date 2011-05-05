@@ -39,8 +39,9 @@ namespace Permory { namespace statistic {
 
             Dichotom(
                     const detail::Parameter&, 
-                    const std::vector<bool>& trait, //dichotomous trait
-                    const Permutation* pp=0);       //pre-stored permutations
+                    gwas::Gwas::const_inderator ind_begin,//individuals to create
+                    gwas::Gwas::const_inderator ind_end,  // dichotomous trait from
+                    const Permutation* pp=0);       // pre-stored permutations
 
             // Inspection
             size_t size() const { return testPool_.size(); }
@@ -66,8 +67,11 @@ namespace Permory { namespace statistic {
             template<class D> void correct_tab(const gwas::Locus_data<D>&,
                     Con_tab<K, L>*&);
 
+            std::vector<T> prepare_trait(gwas::Gwas::const_inderator begin,
+                    gwas::Gwas::const_inderator end);
+
             std::vector<T> trait_;
-            Test_pool<K, L> testPool_;
+            Test_pool<Con_tab<K, L> > testPool_;
             T nCases_;
             detail::Matrix<T> caseFreqs_;   //freqs for all permutations 
                                             //(one row per genotype)
@@ -85,9 +89,10 @@ namespace Permory { namespace statistic {
     template<uint K, uint L, class T> inline 
         Dichotom<K, L, T>::Dichotom(
                 const detail::Parameter& par,
-                const std::vector<bool>& trait,
+                gwas::Gwas::const_inderator ind_begin,
+                gwas::Gwas::const_inderator ind_end,
                 const Permutation* pp) 
-        : trait_(trait.begin(), trait.end()), testPool_(par),
+        : trait_(prepare_trait(ind_begin, ind_end)), testPool_(par),
         useBitarithmetic_(par.useBar) 
         {
             nCases_ = std::accumulate(trait_.begin(), trait_.end(), 0); 
@@ -149,7 +154,7 @@ namespace Permory { namespace statistic {
             }
 
             std::vector<double> v(testPool_.size());
-            for_each_test<K,L>(*tab, testPool_.begin(), testPool_.end(), v.begin());
+            for_each_test(*tab, testPool_.begin(), testPool_.end(), v.begin());
             delete tab;
             return v;
         }
@@ -185,7 +190,7 @@ namespace Permory { namespace statistic {
             // For each permutation i (i.e. for each obtained contingency 
             // table) compute the max over all test statistics, say max(i), and
             // then update tMax_[i] = max(tMax_[i], max(i))
-            for_each_test_and_tab<K,L>(con_tabs_, testPool_, tMax_.begin());
+            for_each_test_and_tab(con_tabs_, testPool_, tMax_.begin());
             //con_tabs_[0].print();//XXX
         }
 
@@ -271,6 +276,17 @@ namespace Permory { namespace statistic {
             delete tab;
             tab = result;
         }
+
+    template<uint K, uint L, class T> std::vector<T>
+        Dichotom<K, L, T>::prepare_trait(
+                    gwas::Gwas::const_inderator ind_begin,
+                    gwas::Gwas::const_inderator ind_end)
+    {
+        std::vector<T> result(ind_end - ind_begin);
+        transform(ind_begin, ind_end, result.begin(),
+                    std::mem_fun_ref(&Individual::isAffected));
+        return result;
+    }
 
 } // namespace statistic
 } // namespace Permory

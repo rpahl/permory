@@ -37,7 +37,7 @@ int main(int ac, char* av[])
     string config_file;
     std::vector<string> marker_data_files;
 
-    analyzer_factory_t factory(ac, av);
+    hook::Argument_hook()(&ac, &av);
 
     myout << endl;
     myout << "+-----------------+-----------------+------------------+" << endl;
@@ -81,6 +81,10 @@ int main(int ac, char* av[])
             ("max-maf", 
              value<double>(&par.max_maf)->default_value(0.5),
              "upper minor allele frequency threshold")
+            ("phenotype",
+              value<Record::Value_type>(&par.val_type)->
+                    default_value(Record::dichotomous),
+             "type of phenotype data: 1=dichotom, 2=continuous")
             ;
         //
         // Data
@@ -218,6 +222,11 @@ int main(int ac, char* av[])
                 par.log_file<<"'." << endl;
         }
 
+        if (par.val_type == Record::undefined) {
+            cerr << errpre << "Specified phenotype unknown." << endl;
+            return 1;
+        }
+
         par.fn_marker_data.insert(marker_data_files.begin(), marker_data_files.end());
         bool hasData = vm.count("data-file") > 0;
         if (!hasData) {
@@ -303,6 +312,7 @@ int main(int ac, char* av[])
         else {
             par.tests.insert(trend);
         }
+        par.useBar = par.val_type == Record::dichotomous;
 
         if (par.min_maf >= par.max_maf) {
             cerr << errpre << "Bad maf filter specification will left no " <<
@@ -335,6 +345,7 @@ int main(int ac, char* av[])
     }    
 
     try {
+        analyzer_factory_t factory;
         gwas_analysis(&par, myout, factory);
     }
     catch(std::exception& e)

@@ -41,6 +41,7 @@ namespace Permory { namespace gwas {
             size_t nValid() const { return this->size() - count_elem(undef_); }
             size_t nMiss() const { return count_elem(undef_); }
             double maf(detail::Marker_type) const; //*m*inor *a*llele *f*requency
+            void get_data_without_missings(std::vector<T>*) const;
 
             // Modifiers
             void set_target(const T&); 
@@ -138,6 +139,19 @@ namespace Permory { namespace gwas {
         else { //or via alleles, which is simple to compute
             double maf = double(count_elem(minor_)) / double(nValid());
             return maf > 0.5 ? 1.0 - maf : maf;
+        }
+    }
+
+    template<class T> inline void
+    Locus_data<T>::get_data_without_missings(std::vector<T>* result) const
+    {
+        result->reserve(nValid());
+        for (typename Locus_data<T>::const_iterator it = this->begin();
+             it != this->end();
+             ++it) {
+            if (not (*it == undef_)) {
+                result->push_back(*it);
+            }
         }
     }
 
