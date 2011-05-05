@@ -72,22 +72,25 @@ namespace Permory { namespace statistic {
             const std::vector<Pair<T> >& get_buffer() const
                 { return nomdenom_buf_; }
             T get_mu_j() const { return mu_j_; }
-            T get_denom_invariant() const { return denom_invariant_; }
+            T get_invariant() const { return invariant_; }
+            T get_denom_invariant() const { return invariant_.second; }
             Pair<T> get_sum() const { return sum_; }
 
             // Modifiers
             template<class D> void update(const Locus_data<D>& data);
 
         protected:
-            void calculate_denom_invariant();
-            T calculate_mu_y(const std::vector<T>& trait);
+            template<class D> Pair<T> calculate_invariant(
+                    const Locus_data<D>& data) const;
+            T calculate_mu_y(const std::vector<T>& trait) const;
             T calculate_mu_j(const Locus_data<uint>& data) const;
             template<class D> T calculate_mu_j(const Locus_data<D>& data) const;
 
         private:
             double do_operator(const std::vector<Pair<T> >& tab) const;
 
-            std::vector<Pair<T> > create_buffer(const std::vector<T>& trait);
+            std::vector<Pair<T> > create_buffer(const std::vector<T>& trait)
+                    const;
 
             T mu_y_;            // mean of phenotypes:
                                 //   1/N * \sum_{i=1}^{N} Y_i
@@ -98,7 +101,11 @@ namespace Permory { namespace statistic {
                                 //   first  = \sum_{i=1}^{N} (Y_i - \mu_y)
                                 //   second = \sum_{i=1}^{N} (Y_i - \mu_y)^2
             const Pair<T> sum_; // Sum of all elements in nomdenom_buf_.
-            T denom_invariant_; // invariant summand of denominator in marker j:
+            Pair<T> invariant_; // invariant summand of nominator and
+                                // denominator in marker j:
+                                // nominator:
+                                //   \mu_j * \sum_{i=1}^{N} (Y_i - \mu_y)
+                                // denominator:
                                 //   \mu_j^2 * \sum_{i=1}^{N} (Y_i - \mu_y)^2
     };
 
@@ -209,20 +216,35 @@ namespace Permory { namespace statistic {
     }
 
 
-    template<class T> inline
-    void Trend_continuous<T>::calculate_denom_invariant()
+    template<class T> template<class D> inline
+    Pair<T> Trend_continuous<T>::calculate_invariant(
+                const Locus_data<D>& data) const
     {
-        denom_invariant_ = sum_.second * mu_j_ * mu_j_;
+        if (data.hasMissings()) {
+            Pair<T> result(0, 0);
+            typename Locus_data<D>::const_iterator it = data.begin();
+            BOOST_FOREACH(Pair<T> x, nomdenom_buf_) {
+                if (not (*it++ == data.get_undef())) {
+                    result += x;
+                }
+            }
+            result.first *= mu_j_;
+            result.second *= mu_j_ * mu_j_;
+            return result;
+        }
+        else {
+            return make_pair<T>(0, sum_.second * mu_j_ * mu_j_);
+        }
     }
 
     template<class T> inline
-    T Trend_continuous<T>::calculate_mu_y(const std::vector<T>& trait)
+    T Trend_continuous<T>::calculate_mu_y(const std::vector<T>& trait) const
     {
         return std::accumulate(trait.begin(), trait.end(), T(0)) / trait.size();
     }
 
-    template<class T> std::vector<Pair<T> > inline
-        Trend_continuous<T>::create_buffer(const std::vector<T>& trait)
+    template<class T> inline std::vector<Pair<T> >
+    Trend_continuous<T>::create_buffer(const std::vector<T>& trait) const
     {
         std::vector<Pair<T> > result(trait.size());
         for (size_t i = 0; i < trait.size(); ++i) {
@@ -235,7 +257,14 @@ namespace Permory { namespace statistic {
     template<class T> inline
     T Trend_continuous<T>::calculate_mu_j(const Locus_data<uint>& data) const
     {
-        return std::accumulate(data.begin(), data.end(), 0.) / data.size();
+        if (data.hasMissings()) {
+            std::vector<uint> v;
+            data.get_data_without_missings(&v);
+            return std::accumulate(v.begin(), v.end(), 0.) / v.size();
+        }
+        else {
+            return std::accumulate(data.begin(), data.end(), 0.) / data.size();
+        }
     }
     template<class T> template<class D> inline
     T Trend_continuous<T>::calculate_mu_j(const Locus_data<D>& data) const
@@ -250,14 +279,14 @@ namespace Permory { namespace statistic {
     void Trend_continuous<T>::update(const Locus_data<D>& data)
     {
         mu_j_ = calculate_mu_j(data);
-        calculate_denom_invariant();
+        invariant_ = calculate_invariant(data);
     }
 
     template<class T> inline
     double Trend_continuous<T>::do_operator(const std::vector<Pair<T> >& tab) const
     {
-        double nominator = 0.;
-        double denominator = denom_invariant_;
+        double nominator = -invariant_.first;
+        double denominator = invariant_.second;
         // Skip index 0 as product in nominator and denominator will always
         // be 0.
         for (size_t i = 1; i < tab.size(); ++i) {

@@ -248,6 +248,25 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
     }
 }
 
+void quantitative_missings_test() {
+    const double tolerance = 0.0001;
+
+    Parameter par;
+    par.val_type = Record::continuous;
+    par.undef_allele_code = '?';
+
+    char marker[5] = {'0','0','1','?','2'};
+    Locus_data<char> locus_data = create_locus_data(marker, par);
+    BOOST_REQUIRE( locus_data.hasMissings() );
+
+    Permutation pp;
+    vector<Individual> trait = create_trait<Individual>();
+
+    Quantitative<3> q(par, trait.begin(), trait.end(), &pp);
+    vector<double> orig(q.test(locus_data));
+    BOOST_CHECK_CLOSE( orig[0], 2.76889, tolerance );
+}
+
 void quantitative_test() {
     uint uint_marker1[5] = {0,0,1,0,2};
     uint uint_marker2[5] = {2,2,1,0,0};
@@ -345,36 +364,86 @@ void teststat_test() {
 
         vector<double> trait(create_trait<double>());
 
-        Trend_continuous<T> test(trait);
+        {
+            Trend_continuous<T> test(trait);
 
-        BOOST_CHECK_CLOSE( test.get_mu_y(), 0.46, tolerance );
+            BOOST_CHECK_CLOSE( test.get_mu_y(), 0.46, tolerance );
 
-        const vector<P> buffer(test.get_buffer());
-        BOOST_CHECK_CLOSE( buffer[0].first,  0.34,   tolerance );
-        BOOST_CHECK_CLOSE( buffer[0].second, 0.1156, tolerance );
-        BOOST_CHECK_CLOSE( buffer[1].first,  0.24,   tolerance );
-        BOOST_CHECK_CLOSE( buffer[1].second, 0.0576, tolerance );
-        BOOST_CHECK_CLOSE( buffer[2].first,  0.04,   tolerance );
-        BOOST_CHECK_CLOSE( buffer[2].second, 0.0016, tolerance );
-        BOOST_CHECK_CLOSE( buffer[3].first, -0.36,   tolerance );
-        BOOST_CHECK_CLOSE( buffer[3].second, 0.1296, tolerance );
-        BOOST_CHECK_CLOSE( buffer[4].first, -0.26,   tolerance );
-        BOOST_CHECK_CLOSE( buffer[4].second, 0.0676, tolerance );
+            const vector<P> buffer(test.get_buffer());
+            BOOST_CHECK_CLOSE( buffer[0].first,  0.34,   tolerance );
+            BOOST_CHECK_CLOSE( buffer[0].second, 0.1156, tolerance );
+            BOOST_CHECK_CLOSE( buffer[1].first,  0.24,   tolerance );
+            BOOST_CHECK_CLOSE( buffer[1].second, 0.0576, tolerance );
+            BOOST_CHECK_CLOSE( buffer[2].first,  0.04,   tolerance );
+            BOOST_CHECK_CLOSE( buffer[2].second, 0.0016, tolerance );
+            BOOST_CHECK_CLOSE( buffer[3].first, -0.36,   tolerance );
+            BOOST_CHECK_CLOSE( buffer[3].second, 0.1296, tolerance );
+            BOOST_CHECK_CLOSE( buffer[4].first, -0.26,   tolerance );
+            BOOST_CHECK_CLOSE( buffer[4].second, 0.0676, tolerance );
 
-        char marker[5] = {'0','0','1','0','2'};
-        Locus_data<char> locus_data = create_locus_data(marker, par);
+            char marker[5] = {'0','0','1','0','2'};
+            Locus_data<char> locus_data = create_locus_data(marker, par);
 
-        test.update(locus_data);
+            test.update(locus_data);
 
-        BOOST_CHECK_CLOSE( test.get_mu_j(), 0.6, tolerance );
-        BOOST_CHECK_CLOSE( test.get_denom_invariant(), 0.13392, tolerance );
+            BOOST_CHECK_CLOSE( test.get_mu_j(), 0.6, tolerance );
+            BOOST_CHECK_CLOSE( test.get_denom_invariant(), 0.13392, tolerance );
 
-        vector<P> sums(3);
-        sums[0] = buffer[0] + buffer[1] + buffer[3];
-        sums[1] = buffer[2];
-        sums[2] = buffer[4];
-        T result = test(sums);
-        BOOST_CHECK_CLOSE( result, 0.9530113, tolerance );
+            vector<P> sums(3);
+            sums[0] = buffer[0] + buffer[1] + buffer[3];
+            sums[1] = buffer[2];
+            sums[2] = buffer[4];
+            T result = test(sums);
+            BOOST_CHECK_CLOSE( result, 0.9530113, tolerance );
+        }
+        //
+        // test missings
+        {
+            char marker[5] = {'0','0','1','?','2'};
+            Locus_data<char> locus_data = create_locus_data(marker, par);
+
+            BOOST_REQUIRE( locus_data.hasMissings() );
+
+            Trend_continuous<T> test(trait);
+
+            test.update(locus_data);
+
+            BOOST_CHECK_CLOSE( test.get_mu_y(), 0.46, tolerance );
+            BOOST_CHECK_CLOSE( test.get_mu_j(), 0.75, tolerance );
+            BOOST_CHECK_CLOSE( test.get_denom_invariant(), 0.13635, tolerance );
+
+            const vector<P> buffer(test.get_buffer());  // Buffer contains
+                                                        // missings!!!
+            vector<P> sums(3);
+            sums[0] = buffer[0] + buffer[1];
+            sums[1] = buffer[2];
+            sums[2] = buffer[4];
+            T result = test(sums);
+            BOOST_CHECK_CLOSE( result, 2.76889, tolerance);
+        }
+        {
+            char marker[5] = {'0','0','0','?','2'};
+            Locus_data<char> locus_data = create_locus_data(marker, par);
+
+            BOOST_REQUIRE( locus_data.hasMissings() );
+
+            Trend_continuous<T> test(trait);
+
+            test.update(locus_data);
+
+            BOOST_CHECK_CLOSE( test.get_mu_y(), 0.46, tolerance );
+            BOOST_CHECK_CLOSE( test.get_mu_j(), 0.5, tolerance );
+            BOOST_CHECK_CLOSE( test.get_denom_invariant(), 0.0606, tolerance );
+
+            const vector<P> buffer(test.get_buffer());  // Buffer contains
+                                                        // missings!!!
+            vector<P> sums(3);
+            sums[0] = buffer[0] + buffer[1] + buffer[2];
+            sums[1] = 0;
+            sums[2] = buffer[4];
+            T result = test(sums);
+            BOOST_CHECK_CLOSE( result, 2.502554, tolerance);
+        }
     }
 }
 
@@ -385,6 +454,7 @@ test_suite* init_unit_test_suite( int argc, char* argv[] )
 
     test->add(BOOST_TEST_CASE(&single_step_counts_test));
     test->add(BOOST_TEST_CASE(&quantitative_test));
+    test->add(BOOST_TEST_CASE(&quantitative_missings_test));
     test->add(BOOST_TEST_CASE(&teststat_test));
 
     return test;

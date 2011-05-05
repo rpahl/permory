@@ -184,8 +184,18 @@ namespace Permory { namespace statistic {
         {
             std::vector<element_t> tab;
             if (data.hasMissings()) {
-                // TODO
-                throw std::runtime_error("Not implementet yet.");
+                std::vector<D> dd; dd.reserve(data.size());
+                std::vector<element_t> tt; tt.reserve(data.size());
+
+                typename gwas::Locus_data<D>::const_iterator it = data.begin();
+                BOOST_FOREACH(element_t t, nomdenom_buf_) {
+                    if (*it != data.get_undef()) { //only keep the valid values
+                        dd.push_back(*it);
+                        tt.push_back(t);
+                    }
+                    it++;
+                }
+                make_table<D>(tt.begin(), tt.end(), dd.begin(), dd.end(), tab);
             }
             else {
                 make_table<D>(nomdenom_buf_.begin(), nomdenom_buf_.end(),
