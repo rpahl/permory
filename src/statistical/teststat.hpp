@@ -17,6 +17,7 @@
 namespace Permory { namespace statistic {
 
     using Permory::detail::Pair;
+    using Permory::detail::make_pair;
     using Permory::gwas::Locus_data;
 
     template<class T> class Test_stat {
@@ -61,7 +62,9 @@ namespace Permory { namespace statistic {
             // Ctors
             Trend_continuous(const std::vector<T>& trait)
                     : mu_y_(calculate_mu_y(trait)),
-                      nomdenom_buf_(create_buffer(trait))
+                      nomdenom_buf_(create_buffer(trait)),
+                      sum_(accumulate(nomdenom_buf_.begin(),
+                           nomdenom_buf_.end(), make_pair<T>(0,0)))
                 { }
 
             // Inspectors
@@ -70,6 +73,7 @@ namespace Permory { namespace statistic {
                 { return nomdenom_buf_; }
             T get_mu_j() const { return mu_j_; }
             T get_denom_invariant() const { return denom_invariant_; }
+            Pair<T> get_sum() const { return sum_; }
 
             // Modifiers
             template<class D> void update(const Locus_data<D>& data);
@@ -93,6 +97,7 @@ namespace Permory { namespace statistic {
                                 // nominator-denominator buffer:
                                 //   first  = \sum_{i=1}^{N} (Y_i - \mu_y)
                                 //   second = \sum_{i=1}^{N} (Y_i - \mu_y)^2
+            const Pair<T> sum_; // Sum of all elements in nomdenom_buf_.
             T denom_invariant_; // invariant summand of denominator in marker j:
                                 //   \mu_j^2 * \sum_{i=1}^{N} (Y_i - \mu_y)^2
     };
@@ -207,12 +212,7 @@ namespace Permory { namespace statistic {
     template<class T> inline
     void Trend_continuous<T>::calculate_denom_invariant()
     {
-        typedef Pair<T> P;
-        denom_invariant_ = 0;
-        BOOST_FOREACH(P x, nomdenom_buf_) {
-            denom_invariant_ += x.second;
-        }
-        denom_invariant_ *= mu_j_ * mu_j_;
+        denom_invariant_ = sum_.second * mu_j_ * mu_j_;
     }
 
     template<class T> inline

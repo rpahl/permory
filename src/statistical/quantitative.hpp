@@ -87,7 +87,7 @@ namespace Permory { namespace statistic {
                                         // nominator-denominator buffer:
                                         //   first  = \sum_{i=1}^{N} (Y_i - \mu_y)
                                         //   second = \sum_{i=1}^{N} (Y_i - \mu_y)^2
-            element_t sum_;             // sum of all nomdenom_buf_ elements
+            const element_t sum_;       // sum of all nomdenom_buf_ elements
 
             std::vector<double> tMax_;  //max test statistics
 
@@ -115,6 +115,7 @@ namespace Permory { namespace statistic {
         : trait_(prepare_trait(ind_begin, ind_end)),
           test_stat_(new Trend_continuous<T>(trait_)),
           nomdenom_buf_(test_stat_->get_buffer()),
+          sum_(test_stat_->get_sum()),
           useBitarithmetic_(par.useBar)
         {
             if (useBitarithmetic_) {
@@ -124,8 +125,6 @@ namespace Permory { namespace statistic {
 
             testPool_.add(test_stat_); // NOTE: Pointer will be deleted by
                                        // Test_pool.
-            sum_ = std::accumulate(nomdenom_buf_.begin(), nomdenom_buf_.end(),
-                                    make_pair(0.,0.));
 
             bool yesPermutation = (pp != 0);
             if (yesPermutation) {
