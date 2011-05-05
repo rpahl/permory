@@ -241,8 +241,7 @@ namespace Permory { namespace statistic {
     T Trend_continuous<T>::calculate_mu_j(const Locus_data<D>& data) const
     {
         gwas::Locus_data<uint> *numeric = data.as_numeric();
-        T temp = std::accumulate(numeric->begin(), numeric->end(), 0.)
-               / numeric->size();
+        T temp = calculate_mu_j(*numeric);
         delete numeric;
         return temp;
     }
