@@ -45,7 +45,7 @@ namespace Permory { namespace gwas {
             virtual ~Analyzer() { }
 
             // Modifiers
-            template<class S, class T> void analyze_dichotom();
+            template<class S, class T> void analyze();
 
         protected:
             virtual void output_results(std::deque<double>& tmax);
@@ -100,7 +100,7 @@ namespace Permory { namespace gwas {
 
     //
     //  Compute test statistics and perform permutation test
-    template<class S, class T> void Analyzer::analyze_dichotom()
+    template<class S, class T> void Analyzer::analyze()
     {
         using namespace std;
         using namespace boost;
@@ -355,16 +355,16 @@ namespace Permory { namespace gwas {
                 data_domain.insert('2');
                 boost::shared_ptr<Analyzer> analyzer = factory(par, myout, &study, data_domain);
                 if (par->val_type == Record::continuous) {
-                    analyzer->analyze_dichotom<statistic::Quantitative<3>, double>();
+                    analyzer->analyze<statistic::Quantitative<3>, double>();
                 }
                 else {
-                    analyzer->analyze_dichotom<statistic::Dichotom<2,3>, bool>();
+                    analyzer->analyze<statistic::Dichotom<2,3>, bool>();
                 }
                 break;
             }
             case allelic: //2x2 contingency table analysis
                 boost::shared_ptr<Analyzer> analyzer = factory(par, myout, &study);
-                analyzer->analyze_dichotom<statistic::Dichotom<2,2>, bool>();
+                analyzer->analyze<statistic::Dichotom<2,2>, bool>();
                 break;
         }
     }
