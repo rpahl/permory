@@ -186,6 +186,7 @@ namespace Permory { namespace gwas {
     template<class T> inline Locus_data<T> 
         Locus_data<T>::condense_alleles_to_genotypes(uint a) const
     {
+        T undef_condense = boost::lexical_cast<T>('?');
         std::vector<T> v; 
         // a=2 (default) means standard 2-allelic genotype
         v.reserve(this->size()/a);
@@ -200,10 +201,10 @@ namespace Permory { namespace gwas {
             }
             else {
                 // Found one or more undefined alleles => undefined genotype 
-                v.push_back(this->undef_);
+                v.push_back(undef_condense);
             }
         }
-        return Locus_data<T>(v, this->undef_); 
+        return Locus_data<T>(v, undef_condense);
     }
 
     template<> inline Locus_data<uint>* Locus_data<char>::as_numeric() const
