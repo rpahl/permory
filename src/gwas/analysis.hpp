@@ -344,6 +344,9 @@ namespace Permory { namespace gwas {
         if (study.m() == 0) {
             throw runtime_error("No marker available.");
         }
+        if (m < par->ntop) {
+            par->ntop = m;
+        }
         myout << normal << stdpre << m << " markers found." << endl << endl; 
 
         myout << normal << stdpre << "Starting analysis..." << endl;
