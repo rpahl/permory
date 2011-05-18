@@ -30,7 +30,7 @@ namespace Permory { namespace statistic {
     using namespace Permory::detail;
 
     //
-    // Analyze genotype data with binary/dichotomous trait
+    // Analyze genotype data with continuous/quantitative trait.
     //
     template<uint L, class T = double> class Quantitative {
         public:
