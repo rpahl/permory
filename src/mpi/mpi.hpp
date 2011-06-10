@@ -73,7 +73,7 @@ namespace Permory { namespace gwas {
         protected:
             size_t nperm_per_process() const;
 
-            virtual void output_results(std::deque<double> tmax);
+            virtual void output_results(std::deque<double>& tmax);
 
         private:
             boost::shared_ptr<mpi::environment> env_;
@@ -123,7 +123,7 @@ namespace Permory { namespace gwas {
 
     //
     //  Compute test statistics and perform permutation test
-    void Mpi_analyzer::output_results(std::deque<double> tmax)
+    void Mpi_analyzer::output_results(std::deque<double>& tmax)
     {
         using namespace std;
         using namespace boost::mpi;
