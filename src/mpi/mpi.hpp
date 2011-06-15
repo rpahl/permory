@@ -29,7 +29,7 @@
 #include "gwas/analysis.hpp"
 #include "io/output.hpp"
 
-// Make deque_concat() commulative to gain more speed.
+// Make deque_concat() commutative to gain more speed.
 namespace boost { namespace mpi {
 
   template<>
