@@ -7,13 +7,11 @@
 #include <iomanip>
 #include <time.h>
 
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/parsers.hpp>
-#include <boost/program_options/variables_map.hpp>
 #include <boost/progress.hpp>   //timer
 
 #include "detail/config.hpp"
 #include "detail/parameter.hpp"
+#include "detail/program_options.hpp"
 #include "gwas/analysis.hpp"
 #include "io/file.hpp"
 #include "io/line_reader.hpp"
@@ -45,8 +43,8 @@ int main(int ac, char* av[])
     myout << "|    PERMORY      |      v"<< fixed << setprecision(2) << 
         par.version <<                     "      |    6/Oct/2010    |" << endl;
     myout << "+-----------------+-----------------+------------------+" << endl;
-    myout << "|           Copyright (c) 2010 Roman Pahl              |" << endl;
-    myout << "|                         2011 Volker Steiß            |" << endl;
+    myout << "|          Copyright (c) 2010-2011 Roman Pahl          |" << endl;
+    myout << "|                             2011 Volker Steiß        |" << endl;
     myout << "|  Distributed under the Boost Software License, v1.0  |" << endl;
     myout << "+------------------------------------------------------+" << endl;
     myout << "|                   www.permory.org                    |" << endl;
@@ -71,31 +69,31 @@ int main(int ac, char* av[])
         //
         options_description analysis("Analysis");
         analysis.add_options()
-            ("nco", value<size_t>(&par.ncontrol), 
-             "number of controls - if specified, shadows option "
+            ("nco", my_value<size_t>(&par.ncontrol, "NUM"), 
+             "number of controls; if used, shadows option "
              "'--trait-file' and requires option '--nca'\n" 
              "Assumes: data format [...controls...|...cases...]")
-            ("nca", value<size_t>(&par.ncase), 
+            ("nca", my_value<size_t>(&par.ncase, "NUM"), 
              "number of cases (requires option '--nco')")
             ("min-maf", 
-             value<double>(&par.min_maf)->default_value(0.0),
+             my_value<double>(&par.min_maf, "NUM")->my_default_value(0.0),
              "lower minor allele frequency threshold") 
             ("max-maf", 
-             value<double>(&par.max_maf)->default_value(0.5),
+             my_value<double>(&par.max_maf, "NUM")->my_default_value(0.5),
              "upper minor allele frequency threshold")
             ("phenotype",
-              value<Record::Value_type>(&par.val_type)->
-                    default_value(Record::dichotomous),
-             "type of phenotype data: 1=dichotom, 2=continuous")
+              my_value<Record::Value_type>(&par.val_type, "NUM")->
+                    my_default_value(Record::dichotomous, " (=1)"),
+             "1=dichotomous, 2=continuous")
             ;
         //
         // Data
         //
         options_description data("Data");
         data.add_options()
-            ("allelic", "allelic-based permutation (default: genotype)") 
+            ("allelic", "perform allelic-based permutation") 
             ("missing",  
-             value<char>(&par.undef_allele_code)->default_value('?'),
+             my_value<char>(&par.undef_allele_code, "CHAR")->my_default_value('?'),
              "code of missing marker data (single character)")
             ;
         //
@@ -103,14 +101,14 @@ int main(int ac, char* av[])
         //
         options_description io("Input/Output");
         io.add_options()
-            ("trait-file,f", value<string>(&par.fn_trait), 
+            ("trait-file,f", my_value<string>(&par.fn_trait, "FILE"), 
              "file with binary trait data")
             ("out-prefix,o", 
-             value<string>(&par.out_prefix)->default_value("out"), 
+             my_value<string>(&par.out_prefix, "STRING")->my_default_value("out"), 
              "prefix for all output files") 
-            ("config,c", value<string>(&config_file), "configuration file")
-            ("log", value<string>(&par.log_file), "log file")
-            //("stat,s", value<string>(&tests), "statistical tests to be used")
+            ("config,c", my_value<string>(&config_file, "FILE"), "configuration file")
+            ("log", my_value<string>(&par.log_file, "FILE"), "log file")
+            //("stat,s", my_value<string>(&tests, "STRING"), "statistical tests to be used")
             ;
         //
         // Permutation
@@ -118,10 +116,10 @@ int main(int ac, char* av[])
         options_description perm("Permutation");
         perm.add_options()
             ("nperm,n",
-             value<size_t>(&par.nperm_total)->default_value(10000),
+             my_value<size_t>(&par.nperm_total, "NUM")->my_default_value(10000),
              "Number of permutations")
             ("seed", 
-             value<int>(&par.seed)->default_value(12345678), 
+             my_value<int>(&par.seed, "NUM")->my_default_value(12345678), 
              "random seed")
             ;
         //
@@ -131,12 +129,12 @@ int main(int ac, char* av[])
         // speed optimization
         options_description advanced("Advanced options");
         advanced.add_options()
-            ("counts", "output counts in addition to p-values")
-            ("block",value<size_t>(&par.nperm_block)->default_value(10000),  
+            ("counts", "in addition to p-values, output #(T_perm > T_orig)")
+            ("block",my_value<size_t>(&par.nperm_block, "NUM")->my_default_value(10000),  
              "permutation block size")
-            ("ntop", value<size_t>(&par.ntop)->default_value(100), 
-             "number of top markers shown in the *.top output file")
-            ("tail", value<size_t>(&par.tail_size)->default_value(100), 
+            ("ntop", my_value<size_t>(&par.ntop, "NUM")->my_default_value(100), 
+             "number of markers listed in the *.top output file")
+            ("tail", my_value<size_t>(&par.tail_size, "NUM")->my_default_value(100), 
              "size of sliding tail (REM method)")
 
             ;
@@ -158,7 +156,7 @@ int main(int ac, char* av[])
         config_file_options.add(general).add(analysis).add(data).add(io).add(perm).
             add(advanced).add(hidden);
 
-        options_description visible("Important options");
+        options_description visible("Options");
         visible.add(general).add(analysis).add(data).add(io).add(perm);
 
         // data-file is specified without option flag
