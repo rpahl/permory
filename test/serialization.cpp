@@ -23,7 +23,7 @@ using namespace Permory::gwas;
 
 template<class T> void serialize_deserialize(const T& orig, T& loaded)
 {
-    const string filename = "serialization.test";
+    const string filename = "test/serialization.test";
 
     {
         ofstream ofile(filename.c_str());
