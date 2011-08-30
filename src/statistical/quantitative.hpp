@@ -24,6 +24,7 @@
 #include "permutation/booster.hpp"  //Bitset_with_count,
 #include "permutation/perm.hpp"
 #include "statistical/testpool.hpp"
+#include "statistical/statistic.hpp"
 
 namespace Permory { namespace statistic {
     using namespace permutation;
@@ -32,15 +33,12 @@ namespace Permory { namespace statistic {
     //
     // Analyze genotype data with continuous/quantitative trait.
     //
-    template<uint L, class T = double> class Quantitative {
+    template<uint L, class T = double> class Quantitative
+            : public Statistic<std::vector<Pair<T> >, Pair<T>, L > {
         public:
 
             typedef Pair<T> element_t;
-
-            // Iterator pass through
-            typedef typename std::vector<double>::const_iterator const_iterator;
-            const_iterator tmax_begin() const { return tMax_.begin(); }
-            const_iterator tmax_end() const { return tMax_.end(); }
+            typedef Statistic<std::vector<element_t>, element_t, L> S;
 
             Quantitative(
                     const Parameter&,
@@ -69,9 +67,6 @@ namespace Permory { namespace statistic {
             template<class D> void permutation_test(const gwas::Locus_data<D>&);
 
         private:
-            // This function does the "permutation work"
-            template<class D> void do_permutation(const gwas::Locus_data<D>&);
-
             std::vector<T> prepare_trait(gwas::Gwas::const_inderator begin,
                     gwas::Gwas::const_inderator end);
 
@@ -82,27 +77,13 @@ namespace Permory { namespace statistic {
 
             std::vector<T> trait_;
             Trend_continuous<T> *test_stat_;
-            Test_pool<std::vector<element_t> > testPool_;
             const std::vector<element_t>& nomdenom_buf_;
                                         // nominator-denominator buffer:
                                         //   first  = \sum_{i=1}^{N} (Y_i - \mu_y)
                                         //   second = \sum_{i=1}^{N} (Y_i - \mu_y)^2
-            const element_t sum_;       // sum of all nomdenom_buf_ elements
-
-            std::vector<double> tMax_;  //max test statistics
-
-            Matrix<element_t> extension_;
-                                        // contains the intermediate
-                                        // result (extension) of the nominator
-                                        // and denominator
-
-            boost::ptr_vector<Perm_boost<element_t> > boosters_;
 
             // For caching purpose
-            std::vector<std::vector<element_t> > tabs_;
             bool useBitarithmetic_;
-            std::vector<int> index_[L+1];   //L+1 integer vectors
-            Bitset_with_count dummy_[L+1];  //L+1 bitsets with cached bit counts
     };
     // ========================================================================
     // Quantitative implementations
@@ -115,7 +96,6 @@ namespace Permory { namespace statistic {
         : trait_(prepare_trait(ind_begin, ind_end)),
           test_stat_(new Trend_continuous<T>(trait_)),
           nomdenom_buf_(test_stat_->get_buffer()),
-          sum_(test_stat_->get_sum()),
           useBitarithmetic_(par.useBar)
         {
             if (useBitarithmetic_) {
@@ -123,7 +103,9 @@ namespace Permory { namespace statistic {
                     "Bit arithmetics not allowed for quantitative phenotypes!");
             }
 
-            testPool_.add(test_stat_); // NOTE: Pointer will be deleted by
+            this->marginal_sum_ = test_stat_->get_sum();
+
+            this->testPool_.add(test_stat_); // NOTE: Pointer will be deleted by
                                        // Test_pool.
 
             bool yesPermutation = (pp != 0);
@@ -136,22 +118,22 @@ namespace Permory { namespace statistic {
         void Quantitative<L, T>::renew_permutations(const Permutation* pp, size_t nperm,
                 size_t tail_size)
     {
-        tabs_.resize(nperm);
-        for (size_t i = 0; i < tabs_.size(); ++i) {
-            tabs_[i].resize(L+1);
+        this->tabs_.resize(nperm);
+        for (size_t i = 0; i < this->tabs_.size(); ++i) {
+            this->tabs_[i].resize(L+1);
         }
 
-        tMax_.clear();
-        tMax_.resize(nperm);
+        this->tMax_.clear();
+        this->tMax_.resize(nperm);
 
         boost::shared_ptr<Perm_matrix<element_t> > pmat(
                 new Perm_matrix<element_t>(nperm, *pp, nomdenom_buf_, useBitarithmetic_));
 
         // Prepare permutation booster
-        boosters_.clear();
-        boosters_.reserve(L+1);
+        this->boosters_.clear();
+        this->boosters_.reserve(L+1);
         for (uint i=0; i<L+1; i++) {
-            boosters_.push_back(new Perm_boost<element_t>(pmat, tail_size));
+            this->boosters_.push_back(new Perm_boost<element_t>(pmat, tail_size));
         }
     }
 
@@ -208,92 +190,44 @@ namespace Permory { namespace statistic {
                 correct_tab<D>(data, tab);
             }
             test_stat_->update(data);
-            std::vector<double> v(testPool_.size());
-            for_each_test(tab, testPool_.begin(), testPool_.end(), v.begin());
+            std::vector<double> v(this->testPool_.size());
+            for_each_test(tab, this->testPool_.begin(), this->testPool_.end(), v.begin());
             return v;
         }
 
     template<uint L, class T> template<class D> inline void
         Quantitative<L, T>::permutation_test(const gwas::Locus_data<D>& data)
-        {
-            test_stat_->update(data);
-            extension_.resize(L+1, tMax_.size());  // one extra row for missings
+    {
+        test_stat_->update(data);
+        this->extension_.resize(L+1, this->tMax_.size());  // one extra row for missings
 
-            do_permutation(data);
-
-            // Fill tables
-            uint j = 0; //row index of matrix with case frequency results
-            uint c = 0; //column index of contingency table
-
-            // the unique_iterator is defined in discretedata.hpp:
-            // std::map<elem_type, count_type> unique_;//unique elements with counts
-            typename gwas::Locus_data<D>::unique_iterator uniques = data.unique_begin();
-            for (; uniques!=data.unique_end(); uniques++) {
-                bool ok = not (uniques->first == data.get_undef());
-                if (ok) {
-                    for (uint t=0; t < tabs_.size(); ++t) {
-                        tabs_[t][c] = extension_[j][t];
-                    }
-                    c++;
-                }
-                j++;
-            }
-            for_each_test_and_tab(tabs_, testPool_, tMax_.begin());
+        bool yesPermutation = (not this->boosters_.empty());
+        if (yesPermutation) {
+            this->do_permutation(data);
         }
 
-    template<uint L, class T> template<class D> inline void
-        Quantitative<L, T>::do_permutation(const gwas::Locus_data<D>& data)
-        {
-            uint boost_index[L+1];  // see below
-            size_t worst_idx = 0;
-            size_t maxcnt = 0;
+        // Fill tables
+        uint j = 0; //row index of matrix with case frequency results
+        uint c = 0; //column index of contingency table
 
-            typename gwas::Locus_data<D>::unique_iterator
-                it = data.unique_begin();
-            for (uint i=0; i < L+1; i++) {
-                size_t cnt = (size_t) it->second; //#occurences of the code
-                D allelic_code = it->first;
-                index_[i].clear();
-                index_[i].reserve(cnt);
-                index_code<D>(index_[i], data.begin(), data.end(), allelic_code);
-                dummy_[i] = dummy_code<D>(data.begin(), data.end(), allelic_code);
-
-                // Determine index of most similar dummy code in the
-                // booster's buffer. If the smallest distance between this
-                // dummy code and the most similar one is smaller than 'cnt',
-                // 'cnt' will contain this distance after the call.
-                boost_index[i] = boosters_[i].find_most_similar(dummy_[i], cnt);
-
-                // Keep track of the worst boostable element, which is the one
-                // that shows both highest occurences of the code and the
-                // highest distance to "neighboured" dummy codes
-                if (cnt > maxcnt) {
-                    maxcnt = cnt;
-                    worst_idx = i;
+        // the unique_iterator is defined in discretedata.hpp:
+        // std::map<elem_type, count_type> unique_;//unique elements with counts
+        typename gwas::Locus_data<D>::unique_iterator uniques = data.unique_begin();
+        for (; uniques!=data.unique_end(); uniques++) {
+            bool ok = not (uniques->first == data.get_undef());
+            if (ok) {
+                for (uint t=0; t < this->tabs_.size(); ++t) {
+                    this->tabs_[t][c] = this->extension_[j][t];
                 }
-                it++;
+                c++;
             }
-
-            // Permute for each allelic code, except the one that can be least
-            // optimized/boosted for permutation. For this, the frequency is
-            // simply derived via the marginal sum.
-            extension_[worst_idx] = sum_; //init with marginal sum
-            for (uint i=0; i < L+1; i++) {
-                if (i != worst_idx) {
-                    boosters_[i].permute(
-                            index_[i],          //index coded data
-                            dummy_[i],          //dummy coded data
-                            boost_index[i],     //index into booster's buffer
-                            &extension_[i]);    //resulting sums
-                    extension_[worst_idx] -= extension_[i];
-                }
-            }
-            // Since it was left out, the dummy code and the resulting case
-            // frequencies of the skipped code are added post hoc "by hand"
-            // to the buffer of the booster.
-            boosters_[worst_idx].add_to_buffer(dummy_[worst_idx]);
-            boosters_[worst_idx].add_to_buffer(extension_[worst_idx]);
+            j++;
         }
+        // For each permutation i (i.e. for each obtained contingency
+        // table) compute the max over all test statistics, say max(i), and
+        // then update tMax_[i] = max(tMax_[i], max(i))
+        for_each_test_and_tab(this->tabs_, this->testPool_, this->tMax_.begin());
+    }
 
     template<uint L, class T> std::vector<T>
         Quantitative<L, T>::prepare_trait(
