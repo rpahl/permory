@@ -1,0 +1,112 @@
+Copyright (c) 2010 Roman Pahl
+Distributed under the Boost Software License, Version 1.0. (See accompanying
+file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
+
+
+
+The fastest and easiest way to learn a programs functions is by examples. For
+a quick start, simply follow the instructions below. All data files involved in
+these examples have been kept very tiny, so that the user can 
+actually look into them and see what's going on. 
+
+
+Preparation
+-----------
+    Open a console and browse into the directory of the permory executable.
+
+
+General usage
+-------------
+    > permory [option] <data_file1> [data_file2 ...]
+
+Options, and data file(s) can be specified in arbitrary order. Output by 
+default is written to out.* files.
+
+
+Interactive help
+----------------
+    > permory -h 
+
+
+Example 1
+---------
+We support the transposed fileset data format of PLINK. The data format being 
+used is automatically detected by PERMORY:
+
+> permory -f data/tiny.tfam data/tiny.tped
+
+This analyzes data_tiny.tfam using 10K permutations (default) and reading the 
+trait status from the file tiny.tfam. After the call you should see two new
+files:
+    - out.all   # contains results of all markers in the original order
+    - out.top   # contains results of the top 100 markers (sorted by p-value)
+
+
+Example 2
+---------
+The data format used by the program SLIDE is also supported. Since it does NOT
+contain any trait status, we can add this information "by hand":
+
+> permory --nco 15 --nca 15 data/tinyG.slide
+
+Analyzes the data set assuming 15 controls and 15 cases (in that order). That is, 
+the first 15 data entries are interpreted as controls and the rest as cases. 
+Here the resulting files 'out.all' and 'out.top' (from Example 1) are overwritten 
+by default. You can prevent this by using the '-i option (see permory -h).
+
+
+Example 3
+---------
+PERMORY allows arbitrary combination of files of different formats.
+Particularly, we support formats of all programs that appeared in the
+corresponding publication (Pahl R and Schäfer H (2010) PERMORY: an LD-exploiting 
+permutation test algorithm for powerful genome-wide association testing. 
+Bioinformatics 2010 Sep 1; 26(17):2093-100. Epub 2010 Jul 6.), namely 
+PLINK, PRESTO, and SLIDE. So instead, we can type
+
+> permory data/tinyG.slide -f data/tiny.tfam -v
+
+which now again reads the trait status from the *.tfam file. Using the verbose
+option ('-v'), the user can check, which format(s) is/are assumed by PERMORY.
+
+
+Example 4
+---------
+You can specify as many data files as you want, each of any format. In 
+addition, PERMORY supports gzipped files, so the following is viable:
+
+> permory -f data/tiny.tfam data/tiny.tped data/tinyG.slide data/tiny.bgl.gz -v
+
+Is is important to note that the *.gz ending is mandatory for gzipped files. 
+Otherwise PERMORY will not recognize the compression and probably stop with 
+an error.
+
+
+Example 5
+---------
+To prevent the user from typing the same commands over and over again, all
+options can be alternatively specified in a configuration file:
+
+> permory data/tiny.bgl.gz -c permory.cfg
+
+For more information see the configuration file ('permory.cfg').
+
+
+Example 6
+---------
+By default, PERMORY analyses genotypes. When using the --allelic option, all
+alleles are considered independent. That is, the trait status is permuted
+individually for each allele.
+
+> permory -f data/tiny.bgl.gz data/tiny.tped data/tinyA.slide --allelic
+
+First, note the use of 'tiny.bgl.gz' - this format supports trait status
+incorporated into the data file. For more information, we refer to the
+documentation of PRESTO
+(http://faculty.washington.edu/browning/presto/presto.html).
+Second, instead of 'tinyG.slide', we use 'tinyA.slide', which contains allelic
+data in contrast to tinyG.slide, just containing genotypes.
+
+
+
+

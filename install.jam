@@ -1,0 +1,42 @@
+# Copyright (c) 2011 Roman Pahl
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
+
+# System specific installation
+
+import os ;
+if ( [ os.name ] = LINUX )
+{
+    # Binaries
+    install compactor-bin : compactor : <location>release ;
+    install permory-bin : permory : <location>release ;
+
+    # Documentation
+    install quickstart : doc/QUICKSTART.txt : <location>release ;
+    install quickstart-mpi : doc/QUICKSTART_MPI.txt : <location>release ;
+    install readme : doc/README.txt : <location>release ;
+
+    # Install
+    alias install : compactor-bin permory-bin quickstart quickstart-mpi readme ;
+    explicit install compactor-bin permory-bin quickstart quickstart-mpi readme ;
+}
+
+if ( [ os.name ] = CYGWIN )
+{
+    # Binaries
+    install permory-bin : permory : <location>release ;
+    install compactor-bin : compactor : <location>release ;
+
+    # Documentation
+    install quickstart : doc/QUICKSTART_WIN.txt : <location>release ;
+    install readme : doc/README_WIN.txt : <location>release ;
+
+    # Cygwin runtime libraries
+    install cyggcc : /bin/cyggcc_s-1.dll : <location>release ;
+    install cygstdc : /bin/cygstdc++-6.dll : <location>release ;
+    install cygwin1 : /bin/cygwin1.dll : <location>release ;
+
+    # Install
+    alias install : compactor-bin permory-bin quickstart readme cyggcc cygstdc cygwin1 ;
+    explicit install compactor-bin permory-bin quickstart readme cyggcc cygstdc cygwin1 ;
+}
