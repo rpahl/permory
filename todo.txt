@@ -1,3 +1,4 @@
+- update code regarding boost filesystem library to support the library beyond version 2
 - provide effective number of tests
 - robust test statistics
 - add to docu: do not use allelic test on *.tped data as plink reorders alleles when transposing the filesets using --transpose

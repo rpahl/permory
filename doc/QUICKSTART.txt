@@ -6,7 +6,7 @@ file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 The fastest and easiest way to learn a programs functions is by examples. For
 a quick start, simply follow the instructions below. All data files involved in
-these examples (on purpose) have been kept very tiny, so that the user can 
+these examples have been kept very tiny, so that the user can 
 actually look into them and see what's going on. 
 
 
@@ -87,9 +87,9 @@ Example 5
 To prevent the user from typing the same commands over and over again, all
 options can be alternatively specified in a configuration file:
 
-$ permory data/tiny.bgl.gz -c example.cfg
+$ permory data/tiny.bgl.gz -c permory.cfg
 
-For more information see the configuration file ('example.cfg').
+For more information see the configuration file ('permory.cfg').
 
 
 Example 6

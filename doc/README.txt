@@ -14,18 +14,19 @@ License notes
 
 Package content
 ---------------
-    compactor           # data compactor executable
-    example.cfg         # example configuration file 
-    LICENSE_1_0.txt     # license information
-    permory             # permory executable
-    QUICKSTART.txt      # general usage and application examples
-    README.txt          # this file
     - data (folder)     # example data of different formats
         tiny.bgl.gz     # marker data (Beagle format as used by PRESTO)
         tiny.tfam       # trait data (transposed fileset PLINK format)
         tiny.tped       # marker data (transposed fileset PLINK format)
         tinyA.slide     # allelic marker data (SLIDE format)
         tinyG.slide     # genotype marker data (SLIDE format)
+    compactor           # data compactor executable
+    LICENSE_1_0.txt     # license information
+    permory             # permory executable
+    permory.cfg         # example configuration file 
+    QUICKSTART.txt      # general usage and application examples
+    QUICKSTART_MPI.txt  # parallel computing using message passing interface
+    README.txt          # this file
 
 
 Getting started

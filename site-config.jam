@@ -23,19 +23,21 @@ if ( [ os.name ] = CYGWIN )
 {
     #path-constant BOOST_PATH : [ os.environ BOOST_PATH ] ;
     #path-constant BOOST_LIB_PATH : [ os.environ BOOST_LIB_PATH ] ;
-    path-constant BOOST_PATH : /usr/local/include/boost ;
-    path-constant BOOST_LIB_PATH : /usr/local/lib ;
-    
+    path-constant BOOST_LIB_PATH : /home/roman/boost_1_47_0/stage/lib ;
+    path-constant LOCAL_LIB_PATH : /usr/local/lib ;
+    path-constant LOCAL_BOOST_PATH : /home/roman/boost_1_47_0 ;
+    path-constant LOCAL_INCLUDE_PATH : /usr/local/include ;
+
     lib bfs : : <name>boost_filesystem <search>$(BOOST_LIB_PATH:W) ;
-    lib bpop : : <name>boost_program_options ;
-    lib bio : : <name>boost_iostreams ; 
-    lib bsys : : <name>boost_system ; 
-    lib zlib : : <name>z ; 
-    lib gsl : : <name>gsl ;
-    lib gslcblas : : <name>gslcblas ;
-    lib utf : : <name>boost_unit_test_framework ; 
-    lib bmpi : : <name>boost_mpi ;
-    lib bs   : : <name>boost_serialization ;
+    lib bpop : : <name>boost_program_options <search>$(BOOST_LIB_PATH:W) ;
+    lib bio : : <name>boost_iostreams <search>$(BOOST_LIB_PATH:W) ; 
+    lib bsys : : <name>boost_system <search>$(BOOST_LIB_PATH:W) ; 
+    lib zlib : : <name>z <search>$(LOCAL_LIB_PATH:W) ; 
+    lib gsl : : <name>gsl <search>$(LOCAL_LIB_PATH:W) ;
+    lib gslcblas : : <name>gslcblas <search>$(LOCAL_LIB_PATH:W) ;
+    lib utf : : <name>boost_unit_test_framework <search>$(BOOST_LIB_PATH:W) ;
+    lib bmpi : : <name>boost_mpi <search>$(BOOST_LIB_PATH:W) ;
+    lib bs   : : <name>boost_serialization <search>$(BOOST_LIB_PATH:W) ;
 }
 
 #local mypath = [ os.environ PATH ] ;
