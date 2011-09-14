@@ -24,7 +24,6 @@
 namespace Permory { namespace io {
     namespace bio = boost::iostreams;
     namespace bfs = boost::filesystem;
-    using namespace Permory::detail; //exceptions
 
     template<class T> class Line_reader {
         public:
@@ -69,19 +68,22 @@ namespace Permory { namespace io {
     template<class T> inline Line_reader<T>::Line_reader(const std::string& fn) 
         : file_(fn), charCount_(0), lineCount_(0), wordCount_(0) 
     {
+        using namespace detail;
+
         if (not bfs::is_regular(*file_)) {
-            throw File_exception("not a regular file.");
+            throw std::runtime_error("not a regular file.");
         }
         if (not bfs::exists(*file_)) { 
             throw File_not_found("not found.");
         }
 
-        ext_ =  (*file_).extension(); 
+        ext_ =  (*file_).extension().string(); 
         if (ext_ ==  ".gz") {
             in_.push(bio::gzip_decompressor()); 
             ext_ = file_.extension(1); //discard compression extension
-            if (ext_.empty())
+            if (ext_.empty()) {
                 throw File_exception("not a regular file name.");
+            }
         }
 
         // the input streambuffer
@@ -112,14 +114,14 @@ namespace Permory { namespace io {
         buf_.assign(start, end);
 
         wordCount_ += buf_.size();
-        lineCount_ += (!buf_.empty());
+        lineCount_ ++;
     }
 
     template<class T> inline void Line_reader<T>::next_str(std::string& s)
     {
         getline (in_, s);
         charCount_ += s.size();
-        lineCount_ += (!s.empty());
+        lineCount_ ++;
     }
 
     template<class T> inline void Line_reader<T>::skip()
@@ -173,8 +175,10 @@ namespace Permory { namespace io {
     inline Line_reader<char>::Line_reader(const std::string& fn) 
         : file_(fn), charCount_(0), lineCount_(0)
     {
+        using namespace detail;
+
         buf_.resize(BUFFSIZE);
-        ext_ =  (*file_).extension(); // file extension
+        ext_ =  (*file_).extension().string(); 
         if (ext_ ==  ".gz") {
             in_.push(bio::gzip_decompressor()); 
             ext_ = file_.extension(1); //discard compression extension
@@ -211,7 +215,7 @@ namespace Permory { namespace io {
         }
         buf_.resize(nchar_);    //chop off (possible) characters from last line
         charCount_+= nchar_;
-        lineCount_ += (nchar_ > 0);
+        lineCount_ ++;
 #if defined(_WINDOWS) || defined(_WIN32) || defined(__WIN32__) || defined(_WIN64)
         if (!buf_.empty()) {
             if (buf_.back() == '\r') //remove possible windows line ending artefact
@@ -225,9 +229,9 @@ namespace Permory { namespace io {
 
     inline void Line_reader<char>::skip() 
     {
-        char ch;
-        while (it_ != eos_ && *it_ != '\n') 
-            ch = *it_++;
+        while (it_ != eos_ && *it_ != '\n') {
+            it_++;
+        }
 
         if (it_ != eos_) { 
             it_++; //point to next line

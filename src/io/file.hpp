@@ -19,7 +19,7 @@ namespace Permory { namespace io {
         public:
             // Ctor
             File_handle(const std::string& fn) 
-                : p_(fn, bfs::native) 
+                : p_(fn) 
             {}
 
             // Inspection
@@ -42,7 +42,7 @@ namespace Permory { namespace io {
         // file_extension(0) returns "gz"
         // file_extension(1) returns "txt"
         // file_extension(2 or greater) returns ""
-        std::string s = (std::string) p_.filename(); 
+        std::string s = p_.filename().string();
         int x = s.find_last_of(".");
         for (int i=0; i<a; i++) 
         {
@@ -61,7 +61,7 @@ namespace Permory { namespace io {
     class File_info {
         public:
             // Ctor
-            File_info(const char* fn) : p_(fn, bfs::native) {}
+            File_info(const char* fn) : p_(fn) {}
             bool file_exists() const { return bfs::exists(p_); }
             bool isRegular() const { return bfs::is_regular(p_); } 
             size_t file_size() const { return bfs::file_size(p_); }

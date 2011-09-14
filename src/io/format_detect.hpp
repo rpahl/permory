@@ -24,10 +24,11 @@ namespace Permory { namespace io {
     // given false positives. On the other hand, it should do the job unless
     // the user attentionally tries to abuse and/or use non-supported formats.
     //
-    Datafile_format detect_marker_data_format(
+    detail::Datafile_format detect_marker_data_format(
             const std::string& fn,  //file name
             char mc='?')            //the character for the missing value
     {
+        using namespace detail;
         Line_reader<char> lr(fn);
         while (!lr.eof()) {
             lr.next();
@@ -83,9 +84,10 @@ namespace Permory { namespace io {
     // Again, the detection works very rudimentary and can be easily fooled to
     // given false positives but should do the job unless if not abused.
     //
-    Datafile_format detect_phenotype_data_format(
+    detail::Datafile_format detect_phenotype_data_format(
             const std::string& fn)  //file name
     {
+        using namespace detail;
         try {
             Line_reader<char> lr(fn);
             while (!lr.eof()) {
@@ -119,9 +121,10 @@ namespace Permory { namespace io {
         return unknown;
     }
 
-    Datafile_format detect_meta_data_format(
+    detail::Datafile_format detect_meta_data_format(
             const std::string& fn)  //file name
     {
+        using namespace detail;
         try {
             Line_reader<char> lr(fn);
             while (!lr.eof()) {

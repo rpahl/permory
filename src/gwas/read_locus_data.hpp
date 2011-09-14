@@ -107,6 +107,7 @@ namespace Permory { namespace gwas {
     {
         using namespace std;
         using namespace Permory::io;
+        using namespace Permory::detail;
 
         io::Line_reader<string> lr(fn);
         string line;

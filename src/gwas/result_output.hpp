@@ -20,6 +20,7 @@ namespace Permory { namespace gwas {
         using namespace std;
         using namespace boost;
         using namespace io;
+        using namespace Permory::detail;
         size_t m = study.m();
         size_t nbad = 0;
         size_t nmin = 0;

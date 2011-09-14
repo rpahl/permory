@@ -28,6 +28,7 @@ void file_compact(const std::string& fn_in, const std::string& fn_out,
 {
     using namespace std;
     using namespace boost;
+    using namespace Permory::detail;
     using namespace Permory::gwas;
     using namespace Permory::io;
     cout << stdpre << "Scanning file..." << endl;

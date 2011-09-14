@@ -99,6 +99,7 @@ namespace Permory { namespace gwas {
     {
         using namespace std;
         using namespace Permory::io;
+        using namespace Permory::detail;
         Line_reader<string> lr(fn);   
         size_t id = 0;
         if (not individuals->empty()) {

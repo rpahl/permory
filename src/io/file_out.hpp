@@ -62,7 +62,7 @@ namespace Permory { namespace io {
     inline File_out::File_out(const std::string& fn)
         : file_(fn) 
     {
-        bio::file_sink fs((*file_).filename());
+        bio::file_sink fs((*file_).string());
         bool isOpen = fs.is_open();
         if (!isOpen) {
             throw detail::File_exception("failed to open file.");
@@ -133,7 +133,7 @@ namespace Permory { namespace io {
     inline File_out_char::File_out_char(const std::string& fn)
         : file_(fn), charCount_(0), lineCount_(0)
     {
-        bio::file_sink fs((*file_).filename());
+        bio::file_sink fs((*file_).string());
         bool isOpen = fs.is_open();
         if (!isOpen)
             throw detail::File_exception("failed to open file.");

@@ -106,6 +106,7 @@ namespace Permory { namespace gwas {
         using namespace std;
         using namespace boost;
         using namespace io;
+        using namespace Permory::detail;
 
         // Prepare progress bar
         size_t m = study_->m();
@@ -297,6 +298,7 @@ namespace Permory { namespace gwas {
         using namespace std;
         using namespace boost;
         using namespace io;
+        using namespace Permory::detail;
         myout << normal << stdpre << "Scanning marker data..." << endl;
         BOOST_FOREACH(string fn, par->fn_marker_data) {
             Datafile_format dff = detect_marker_data_format(fn, par->undef_allele_code);
@@ -324,6 +326,7 @@ namespace Permory { namespace gwas {
     {
         using namespace std;
         using namespace io;
+        using namespace Permory::detail;
 
         // Phenotype data (either read in or create)
         Gwas study(create_study_sample(par, myout)); 

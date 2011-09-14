@@ -28,11 +28,9 @@ project permory
     : requirements 
       <include>src 
       <link>static 
-      #<linkflags>-lgslcblas #<runtime-link>static 
       #<warnings>off
       <include>$(LOCAL_BOOST_PATH)
       <include>$(LOCAL_INCLUDE_PATH)
-      <define>BOOST_FILESYSTEM_VERSION=2
     : usage-requirements 
       <include>. 
       $(flags)
