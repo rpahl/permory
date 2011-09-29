@@ -16,9 +16,14 @@ if ( [ os.name ] = LINUX )
     install quickstart-mpi : doc/QUICKSTART_MPI.txt : <location>release ;
     install readme : doc/README.txt : <location>release ;
 
+    # Examples
+    install example : example/mpi_marc.sh : <location>release/example ;
+
     # Install
-    alias install : compactor-bin permory-bin quickstart quickstart-mpi readme ;
-    explicit install compactor-bin permory-bin quickstart quickstart-mpi readme ;
+    alias install : compactor-bin permory-bin quickstart quickstart-mpi readme
+                    example ;
+    explicit install compactor-bin permory-bin quickstart quickstart-mpi readme
+                     example ;
 }
 
 if ( [ os.name ] = CYGWIN )
@@ -31,12 +36,17 @@ if ( [ os.name ] = CYGWIN )
     install quickstart : doc/QUICKSTART_WIN.txt : <location>release ;
     install readme : doc/README_WIN.txt : <location>release ;
 
+    # Examples
+    install example : example/mpi_marc.sh : <location>release/example ;
+
     # Cygwin runtime libraries
     install cyggcc : /bin/cyggcc_s-1.dll : <location>release ;
     install cygstdc : /bin/cygstdc++-6.dll : <location>release ;
     install cygwin1 : /bin/cygwin1.dll : <location>release ;
 
     # Install
-    alias install : compactor-bin permory-bin quickstart readme cyggcc cygstdc cygwin1 ;
-    explicit install compactor-bin permory-bin quickstart readme cyggcc cygstdc cygwin1 ;
+    alias install : compactor-bin permory-bin quickstart readme cyggcc cygstdc cygwin1
+                    example ;
+    explicit install compactor-bin permory-bin quickstart readme cyggcc cygstdc cygwin1
+                     example ;
 }
