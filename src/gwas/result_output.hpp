@@ -47,6 +47,8 @@ namespace Permory { namespace gwas {
         myout << indent(4) << sum << " in total" << endl;
         myout << normal << stdpre << m - sum << " (of " << m <<
             ") markers were used for analysis." << endl;
+        myout << normal << stdpre << "Effective number of tests (markers) = " <<
+            study.meff() << endl;
     }
 
     void result_to_file(

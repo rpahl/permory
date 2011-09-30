@@ -29,11 +29,12 @@ namespace Permory { namespace detail {
             //
             // Analysis
             //
-            static double min_maf;                  //minor allele freq threshold
-            static double max_maf;                  //minor allele freq threshold
-            static Marker_type marker_type;         //allelic or genotype 
-            static size_t m;                        //number of markers
-            static size_t ncase, ncontrol;          //number of cases/controls
+            static double alpha;            //genome-wide significance threshold
+            static double min_maf;          //minor allele freq threshold
+            static double max_maf;          //minor allele freq threshold
+            static Marker_type marker_type; //allelic or genotype 
+            static size_t m;                //number of markers
+            static size_t ncase, ncontrol;  //number of cases/controls
 
             //
             // Data

@@ -42,6 +42,7 @@ namespace Permory { namespace gwas {
 
             // Inspection
             size_t m() const { return loci_.size(); }
+            size_t meff() const { return meff_; }
             size_t ncase() const;
             size_t ncontrol() const { return (sample_size() - ncase()); }
             size_t sample_size() const { return ind_.size(); }
@@ -51,10 +52,12 @@ namespace Permory { namespace gwas {
             std::deque<Locus>* pointer_to_loci() { return &loci_; }
             void add_loci(const_iterator start, const_iterator end);
             void resize_loci(size_t n) { if (n < this->m()) loci_.resize(n); }
+            void set_meff(double, double alpha=0.05, bool Bonf=true);
 
         private:
             std::vector<Individual> ind_;   //recruited individuals
             std::deque<Locus> loci_;
+            size_t meff_;                   //effective number of tests
 
             // serialization stuff
             friend class boost::serialization::access;
@@ -84,6 +87,21 @@ namespace Permory { namespace gwas {
     {
         if (ind_.size() < 2) {
             throw std::invalid_argument("Gwas must have at least 2 individuals.");
+        }
+    }
+
+    //
+    // Effective number of tests (or markers, or hypotheses)
+    inline void Gwas::set_meff(
+            double p_adjusted,  //adjusted p-value
+            double alpha,       //significance threshold
+            bool Bonf)          //Bonferroni (true) or Sidak (false) correction
+    {
+        if (Bonf) { //Bonferroni
+            meff_ = alpha/p_adjusted;
+        }
+        else {      // Sidak
+            meff_ = log(1-alpha)/log(1-p_adjusted);
         }
     }
 

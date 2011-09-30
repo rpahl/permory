@@ -136,7 +136,8 @@ int main(int ac, char* av[])
              "number of markers listed in the *.top output file")
             ("tail", my_value<size_t>(&par.tail_size, "NUM")->my_default_value(100), 
              "size of sliding tail (REM method)")
-
+            ("alpha", my_value<size_t>(&par.alpha, "NUM")->my_default_value(0.05), 
+             "genome-wide significance threshold (determines effective number of tests)")
             ;
 
         // Hidden options, will be allowed both on command line and
@@ -317,6 +318,10 @@ int main(int ac, char* av[])
         if (par.min_maf >= par.max_maf) {
             cerr << errpre << "Bad maf filter specification will left no " <<
                 "markers to analyze." << endl;
+            return 1;
+        }
+        if (par.alpha <= 0 || par.alpha > 1) {
+            cerr << errpre << "Significance threshold alpha must be in [0,1]." << endl;
             return 1;
         }
 

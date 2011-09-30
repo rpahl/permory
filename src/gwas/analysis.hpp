@@ -222,6 +222,12 @@ namespace Permory { namespace gwas {
         #define TIME(X, Y) t.restart(); Y; out_ << all << stdpre << X << t.elapsed() << " s" << endl;
         boost::timer t;
 
+        // Effective number of tests
+        double alpha = 0.05;
+        double tperm_alpha = tperm[round((1.0-alpha)*tperm.size())];
+        double p = 1.0 - gsl_cdf_chisq_P(tperm_alpha, 1);
+        study_ -> set_meff(p, alpha);
+
         out_ << endl;
         result_to_console(par_, out_, *study_);
 
