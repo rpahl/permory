@@ -73,7 +73,7 @@ namespace Permory { namespace gwas {
         protected:
             size_t nperm_per_process() const;
 
-            virtual void output_results(std::deque<double>& tmax);
+            virtual void output_results(const std::deque<double>& tperm);
 
         private:
             boost::shared_ptr<mpi::environment> env_;
@@ -122,27 +122,27 @@ namespace Permory { namespace gwas {
     }
 
     //
-    //  Compute test statistics and perform permutation test
-    void Mpi_analyzer::output_results(std::deque<double>& tmax)
+    //  Compute adjusted p-values and output results
+    void Mpi_analyzer::output_results(
+            const std::deque<double>& tperm //*sorted* max test statistic per permutation
+            )
     {
         using namespace std;
         using namespace boost::mpi;
         using namespace detail;
 
-        sort(tmax.begin(), tmax.end());
-
         if (world_->rank() == 0) {
             boost::timer t;
-            deque<double> tmax_result;
-            reduce(*world_, tmax, tmax_result, deque_concat<double>(), 0);
+            deque<double> tperm_result;
+            reduce(*world_, tperm, tperm_result, deque_concat<double>(), 0);
             out_ << all << io::stdpre << "Runtime reduce: " << t.elapsed() << " s" << endl;
             t.restart();
             par_->nperm_total = orig_nperm_total_;  // reset nperm_total for correct output calculations
-            Analyzer::output_results(tmax_result);
+            Analyzer::output_results(tperm_result);
             out_ << all << io::stdpre << "Runtime output: " << t.elapsed() << " s" << endl;
         }
         else {
-            reduce(*world_, tmax, deque_concat<double>(), 0);
+            reduce(*world_, tperm, deque_concat<double>(), 0);
         }
     }
 

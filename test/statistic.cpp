@@ -48,7 +48,8 @@ void single_step_counts_test()
 
     deque<size_t> result;
  
-    result = single_step_counts(l1, &l2);
+    sort(l2.begin(),l2.end());
+    result = single_step_counts(l1, l2);
 
     BOOST_CHECK_EQUAL( result.at(0), size_t(10) );
     BOOST_CHECK_EQUAL( result.at(1), size_t(6) );
@@ -66,7 +67,8 @@ void single_step_counts_test()
     l3.push_back(0.8);
     l3.push_back(0.9);
 
-    result = single_step_counts(l1, &l3);
+    sort(l3.begin(),l3.end());
+    result = single_step_counts(l1, l3);
 
     BOOST_CHECK_EQUAL( result.at(0), size_t(9) );
     BOOST_CHECK_EQUAL( result.at(1), size_t(5) );
@@ -122,7 +124,8 @@ deque<double> calculate_pvalue(const deque<double>& orig, Quantitative<3, T>& q,
     deque<double> r(q.tmax_begin(), q.tmax_end());
     BOOST_REQUIRE_EQUAL( r.size(), par.nperm_block );
 
-    deque<size_t> counts = single_step_counts(orig, &r);
+    sort(r.begin(), r.end());
+    deque<size_t> counts = single_step_counts(orig, r);
 
     deque<double> pvalues = single_step_pvalues(counts, par.nperm_block);
     BOOST_REQUIRE_EQUAL( pvalues.size(), orig.size() );

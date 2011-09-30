@@ -16,21 +16,24 @@
 namespace Permory { namespace statistic {
     typedef std::vector<std::vector<double> > matrix_type;
 
+    //
     // Computes single step counts
+    // @requires: tperm must be sorted
     std::deque<size_t> single_step_counts(
             const std::deque<double>& t,        //test statistics
-            std::deque<double>* tperm)          //max test statistic per permutation
+            const std::deque<double>& tperm     //*sorted* max test statistic per permutation
+            )
     {
         using namespace std;
-        sort(tperm->begin(), tperm->end());
         deque<size_t> cnts(t.size(), 0);
         for (size_t j=0; j<t.size(); ++j) {             //for each test statistic
-            deque<double>::iterator it = lower_bound(tperm->begin(), tperm->end(), t[j]);
-            cnts[j] = tperm->end() - it;
+            deque<double>::const_iterator it = lower_bound(tperm.begin(), tperm.end(), t[j]);
+            cnts[j] = tperm.end() - it;
         }
         return cnts;
     }
 
+    //
     // Computes single step p-values 
     std::deque<double> single_step_pvalues(
             const std::deque<size_t>& counts,   //see function above
@@ -44,9 +47,10 @@ namespace Permory { namespace statistic {
         return p;
     }
 
+    //
     // Computes step down counts
     std::deque<size_t> step_down_counts(
-            const std::deque<double>& t,//top X test stats sorted _decreasingly_
+            const std::deque<double>& t,//top X test stats sorted _decreasingly_//TODO implementation probably must be changed to work with increasingly sorted vector
             const matrix_type& m,//max teststats per permutation for top X markers
             const std::deque<double>& v)//condensed max test stats of the non-top markers
     {
@@ -96,6 +100,7 @@ namespace Permory { namespace statistic {
         return cc;
     }
 
+    //
     // Computes step down p-values
     std::deque<double> step_down_pvalues(
             const std::deque<double>& t,

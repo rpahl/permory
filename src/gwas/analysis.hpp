@@ -49,7 +49,7 @@ namespace Permory { namespace gwas {
             template<class S, class T> void analyze();
 
         protected:
-            virtual void output_results(std::deque<double>& tmax);
+            virtual void output_results(const std::deque<double>& tperm);
             virtual void init_filters(); // Define locus filter (e.g. maf filter)
 
             detail::Parameter* par_;
@@ -130,7 +130,7 @@ namespace Permory { namespace gwas {
             trait.swap(tmp);
         }
 
-        deque<double> tmax;     //holds the maximum test statistic per permutation
+        deque<double> tperm;    //holds the maximum test statistic per permutation
         S stat(*par_, trait.begin(), trait.end());   //computes all statistic stuff
         permutation::Permutation pp(par_->seed);     //does the shuffling/permutation
         Gwas::iterator itLocus = study_->begin();    //points to current locus
@@ -201,14 +201,19 @@ namespace Permory { namespace gwas {
                 }
             }
             perm_todo -= nperm;
-            copy(stat.tmax_begin(), stat.tmax_end(), back_inserter(tmax));
+            copy(stat.tmax_begin(), stat.tmax_end(), back_inserter(tperm));
             isFirstRound = false;
         }
 
-        output_results(tmax);
+        sort(tperm.begin(), tperm.end());
+        output_results(tperm);
     }
 
-    void Analyzer::output_results(std::deque<double>& tmax)
+    //
+    //  Compute adjusted p-values and output results
+    void Analyzer::output_results(
+            const std::deque<double>& tperm //*sorted* max test statistic per permutation
+            )
     {
         using namespace std;
         using namespace io;
@@ -229,7 +234,7 @@ namespace Permory { namespace gwas {
                     t_orig.begin(), mem_fun_ref(&Locus::tmax)));
 
         TIME("Runtime single_step_counts all: ",
-            deque<size_t> counts = single_step_counts(t_orig, &tmax));
+            deque<size_t> counts = single_step_counts(t_orig, tperm));
         std::string fn = par_->out_prefix;
         fn.append(".all");
         TIME("Runtime result_to_file all: ",
@@ -243,7 +248,7 @@ namespace Permory { namespace gwas {
             transform(study_->begin(), study_->begin()+par_->ntop,
                     t_orig.begin(), mem_fun_ref(&Locus::tmax)));
         TIME("Runtime single_step_counts top: ",
-            counts = single_step_counts(t_orig, &tmax));
+            counts = single_step_counts(t_orig, tperm));
         fn = par_->out_prefix;
         fn.append(".top");
         TIME("Runtime result_to_file top: ",
