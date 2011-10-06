@@ -1,4 +1,4 @@
-// Copyright (c) 2010 Roman Pahl
+// Copyright (c) 2010-2011 Roman Pahl
 //               2011 Volker Steiß
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
@@ -9,7 +9,10 @@
 
 #include <boost/progress.hpp>   //timer
 
+#include "options_input.cpp"
+
 #include "detail/config.hpp"
+#include "detail/enums.hpp"
 #include "detail/parameter.hpp"
 #include "detail/program_options.hpp"
 #include "gwas/analysis.hpp"
@@ -17,197 +20,68 @@
 #include "io/line_reader.hpp"
 #include "io/output.hpp"
 
-int main(int ac, char* av[])
-{
-    namespace cls = boost::program_options::command_line_style;
-    using namespace std;
-    using namespace boost;
-    using namespace boost::program_options;
-    using namespace Permory;
-    using namespace Permory::detail;
-    using namespace Permory::gwas;
-    using namespace Permory::io;
+//#define BOOST_RESULT_OF_USE_DECLTYPE
+#include <boost/utility/result_of.hpp>
 
-    timer t;    //t.restart(); //start clock
-    time_t rawtime; 
-    struct tm * timeinfo;   //time and date
-    Parameter par;
-    Myout myout(&par); 
-    string config_file;
-    std::vector<string> marker_data_files;
+namespace Permory { 
 
-    hook::Argument_hook()(&ac, &av);
+    void print_head(io::Myout& myout, double version) 
+    {
+        using namespace std;
+        myout << endl;
+        myout << "+-----------------+-----------------+------------------+" << endl;
+        myout << "|    PERMORY      |      v"<< fixed << setprecision(2) << 
+            version << "      |    6/Oct/2010    |" << endl;
+        myout << "+-----------------+-----------------+------------------+" << endl;
+        myout << "|          Copyright (c) 2010-2011 Roman Pahl          |" << endl;
+        myout << "|                             2011 Volker Steiß        |" << endl;
+        myout << "|  Distributed under the Boost Software License, v1.0  |" << endl;
+        myout << "+------------------------------------------------------+" << endl;
+        myout << "|                   www.permory.org                    |" << endl;
+        myout << "+------------------------------------------------------+" << endl;
+    }
 
-    myout << endl;
-    myout << "+-----------------+-----------------+------------------+" << endl;
-    myout << "|    PERMORY      |      v"<< fixed << setprecision(2) << 
-        par.version <<                     "      |    6/Oct/2010    |" << endl;
-    myout << "+-----------------+-----------------+------------------+" << endl;
-    myout << "|          Copyright (c) 2010-2011 Roman Pahl          |" << endl;
-    myout << "|                             2011 Volker Steiß        |" << endl;
-    myout << "|  Distributed under the Boost Software License, v1.0  |" << endl;
-    myout << "+------------------------------------------------------+" << endl;
-    myout << "|                   www.permory.org                    |" << endl;
-    myout << "+------------------------------------------------------+" << endl;
+    void print_options_in_effect(io::Myout& myout, 
+            const boost::program_options::variables_map& vm)
+    {
+        using namespace std;
+        using namespace Permory::io;
+        boost::program_options::variables_map::const_iterator itMap;
 
-    try {
-        //
-        // General
-        //
-        options_description general("General");
-        general.add_options()
-            ("help,h", "show important options")
-            ("help-adv", "show advanced options")
-            ("help-all,H", "show all options")
-            ("interactive,i", "prompt before overwriting files")
-            ("quiet", "suppress console output")
-            ("verbose,v", "detailed output")
-            ("debug,d", "more detailed output")
-            ;
-        //
-        // Analysis
-        //
-        options_description analysis("Analysis");
-        analysis.add_options()
-            ("nco", my_value<size_t>(&par.ncontrol, "NUM"), 
-             "number of controls; if used, shadows option "
-             "'--trait-file' and requires option '--nca'\n" 
-             "Assumes: data format [...controls...|...cases...]")
-            ("nca", my_value<size_t>(&par.ncase, "NUM"), 
-             "number of cases (requires option '--nco')")
-            ("min-maf", 
-             my_value<double>(&par.min_maf, "NUM")->my_default_value(0.0),
-             "lower minor allele frequency threshold") 
-            ("max-maf", 
-             my_value<double>(&par.max_maf, "NUM")->my_default_value(0.5),
-             "upper minor allele frequency threshold")
-            ("phenotype",
-              my_value<Record::Value_type>(&par.val_type, "NUM")->
-                    my_default_value(Record::dichotomous, " (=1)"),
-             "1=dichotomous, 2=continuous")
-            ;
-        //
-        // Data
-        //
-        options_description data("Data");
-        data.add_options()
-            ("allelic", "perform allelic-based permutation") 
-            ("missing",  
-             my_value<char>(&par.undef_allele_code, "CHAR")->my_default_value('?'),
-             "code of missing marker data (single character)")
-            ;
-        //
-        // I/O
-        //
-        options_description io("Input/Output");
-        io.add_options()
-            ("trait-file,f", my_value<string>(&par.fn_trait, "FILE"), 
-             "file with binary trait data")
-            ("out-prefix,o", 
-             my_value<string>(&par.out_prefix, "STRING")->my_default_value("out"), 
-             "prefix for all output files") 
-            ("config,c", my_value<string>(&config_file, "FILE"), "configuration file")
-            ("log", my_value<string>(&par.log_file, "FILE"), "log file")
-            //("stat,s", my_value<string>(&tests, "STRING"), "statistical tests to be used")
-            ;
-        //
-        // Permutation
-        //
-        options_description perm("Permutation");
-        perm.add_options()
-            ("nperm,n",
-             my_value<size_t>(&par.nperm_total, "NUM")->my_default_value(10000),
-             "Number of permutations")
-            ("seed", 
-             my_value<int>(&par.seed, "NUM")->my_default_value(12345678), 
-             "random seed")
-            ;
-        //
-        // Advanced
-        //
-        // Statistical testing
-        // speed optimization
-        options_description advanced("Advanced options");
-        advanced.add_options()
-            ("counts", "in addition to p-values, output #(T_perm > T_orig)")
-            ("block",my_value<size_t>(&par.nperm_block, "NUM")->my_default_value(10000),  
-             "permutation block size")
-            ("ntop", my_value<size_t>(&par.ntop, "NUM")->my_default_value(100), 
-             "number of markers listed in the *.top output file")
-            ("tail", my_value<size_t>(&par.tail_size, "NUM")->my_default_value(100), 
-             "size of sliding tail (REM method)")
-            ("alpha", my_value<size_t>(&par.alpha, "NUM")->my_default_value(0.05), 
-             "genome-wide significance threshold (determines effective number of tests)")
-            ;
+        myout << stdpre << "Options set by user:" << endl;
+        for (itMap = vm.begin(); itMap != vm.end(); ++itMap) {
+            if (not (itMap->second.defaulted())) {
+                string option = itMap->first;
+                if (option != "data-file") {//skip vector<string> of file names
+                    myout << "   --" << option;
 
-        // Hidden options, will be allowed both on command line and
-        // in config file, but will not be shown to the user.
-        options_description hidden("Hidden");
-        hidden.add_options()
-            ("data-file", value<vector<string> >(&marker_data_files)->composing(), 
-             "input data file")
-            ;
-
-        // Create option "profiles"
-        options_description cmd_line_options;
-        cmd_line_options.add(general).add(analysis).add(data).add(io).add(perm).
-            add(advanced).add(hidden);
-
-        options_description config_file_options;
-        config_file_options.add(general).add(analysis).add(data).add(io).add(perm).
-            add(advanced).add(hidden);
-
-        options_description visible("Options");
-        visible.add(general).add(analysis).add(data).add(io).add(perm);
-
-        // data-file is specified without option flag
-        positional_options_description pos;
-        pos.add("data-file", -1);
-
-        // parse command line
-        variables_map vm;
-        store(command_line_parser(ac, av).
-                options(cmd_line_options).
-                positional(pos).
-                // turn off guessing, otherwise --help-all shadows --help
-                style(command_line_style::default_style ^ command_line_style::allow_guessing).
-                run(), vm);
-
-
-        if (vm.count("help")) {
-            cout << "Usage:\n\tpermory [options] <data_file1> [data_file2 ...]\n\n"; 
-            cout << visible << endl;
-            return 0;
-        }
-        if (vm.count("help-all")) {
-            cout << "Usage:\n\tpermory [options] <data_file1> [data_file2 ...]\n\n"; 
-            cout << visible << endl;
-            cout << advanced << endl;
-            return 0;
-        }
-        if (vm.count("help-adv")) {
-            cout << advanced << endl;
-            return 0;
-        }
-        notify(vm);
-
-        bool hasConfigFile = vm.count("config") > 0;
-        if (hasConfigFile) {
-            ifstream ifs(config_file.c_str());
-            if (!ifs) {
-                cerr << errpre << "Unable to open config file: " << config_file << endl;
-                return 1;
-            }
-            else {
-                // in any case, config file is shadowed by cmd_line inputs
-                store(parse_config_file(ifs, config_file_options), vm);
-                notify(vm);
+                    // Workaround: since we dont know the type, we play try and catch :)
+                    try { myout  << " = " << itMap->second.as<double>(); }
+                    catch (...) {
+                        try { myout  << " = " << itMap->second.as<size_t>(); }
+                        catch (...) {
+                            try { 
+                                string s = itMap->second.as<string>();
+                                if (not s.empty()) {
+                                    myout  << " = " << s;
+                                }
+                            }
+                            catch (...) {
+                                try {myout  << "4= " << itMap->second.as<int>(); }
+                                catch (...) { }
+                            }
+                        }
+                    }
+                    myout << endl;
+                }
             }
         }
-        par.quiet = vm.count("quiet") > 0;
-        par.interactive = vm.count("interactive") > 0;
-        par.verbose = vm.count("verbose") > 0;
-        par.debug = vm.count("debug") > 0;
+    }
+
+    void set_program_verbosity(detail::Parameter& par, io::Myout& myout)
+    {
+        using namespace std;
+        using namespace Permory::detail;
         if (par.quiet) {
             myout.set_verbosity(muted);
         }
@@ -217,151 +91,77 @@ int main(int ac, char* av[])
         else if (par.verbose) {
             myout.set_verbosity(verbose);
         }
-        if (not par.log_file.empty()) {
-            myout.set_logfile(par.log_file, par.interactive);
-            myout << normal << stdpre << "Writing this to log file `" << 
-                par.log_file<<"'." << endl;
+    }
+
+}   //namespace permory
+
+int main(int ac, char* av[])
+{
+    namespace cls = boost::program_options::command_line_style;
+    using namespace std;
+    using namespace Permory;
+    using namespace Permory::detail;
+    using namespace Permory::gwas;
+    using namespace Permory::io;
+
+    Parameter par;
+    Myout myout(&par); 
+    Permory::print_head(myout, par.version);
+
+    // Activation/usage of MPI is handled by a static hook
+    Permory::hook::Argument_hook()(&ac, &av);    
+
+    try {
+        boost::program_options::variables_map vm = Permory::get_options(ac, av);
+
+        string logfn = vm["log"].as<string>();
+        if (not logfn.empty()) {
+            myout.set_logfile(logfn, par.interactive);
+            myout << normal << stdpre << "Writing this to log file `" << logfn <<"'." << endl;
         }
 
-        if (par.val_type == Record::undefined) {
-            cerr << errpre << "Specified phenotype unknown." << endl;
-            return 1;
+        Permory::check_options(myout, vm);
+        Permory::set_parameter(par, vm);
+        Permory::set_program_verbosity(par, myout);
+        Permory::print_options_in_effect(myout, vm);
+        myout << normal << indent(3) << "data file(s):" << endl;
+        BOOST_FOREACH(string fn, par.fn_marker_data) {
+            myout << indent(6) << fn << endl;
         }
+        myout << stdpre<< "Output to: " << par.out_prefix << ".*" << endl;
+        myout << normal << stdpre << "Number of permutations: " << 
+            par.nperm_total << endl << endl;
 
-        par.fn_marker_data.insert(marker_data_files.begin(), marker_data_files.end());
-        bool hasData = vm.count("data-file") > 0;
-        if (!hasData) {
-            cerr << errpre << "Please specify a data-file." << endl;
-            cerr << errpre << "For more information try ./permory --help" << endl;
-            return 1;
-        }
-        else {
-            set<string> failed;
-            BOOST_FOREACH(string fn, par.fn_marker_data) {
-                try {
-                    Line_reader<char> lr(fn);
-                }
-                catch (const std::exception& e) {
-                    cerr << errpre << fn << ": Could not open file - will be ignored" << endl;
-                    failed.insert(fn);
-                }
-            }
-            // now discard the bad files (could not be done during loop)
-            BOOST_FOREACH(string s, failed) {
-                par.fn_marker_data.erase(s);
-            }
-        }
-        if (par.fn_marker_data.size() < 1) {
-            cerr << errpre << "No valid data file." << endl;
-            return 1;
-        }
-
-        bool hasNco = vm.count("nco") > 0;
-        bool hasNca = vm.count("nca") > 0;
-        bool hasTraitFile = vm.count("trait-file") > 0;
-        bool createTrait = (hasNco || hasNca);
-        if (createTrait) {
-            bool ok = true;
-            if (not hasNco) {
-                cerr << errpre << "Option '--nco' is missing." << endl;
-                ok = false;
-            }
-            if (not hasNca) {
-                cerr << errpre << "Option '--nca' is missing." << endl;
-                ok = false;
-            }
-            if (par.ncontrol == 0 || par.ncase == 0) {
-                cerr << errpre << "Number of controls or cases cannot be 0." << endl;
-                ok = false;
-            }
-            if (ok) {
-                par.fn_trait = ""; //do not read trait file anymore
-            }
-            else if (hasTraitFile) {    //last chance
-                cerr << errpre << "Will try to read trait from " << par.fn_trait << "." << endl;
-            }
-            else {
-                return 1;   //failure
-            }
-        }
-        else {
-            if (hasTraitFile) {
-                // check file 
-                try {
-                    Line_reader<char> lr(par.fn_trait);
-                }
-                catch (const std::exception& e) {
-                    cerr << e.what() << endl;
-                    return 1;
-                }
-            }
-            else {
-                cerr << errpre << "Please specify either trait file (option " <<
-                    "'--trait-file') or both number of controls ('--nco') " <<
-                    "AND cases ('--nca')." << endl; 
-                return 1;
-            }
-        }
-
-        if (vm.count("counts")) {
-            par.pval_counts = true;
-        }
-        if (vm.count("allelic")) {
-            par.marker_type = allelic;
-            par.tests.insert(chisq);
-        }
-        else {
-            par.tests.insert(trend);
-        }
-        par.useBar = par.val_type == Record::dichotomous;
-
-        if (par.min_maf >= par.max_maf) {
-            cerr << errpre << "Bad maf filter specification will left no " <<
-                "markers to analyze." << endl;
-            return 1;
-        }
-        if (par.alpha <= 0 || par.alpha > 1) {
-            cerr << errpre << "Significance threshold alpha must be in [0,1]." << endl;
-            return 1;
-        }
+        boost::timer t;                
+        time_t rawtime; 
+        struct tm * timeinfo;   //time and date
 
         time(&rawtime);
         timeinfo = localtime(&rawtime);
         myout << normal << stdpre << "Started at " << asctime(timeinfo) << endl;
 
-        myout << normal << stdpre << "Data file(s):" << endl;
-        BOOST_FOREACH(string fn, par.fn_marker_data) {
-            myout << indent(4) << fn << endl;
-        }
-        myout << stdpre<< "Output to: " << par.out_prefix << ".*" << endl;
-        if (createTrait) {
-            myout.verbose();
-            myout << stdpre << "User specified case/control numbers:" << endl;
-            myout << stdpre << "Number of controls: " << par.ncontrol << endl;
-            myout << stdpre << "Number of cases: " << par.ncase << endl;
-        }
-        myout << normal << stdpre << "Number of permutations: " << 
-            par.nperm_total << endl << endl;
-    }
-    catch(std::exception& e)
-    {
-        cerr << e.what() << endl;
-        return 1;
-    }    
-
-    try {
+        // Start main analysis 
+        t.restart();    //start clock
         analyzer_factory_t factory;
-        gwas_analysis(&par, myout, factory);
+        gwas_analysis(&par, myout, factory);    //see src/gwas/analysis.hpp
+
+        time(&rawtime);
+        timeinfo = localtime(&rawtime);
+        myout << stdpre << "Finished at " << asctime(timeinfo);
+        myout << stdpre << "User runtime: " << t.elapsed() << " s" << endl;
     }
-    catch(std::exception& e)
-    {
-        cerr << errpre << "Error: " << e.what() << endl;
-        return 1;
+    catch(const Ambigous_option& e) {
+        myout << errpre << "Ambigous option: " << e.what() << endl;
+    }    
+    catch(const Missing_option& e) {
+        myout << errpre << "Missing option - please specify " << e.what() << endl;
+        myout << errpre << "For more information try ./omd --help" << endl;
+    }    
+    catch(const Data_length_mismatch_error& e) {
+        myout << errpre << "Data length mismatch: " << e.what() << endl;
     }
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    myout << stdpre << "Finished at " << asctime(timeinfo);
-    myout << stdpre << "Runtime: " << t.elapsed() << " s" << endl;
-    return 0;
+    catch(const std::exception& e) {
+        myout << errpre << "Error: " << e.what() << endl;
+    }    
 }
 

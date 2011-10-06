@@ -2,8 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
-#ifndef groupseq_detail_program_options_hpp
-#define groupseq_detail_program_options_hpp
+#ifndef permory_detail_program_options_hpp
+#define permory_detail_program_options_hpp
 
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -25,7 +25,11 @@ namespace Permory { namespace detail {
         public:
             My_typed_value(T* val, std::string name="ARG")
                 : boost::program_options::typed_value<T>(val), name_(name)
-        { }
+            { }
+            My_typed_value(std::string name="ARG")
+                : boost::program_options::typed_value<T>(0), name_(name)
+            { }
+
             // Inspection
             std::string name() const { return name_; }
 
@@ -42,6 +46,7 @@ namespace Permory { namespace detail {
             }
             My_typed_value* my_default_value(const T& val, const std::string& textual)
             {
+                name_.append(" ");
                 name_.append(textual);
                 this->default_value(val);
                 return this;
@@ -51,16 +56,22 @@ namespace Permory { namespace detail {
     };
 
     //
-    //  Provides shorter syntax similar to program_options library
+    //  Functions providing shorter syntax similar to program_options library
     template<class T>
         My_typed_value<T>* my_value(T* val, std::string name="ARG") {
             My_typed_value<T>* r = new My_typed_value<T>(val, name);
             return r;        
         }
 
+    template<class T>
+        My_typed_value<T>* my_value(std::string name="ARG") {
+            My_typed_value<T>* r = new My_typed_value<T>(name);
+            return r;        
+        }
+
 
 } //namespace detail
-} //namespace groupseq
+} //namespace Permory
 
 #endif
 

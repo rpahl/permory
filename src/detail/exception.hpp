@@ -64,6 +64,15 @@ namespace Permory { namespace detail {
                 { }
     };
 
+    class Missing_option : public std::runtime_error {
+        public:
+            explicit Missing_option(const std::string& s) : std::runtime_error(s) {}
+    };
+    
+    class Ambigous_option : public std::runtime_error {
+        public:
+            explicit Ambigous_option(const std::string& s) : std::runtime_error(s) {}
+    };
 } //namespace detail
 } //namespace Permory
 
