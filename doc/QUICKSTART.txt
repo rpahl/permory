@@ -1,4 +1,4 @@
-Copyright (c) 2010 Roman Pahl
+Copyright (c) 2011 Roman Pahl
 Distributed under the Boost Software License, Version 1.0. (See accompanying
 file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
@@ -58,11 +58,10 @@ by default. You can prevent this by using the '-i option (see permory -h).
 Example 3
 ---------
 PERMORY allows arbitrary combination of files of different formats.
-Particularly, we support formats of all programs that appeared in the
-corresponding publication (Pahl R and Schäfer H (2010) PERMORY: an LD-exploiting 
-permutation test algorithm for powerful genome-wide association testing. 
-Bioinformatics 2010 Sep 1; 26(17):2093-100. Epub 2010 Jul 6.), namely 
-PLINK, PRESTO, and SLIDE. So instead, we can type
+Particularly, we support formats of all programs that occured in the 
+publication of Pahl R, Schäfer H: "PERMORY: an LD-exploiting permutation test 
+algorithm for powerful genome-wide association testing", Bioinformatics 2010,
+26(17):2093-2100, namely PLINK, PRESTO, and SLIDE. So instead, we can type
 
 $ permory data/tinyG.slide -f data/tiny.tfam -v
 
@@ -77,7 +76,7 @@ addition, PERMORY supports gzipped files, so the following is viable:
 
 $ permory -f data/tiny.tfam data/tiny.tped data/tinyG.slide data/tiny.bgl.gz -v
 
-Is is important to note that the *.gz ending is mandatory for gzipped files. 
+It is important to note that the *.gz ending is mandatory for gzipped files. 
 Otherwise PERMORY will not recognize the compression and probably stop with 
 an error.
 
@@ -94,18 +93,17 @@ For more information see the configuration file ('permory.cfg').
 
 Example 6
 ---------
-By default, PERMORY analyses genotypes. When using the --allelic option, all
-alleles are considered independent. That is, the trait status is permuted
-individually for each allele.
+By default, PERMORY analyses genotypes. When using the --allelic option 
+instead, all alleles are considered independent. That is, the trait status 
+is permuted individually for each allele.
 
 $ permory -f data/tiny.bgl.gz data/tiny.tped data/tinyA.slide --allelic
 
 First, note the use of 'tiny.bgl.gz' - this format supports trait status
-incorporated into the data file. For more information, we refer to the
-documentation of PRESTO
-(http://faculty.washington.edu/browning/presto/presto.html).
-Second, instead of 'tinyG.slide', we use 'tinyA.slide', which contains allelic
-data in contrast to tinyG.slide, just containing genotypes.
+incorporated into the data file. For more information, see the documentation of 
+PRESTO (http://faculty.washington.edu/browning/presto/presto.html). Second, 
+instead of 'tinyG.slide', we use 'tinyA.slide', which contains allelic
+data in contrast to the genotype data found in tinyG.slide.
 
 
 

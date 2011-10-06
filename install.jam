@@ -28,7 +28,7 @@ if ( [ os.name ] = CYGWIN )
     install compactor-bin : compactor : <location>release ;
 
     # Documentation
-    install quickstart : doc/QUICKSTART_WIN.txt : <location>release ;
+    install quickstart : doc/QUICKSTART.txt : <location>release ;
     install readme : doc/README_WIN.txt : <location>release ;
 
     # Cygwin runtime libraries

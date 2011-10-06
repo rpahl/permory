@@ -27,7 +27,7 @@ Package content
     LICENSE_1_0.txt     # license information
     permory.cfg         # example configuration file 
     permory.exe         # permory executable
-    QUICKSTART_WIN.txt  # general usage and application examples
+    QUICKSTART.txt      # general usage and application examples
     README_WIN.txt      # this file
 
 
