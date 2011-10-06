@@ -5,7 +5,7 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 #
-# Example MPI submission script for use with Marbuger Rechen Cluster (MaRC).
+# Example MPI submission script for use with Marburger Rechen Cluster (MaRC).
 #
 # Example submition to parallel queue starting 10 processes using MPI:
 # $ qsub -cwd -l h_rt=1:0:0 -pe orte 10 -q parallel@@nodes_ng -R y mpi_marc.sh
