@@ -255,7 +255,7 @@ void quantitative_missings_test() {
     const double tolerance = 0.0001;
 
     Parameter par;
-    par.val_type = Record::continuous;
+    par.phenotype_domain = Record::continuous;
     par.undef_allele_code = '?';
 
     char marker[5] = {'0','0','1','?','2'};
@@ -362,7 +362,7 @@ void teststat_test() {
         typedef Pair<T> P;
 
         Parameter par;
-        par.val_type = Record::continuous;
+        par.phenotype_domain = Record::continuous;
         par.useBar = false;
 
         vector<double> trait(create_trait<double>());

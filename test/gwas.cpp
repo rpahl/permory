@@ -33,7 +33,7 @@ void read_individuals_from_tfam_test()
 {
     const string filename = "test/data/pheno_quant_test.tfam";
     Parameter par;
-    par.val_type = Record::continuous;
+    par.phenotype_domain = Record::continuous;
     par.phenotype_data_format = plink_tfam;
     vector<Individual> individuals;
 
@@ -45,7 +45,7 @@ void read_individuals_from_tfam_test()
 void read_individuals_test() {
     const string filename = "test/data/pheno_quant_test.bgl";
     Parameter par;
-    par.val_type = Record::continuous;
+    par.phenotype_domain = Record::continuous;
     par.phenotype_data_format = presto;
     vector<Individual> individuals;
 

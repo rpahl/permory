@@ -31,7 +31,7 @@ namespace Permory {
         myout << endl;
         myout << "+-----------------+-----------------+------------------+" << endl;
         myout << "|    PERMORY      |      v"<< fixed << setprecision(2) << 
-            version << "      |    6/Oct/2010    |" << endl;
+            version << "      |    6/Oct/2011    |" << endl;
         myout << "+-----------------+-----------------+------------------+" << endl;
         myout << "|          Copyright (c) 2010-2011 Roman Pahl          |" << endl;
         myout << "|                             2011 Volker Steiß        |" << endl;

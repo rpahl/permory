@@ -206,6 +206,12 @@ namespace Permory { namespace gwas {
         }
 
         sort(tperm.begin(), tperm.end());
+
+        // Effective number of tests
+        double tperm_alpha = tperm[round((1.0-par_->alpha)*tperm.size())];
+        double p = 1.0 - gsl_cdf_chisq_P(tperm_alpha, 1);
+        study_ -> set_meff(p, par_->alpha);
+
         output_results(tperm);
     }
 
@@ -222,17 +228,11 @@ namespace Permory { namespace gwas {
         #define TIME(X, Y) t.restart(); Y; out_ << all << stdpre << X << t.elapsed() << " s" << endl;
         boost::timer t;
 
-        // Effective number of tests
-        double alpha = 0.05;
-        double tperm_alpha = tperm[round((1.0-alpha)*tperm.size())];
-        double p = 1.0 - gsl_cdf_chisq_P(tperm_alpha, 1);
-        study_ -> set_meff(p, alpha);
-
         out_ << endl;
         result_to_console(par_, out_, *study_);
 
         // Get tmax of original data and use permutation tmax to derive p-values
-        out_ << normal << stdpre << "Writing results." << endl;
+        out_ << normal << stdpre << "Creating result files." << endl;
         deque<double> t_orig(study_->m());
 
         TIME("Runtime transform all: ",
@@ -287,7 +287,7 @@ namespace Permory { namespace gwas {
             read_individuals(*par, fn, &v);
         }
         else {
-            if (not (par->val_type == Record::dichotomous)) {
+            if (not (par->phenotype_domain == Record::dichotomous)) {
                 throw invalid_argument(
                         "Need trait file for non dichotomous phenotypes.");
             }
@@ -310,24 +310,29 @@ namespace Permory { namespace gwas {
         using namespace boost;
         using namespace io;
         using namespace Permory::detail;
+        std::set<std::string> fn_bad_files;  //remember files of unknown format
+
         myout << normal << stdpre << "Scanning marker data..." << endl;
         BOOST_FOREACH(string fn, par->fn_marker_data) {
             Datafile_format dff = detect_marker_data_format(fn, par->undef_allele_code);
             myout << verbose << indent(4) << "`" << fn << "' -> assuming file format " << 
                 detail::datafile_format_to_string(dff);
             if (dff == unknown) {
-                par->fn_bad_files.insert(fn);
+                fn_bad_files.insert(fn);
                 myout << " - will be ignored." << endl;
                 continue;
             }
             myout << endl;
             read_loci(dff, fn, the_study->pointer_to_loci());
         }
-        if (not par->fn_bad_files.empty()) {
-            BOOST_FOREACH(std::string s, par->fn_bad_files) {
+
+        // Deletion of the bad files must be done in a subsequent loop, because
+        // otherwise the iteration through the set had been corrupted
+        if (not fn_bad_files.empty()) {
+            BOOST_FOREACH(std::string s, fn_bad_files) {
                 par->fn_marker_data.erase(s);
             }
-            cerr << warnpre << "Warning: " << par->fn_bad_files.size() << " data file(s) " <<
+            myout << warnpre << "Warning: " << fn_bad_files.size() << " data file(s) " <<
                 "will NOT be processed due to unrecognized data format." << endl;
         }
     }
@@ -341,7 +346,7 @@ namespace Permory { namespace gwas {
 
         // Phenotype data (either read in or create)
         Gwas study(create_study_sample(par, myout)); 
-        if (par->val_type == Record::dichotomous) {
+        if (par->phenotype_domain == Record::dichotomous) {
             if (not par->fn_trait.empty()) {
                 myout << normal << stdpre << "Found ";
             }
@@ -372,7 +377,7 @@ namespace Permory { namespace gwas {
                 data_domain.insert('1');
                 data_domain.insert('2');
                 boost::shared_ptr<Analyzer> analyzer = factory(par, myout, &study, data_domain);
-                if (par->val_type == Record::continuous) {
+                if (par->phenotype_domain == Record::continuous) {
                     analyzer->analyze<statistic::Quantitative<3>, double>();
                 }
                 else {

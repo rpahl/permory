@@ -41,7 +41,7 @@ namespace Permory { namespace detail {
             //
             // Supported data file formats: PERMORY, PRESTO, PLINK, and SLIDE
             static Datafile_format phenotype_data_format;     
-            static Record::Value_type val_type;     //dichotomous or continuous
+            static Record::Value_type phenotype_domain;//dichotomous or continuous
             static char undef_allele_code;          //code of missing allele
             static std::string undef_phenotype_code;//code of missing phenotype
             
@@ -49,7 +49,6 @@ namespace Permory { namespace detail {
             // Input
             //
             static std::set<std::string> fn_marker_data;//data file names
-            static std::set<std::string> fn_bad_files;  //files of unknown format
             static std::string fn_trait;        //trait/phenotype file name
             //static std::string fn_meta;         //meta information file name
 
@@ -92,11 +91,12 @@ namespace Permory { namespace detail {
     bool Parameter::quiet = false;
     bool Parameter::verbose = false;
     bool Parameter::debug = false;
-    double Parameter::version = 1.0;
+    double Parameter::version = 1.1;
 
     //
     // Analysis
     //
+    double Parameter::alpha = 0.05;            
     double Parameter::min_maf = 0.0;
     double Parameter::max_maf = 0.5;
     Marker_type Parameter::marker_type = genotype;
@@ -108,15 +108,14 @@ namespace Permory { namespace detail {
     // Data
     //
     Datafile_format Parameter::phenotype_data_format = unknown;
+    Record::Value_type Parameter::phenotype_domain = Record::dichotomous;     
     char Parameter::undef_allele_code = '?';
     std::string Parameter::undef_phenotype_code = "?"; 
-    Record::Value_type Parameter::val_type = Record::dichotomous;     
 
     //
     // Input
     //
     std::set<std::string> Parameter::fn_marker_data; 
-    std::set<std::string> Parameter::fn_bad_files; 
     std::string Parameter::fn_trait = "";                
     //std::string Parameter::fn_meta = "";                
 

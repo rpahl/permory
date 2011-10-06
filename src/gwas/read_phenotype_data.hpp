@@ -59,11 +59,11 @@ namespace Permory { namespace gwas {
             }
 
             // Get the phenotype
-            if (par.val_type == Record::dichotomous) {
+            if (par.phenotype_domain == Record::dichotomous) {
                 i = boost::lexical_cast<int>(v[5]);
                 has2 = has2 || (i == 2);
             }
-            Record r(boost::lexical_cast<double>(v[5]), par.val_type);
+            Record r(boost::lexical_cast<double>(v[5]), par.phenotype_domain);
             if (v[5] == par.undef_phenotype_code) { 
                 r.theType = Record::undefined; 
             }
@@ -71,7 +71,7 @@ namespace Permory { namespace gwas {
             ind.add_measurement(r);
             individuals->push_back(ind);
         }
-        bool requiresAutocorrection = (par.val_type == Record::dichotomous && has2);
+        bool requiresAutocorrection = (par.phenotype_domain == Record::dichotomous && has2);
         if (requiresAutocorrection) {
             // Auto correct affection status as follows:
             //  unaffected: 1 -> 0
@@ -119,7 +119,7 @@ namespace Permory { namespace gwas {
                             Individual ind(id++);
                             double val = //0 means unaffected and 1 affected
                                 boost::lexical_cast<double>(vs[i]);
-                            Record r(val, par.val_type);
+                            Record r(val, par.phenotype_domain);
                             ind.add_measurement(r);
                             individuals->push_back(ind);
                         }
@@ -147,10 +147,10 @@ namespace Permory { namespace gwas {
                             // Presto uses 1 (unaffected) and 2 (affected), but
                             // we use 0 (unaffected) and 1 (affected), thus
                             // subract 1
-                            if (par.val_type == Record::dichotomous) {
+                            if (par.phenotype_domain == Record::dichotomous) {
                                 val--;
                             }
-                            Record r(val, par.val_type);
+                            Record r(val, par.phenotype_domain);
                             ind.add_measurement(r);
                             individuals->push_back(ind);
                         }
