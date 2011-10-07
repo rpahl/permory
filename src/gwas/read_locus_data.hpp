@@ -28,13 +28,13 @@ namespace Permory { namespace gwas {
 
             // Inspection
             bool hasData() const { return !lr_.eof(); }
-            detail::Datafile_format get_format() const { return format_; }
+            detail::datafile_format get_format() const { return format_; }
 
             // Conversion
             size_t get_next(std::vector<T>&);
 
         private:
-            detail::Datafile_format format_;
+            detail::datafile_format format_;
             io::Line_reader<T> lr_;
     };
 
@@ -101,7 +101,7 @@ namespace Permory { namespace gwas {
     // SLIDE where in case of SLIDE, the loci names are simply formed by the 
     // ID. All newly read loci are appended to the loci deque.
     //
-    void read_loci(const detail::Datafile_format& format, const std::string& fn, 
+    void read_loci(const detail::datafile_format& format, const std::string& fn, 
             //std::back_insert_iterator<std::deque<Locus> > loci_back)
             std::deque<Locus>* loci)
     {

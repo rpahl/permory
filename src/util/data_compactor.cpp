@@ -40,7 +40,7 @@ void file_compact(const std::string& fn_in, const std::string& fn_out,
         n++;
     }
     n--;
-    Datafile_format dff = detect_marker_data_format(fn_in, undef);
+    datafile_format dff = detect_marker_data_format(fn_in, undef);
     if (dff == presto) {
         n--;
     }
@@ -165,13 +165,14 @@ int main(int ac, char* av[])
                 fn_out.append(".gz");
             }
         }
-        Datafile_format dff = detect_marker_data_format(fn_in, undef);
+        datafile_format dff = detect_marker_data_format(fn_in, undef);
         if (dff == unknown) {
             cerr << errpre << "Unknown data format." << endl;
         }
+        Permory::detail::Enum_converter ec;
         cout << stdpre << "Input file: " << "`" << fn_in << 
             "' -> assuming file format " << 
-            Permory::detail::datafile_format_to_string(dff) << endl;
+            ec.key_to_string<datafile_format>(dff) << endl;
     }
     catch(std::exception& e)
     {

@@ -97,7 +97,6 @@ namespace Permory {
 
 int main(int ac, char* av[])
 {
-    namespace cls = boost::program_options::command_line_style;
     using namespace std;
     using namespace Permory;
     using namespace Permory::detail;
@@ -112,6 +111,7 @@ int main(int ac, char* av[])
     Permory::hook::Argument_hook()(&ac, &av);    
 
     try {
+        // Get user supplied program options
         boost::program_options::variables_map vm = Permory::get_options(ac, av);
 
         string logfn = vm["log"].as<string>();
@@ -120,6 +120,7 @@ int main(int ac, char* av[])
             myout << normal << stdpre << "Writing this to log file `" << logfn <<"'." << endl;
         }
 
+        // Check options and set program parameters accordingly
         Permory::check_options(myout, vm);
         Permory::set_parameter(par, vm);
         Permory::set_program_verbosity(par, myout);
@@ -132,10 +133,10 @@ int main(int ac, char* av[])
         myout << normal << stdpre << "Number of permutations: " << 
             par.nperm_total << endl << endl;
 
+        // Prepare timer
         boost::timer t;                
         time_t rawtime; 
         struct tm * timeinfo;   //time and date
-
         time(&rawtime);
         timeinfo = localtime(&rawtime);
         myout << normal << stdpre << "Started at " << asctime(timeinfo) << endl;

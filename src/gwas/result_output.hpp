@@ -110,10 +110,11 @@ namespace Permory { namespace gwas {
         out << left << setw(9) << s;
 
         size_t ntest = par->tests.size();
+        Enum_converter ec;
         for (std::set<Test_type>::const_iterator it=par->tests.begin();
                 it!=par->tests.end(); ++it)
         {
-            s = test_type_to_string(*it);
+            s = ec.key_to_string<Test_type>(*it);
             out << left << setw(13) << s;
         }
         if (ntest > 1) {

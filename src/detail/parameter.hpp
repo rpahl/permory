@@ -40,7 +40,7 @@ namespace Permory { namespace detail {
             // Data
             //
             // Supported data file formats: PERMORY, PRESTO, PLINK, and SLIDE
-            static Datafile_format phenotype_data_format;     
+            static datafile_format phenotype_data_format;     
             static Record::Value_type phenotype_domain;//dichotomous or continuous
             static char undef_allele_code;          //code of missing allele
             static std::string undef_phenotype_code;//code of missing phenotype
@@ -107,7 +107,7 @@ namespace Permory { namespace detail {
     //
     // Data
     //
-    Datafile_format Parameter::phenotype_data_format = unknown;
+    datafile_format Parameter::phenotype_data_format = unknown;
     Record::Value_type Parameter::phenotype_domain = Record::dichotomous;     
     char Parameter::undef_allele_code = '?';
     std::string Parameter::undef_phenotype_code = "?"; 

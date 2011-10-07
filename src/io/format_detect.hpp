@@ -6,7 +6,7 @@
 #define permory_io_format_detect_hpp
 
 #include "detail/config.hpp"
-#include "detail/enums.hpp" //Datafile_format
+#include "detail/enums.hpp" //datafile_format
 #include "detail/exception.hpp"
 #include "detail/parameter.hpp" 
 #include "io/file.hpp" 
@@ -24,7 +24,7 @@ namespace Permory { namespace io {
     // given false positives. On the other hand, it should do the job unless
     // the user attentionally tries to abuse and/or use non-supported formats.
     //
-    detail::Datafile_format detect_marker_data_format(
+    detail::datafile_format detect_marker_data_format(
             const std::string& fn,  //file name
             char mc='?')            //the character for the missing value
     {
@@ -84,7 +84,7 @@ namespace Permory { namespace io {
     // Again, the detection works very rudimentary and can be easily fooled to
     // given false positives but should do the job unless if not abused.
     //
-    detail::Datafile_format detect_phenotype_data_format(
+    detail::datafile_format detect_phenotype_data_format(
             const std::string& fn)  //file name
     {
         using namespace detail;
@@ -121,7 +121,7 @@ namespace Permory { namespace io {
         return unknown;
     }
 
-    detail::Datafile_format detect_meta_data_format(
+    detail::datafile_format detect_meta_data_format(
             const std::string& fn)  //file name
     {
         using namespace detail;

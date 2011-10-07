@@ -1,6 +1,4 @@
 - revise enums.hpp as done in groupseq++ project
-- maybe provide more tests, and if so
-	1) provide robust test statistics
-	2)add to docu: "Don't use allelic test on *.tped data as plink reorders alleles when transposing the filesets using --transpose."
+- provide robust test statistics
 - MRU list using boost::serialization (see Example 9 in boost::MultiIndex)
 

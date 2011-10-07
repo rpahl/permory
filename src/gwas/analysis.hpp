@@ -278,12 +278,14 @@ namespace Permory { namespace gwas {
         using namespace io;
         vector<Individual> v;
         string fn = par->fn_trait;
+
+        Enum_converter ec;
         if (not fn.empty()) {
             myout << normal << stdpre << "Reading trait from file..." << endl;
-            Datafile_format dff = detect_phenotype_data_format(fn);
+            datafile_format dff = detect_phenotype_data_format(fn);
             par->phenotype_data_format = dff;
             myout << verbose << indent(4) << "`" << par->fn_trait << "' -> assuming " <<
-                "file format " << datafile_format_to_string(dff) << endl;
+                "file format " << ec.key_to_string<datafile_format>(dff) << endl;
             read_individuals(*par, fn, &v);
         }
         else {
@@ -313,17 +315,20 @@ namespace Permory { namespace gwas {
         std::set<std::string> fn_bad_files;  //remember files of unknown format
 
         myout << normal << stdpre << "Scanning marker data..." << endl;
+        Enum_converter ec;
         BOOST_FOREACH(string fn, par->fn_marker_data) {
-            Datafile_format dff = detect_marker_data_format(fn, par->undef_allele_code);
-            myout << verbose << indent(4) << "`" << fn << "' -> assuming file format " << 
-                detail::datafile_format_to_string(dff);
-            if (dff == unknown) {
+            datafile_format dff = detect_marker_data_format(fn, par->undef_allele_code);
+            myout << verbose << indent(4) << "`" << fn << "' -> ";
+            if (dff != unknown) {
+                myout << "assuming file format " << ec.key_to_string<datafile_format>(dff);
+                myout << endl;
+                read_loci(dff, fn, the_study->pointer_to_loci());
+            }
+            else {
                 fn_bad_files.insert(fn);
-                myout << " - will be ignored." << endl;
+                myout << "unknown file format - file will be ignored." << endl;
                 continue;
             }
-            myout << endl;
-            read_loci(dff, fn, the_study->pointer_to_loci());
         }
 
         // Deletion of the bad files must be done in a subsequent loop, because
@@ -338,7 +343,7 @@ namespace Permory { namespace gwas {
     }
 
     void gwas_analysis(detail::Parameter* par, io::Myout& myout,
-                        Abstract_analyzer_factory& factory)
+            Abstract_analyzer_factory& factory)
     {
         using namespace std;
         using namespace io;
@@ -372,19 +377,19 @@ namespace Permory { namespace gwas {
         std::set<char> data_domain;
         switch (par->marker_type) {
             case genotype:  //2x3 contingency table analysis
-            {
-                data_domain.insert('0');
-                data_domain.insert('1');
-                data_domain.insert('2');
-                boost::shared_ptr<Analyzer> analyzer = factory(par, myout, &study, data_domain);
-                if (par->phenotype_domain == Record::continuous) {
-                    analyzer->analyze<statistic::Quantitative<3>, double>();
+                {
+                    data_domain.insert('0');
+                    data_domain.insert('1');
+                    data_domain.insert('2');
+                    boost::shared_ptr<Analyzer> analyzer = factory(par, myout, &study, data_domain);
+                    if (par->phenotype_domain == Record::continuous) {
+                        analyzer->analyze<statistic::Quantitative<3>, double>();
+                    }
+                    else {
+                        analyzer->analyze<statistic::Dichotom<2,3>, bool>();
+                    }
+                    break;
                 }
-                else {
-                    analyzer->analyze<statistic::Dichotom<2,3>, bool>();
-                }
-                break;
-            }
             case allelic: //2x2 contingency table analysis
                 boost::shared_ptr<Analyzer> analyzer = factory(par, myout, &study);
                 analyzer->analyze<statistic::Dichotom<2,2>, bool>();
