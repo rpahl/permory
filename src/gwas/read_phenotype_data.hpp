@@ -137,8 +137,20 @@ namespace Permory { namespace gwas {
                     if (lr.empty()) {
                         continue;
                     }
-                    if (*lr.begin() == "A") { //"A" indicates affection status data
-                        // Ignore the "A" as well as the next entry 
+                    if (*lr.begin() == "A" || *lr.begin() == "T") {
+                        //"A" indicates affection status data
+                        //"T" indicates quantitative phenotypes
+                        if (*lr.begin() == "A" &&
+                            par.phenotype_domain != Record::dichotomous) {
+                            throw std::invalid_argument(
+                                "Trait indicator needs to be \"A\" for dichotomous phenotypes.");
+                        }
+                        if (*lr.begin() == "T" &&
+                            par.phenotype_domain != Record::continuous) {
+                            throw std::invalid_argument(
+                                "Trait indicator needs to be \"T\" for quantitative phenotypes.");
+                        }
+                        // Ignore the "A" or "T" as well as the next entry
                         vector<string> vs(lr.begin()+2, lr.end());  
 
                         for (size_t i=0; i<vs.size(); i+=2) {
@@ -146,7 +158,7 @@ namespace Permory { namespace gwas {
                             double val = boost::lexical_cast<double>(vs[i]);
                             // Presto uses 1 (unaffected) and 2 (affected), but
                             // we use 0 (unaffected) and 1 (affected), thus
-                            // subract 1
+                            // subract 1 if dichotomous phenotypes are used.
                             if (par.phenotype_domain == Record::dichotomous) {
                                 val--;
                             }
