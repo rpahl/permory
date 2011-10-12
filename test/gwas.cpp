@@ -79,6 +79,9 @@ void determine_phenotype_domain_test() {
         Record::Value_type expected = Record::dichotomous;
 
         BOOST_CHECK_EQUAL(determine_phenotype_domain(par, filename), expected);
+
+        const string filename2 = "test/data/pheno_binary_test2.tfam";
+        BOOST_CHECK_EQUAL(determine_phenotype_domain(par, filename2), expected);
     }
     { // test plink_tfam format with undefined phenotypes
         const string filename = "test/data/pheno_binary_undef_test.tfam";
