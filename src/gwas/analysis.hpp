@@ -286,6 +286,11 @@ namespace Permory { namespace gwas {
             par->phenotype_data_format = dff;
             myout << verbose << indent(4) << "`" << par->fn_trait << "' -> assuming " <<
                 "file format " << ec.key_to_string<datafile_format>(dff) << endl;
+
+            // Determine phenotype and set usage of BAR depending on trait type.
+            par->phenotype_domain = determine_phenotype_domain(*par, fn);
+            par->useBar = par->phenotype_domain == Record::dichotomous;
+
             read_individuals(*par, fn, &v);
         }
         else {
@@ -360,6 +365,10 @@ namespace Permory { namespace gwas {
             }
             myout << study.ncase() << " cases and " << study.ncontrol() <<
                 " controls." << endl;
+        }
+        else {
+            myout << normal << stdpre << "Found " << study.sample_size()
+                  << " quantitative phenotypes." << endl;
         }
 
         // Loci information read in

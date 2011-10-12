@@ -54,12 +54,67 @@ void read_individuals_test() {
     check_individuals(individuals);
 }
 
+void determine_phenotype_domain_test() {
+    { // test compact format with dichotomous phenotypes
+        const string filename = "test/data/pheno_binary_test.compact";
+        Parameter par;
+        par.phenotype_data_format = compact;
+        Record::Value_type expected = Record::dichotomous;
+
+        BOOST_CHECK_EQUAL(determine_phenotype_domain(par, filename), expected);
+    }
+
+    { // test plink_tfam format with quantitative phenotypes
+        const string filename = "test/data/pheno_quant_test.tfam";
+        Parameter par;
+        par.phenotype_data_format = plink_tfam;
+        Record::Value_type expected = Record::continuous;
+
+        BOOST_CHECK_EQUAL(determine_phenotype_domain(par, filename), expected);
+    }
+    { // test plink_tfam format with dichotomous phenotypes
+        const string filename = "test/data/pheno_binary_test.tfam";
+        Parameter par;
+        par.phenotype_data_format = plink_tfam;
+        Record::Value_type expected = Record::dichotomous;
+
+        BOOST_CHECK_EQUAL(determine_phenotype_domain(par, filename), expected);
+    }
+    { // test plink_tfam format with undefined phenotypes
+        const string filename = "test/data/pheno_binary_undef_test.tfam";
+        Parameter par;
+        par.phenotype_data_format = plink_tfam;
+        par.undef_phenotype_code = "?";
+
+        BOOST_CHECK_THROW(determine_phenotype_domain(par, filename),
+                          std::domain_error);
+    }
+
+    { // test presto format with quantitative phenotypes
+        const string filename = "test/data/pheno_quant_test.bgl";
+        Parameter par;
+        par.phenotype_data_format = presto;
+        Record::Value_type expected = Record::continuous;
+
+        BOOST_CHECK_EQUAL(determine_phenotype_domain(par, filename), expected);
+    }
+    { // test presto format with dichotomous phenotypes
+        const string filename = "test/data/pheno_binary_test.bgl";
+        Parameter par;
+        par.phenotype_data_format = presto;
+        Record::Value_type expected = Record::dichotomous;
+
+        BOOST_CHECK_EQUAL(determine_phenotype_domain(par, filename), expected);
+    }
+}
+
 test_suite* init_unit_test_suite( int argc, char* argv[] )
 {
-    test_suite *test = BOOST_TEST_SUITE("Functions and classes from src/detail");
+    test_suite *test = BOOST_TEST_SUITE("Functions and classes from src/gwas");
 
     test->add(BOOST_TEST_CASE(&read_individuals_from_tfam_test));
     test->add(BOOST_TEST_CASE(&read_individuals_test));
+    test->add(BOOST_TEST_CASE(&determine_phenotype_domain_test));
 
     return test;
 }

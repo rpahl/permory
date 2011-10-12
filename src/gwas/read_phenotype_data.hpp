@@ -90,6 +90,66 @@ namespace Permory { namespace gwas {
         }
     }
 
+    Record::Value_type determine_phenotype_domain(
+            const detail::Parameter& par,
+            const std::string& fn)
+    {
+        using namespace std;
+        using namespace Permory::io;
+        using namespace Permory::detail;
+
+        Record::Value_type result = Record::undefined;
+        Line_reader<string> lr(fn);
+        set<double> values; // different values of phenotypes for plink_tfam
+
+        switch (par.phenotype_data_format) {
+            case compact:
+                // Compact format only supports dichotomous phenotypes.
+                result = Record::dichotomous;
+                break;
+
+            case plink_tfam:
+                while (not lr.eof()) {
+                    lr.next();
+                    if (lr.size() < 6) {
+                        continue;
+                    }
+                    vector<string> v(lr.begin(), lr.begin()+6);
+
+                    if (v[5] == par.undef_phenotype_code) {
+                        throw std::domain_error("Undefined phenotypes not allowed.");
+                    }
+                    values.insert(boost::lexical_cast<double>(v[5]));
+                    if (values.size() > 2) {
+                        result = Record::continuous;
+                        break;
+                    }
+                }
+                if (values.size() == 2) {
+                    result = Record::dichotomous;
+                }
+                break;
+
+            case presto:
+               while (not lr.eof()) {
+                    lr.next();  //read next line
+                    if (not lr.empty()) {
+                        if (*lr.begin() == "A") {
+                            result = Record::dichotomous;
+                        }
+                        if (*lr.begin() == "T") {
+                            result = Record::continuous;
+                        }
+                    }
+                }
+                break;
+
+            default:
+                throw std::invalid_argument("Phenotype data format not supported.");
+        }
+        return result;
+    }
+
     //
     // Read individuals from file. Supports PERMORY, PRESTO, and PLINK. If 
     // vector contains individuals, the newly read individuals are appended.
@@ -158,7 +218,7 @@ namespace Permory { namespace gwas {
                             double val = boost::lexical_cast<double>(vs[i]);
                             // Presto uses 1 (unaffected) and 2 (affected), but
                             // we use 0 (unaffected) and 1 (affected), thus
-                            // subract 1 if dichotomous phenotypes are used.
+                            // subtract 1 if dichotomous phenotypes are used.
                             if (par.phenotype_domain == Record::dichotomous) {
                                 val--;
                             }

@@ -49,10 +49,6 @@ namespace Permory {
              "Assumes: data format [...controls...|...cases...]")
             ("nco", my_value<size_t>("NUM")->my_default_value(0,""), 
              "number of controls (requires option '--nca')")
-            ("phenotype",
-             //my_value<Record::Value_type>("NUM")->my_default_value(Record::dichotomous, " (=1)"),
-             my_value<size_t>("NUM")->my_default_value(1),
-             "1=dichotomous, 2=continuous")
             ;
         //
         // Data
@@ -232,9 +228,6 @@ namespace Permory {
                 throw invalid_argument("number of cases/controls must not be 0");
             }
         }
-        if (vm["phenotype"].as<size_t>() < 1 && vm["phenotype"].as<size_t>() > 2) {
-            throw invalid_argument("invalid phenotype.");
-        }
         double minmaf = vm["min-maf"].as<double>();
         double maxmaf = vm["max-maf"].as<double>();
         if (minmaf < 0) {
@@ -285,17 +278,6 @@ namespace Permory {
         par.min_maf = vm["min-maf"].as<double>();
         par.ncase = vm["nca"].as<size_t>();
         par.ncontrol = vm["nco"].as<size_t>();
-        switch (vm["phenotype"].as<size_t>()) {
-            case 1:
-                par.phenotype_domain = Record::dichotomous;
-                break;
-            case 2:
-                par.phenotype_domain = Record::continuous;
-                break;
-            default:
-                throw invalid_argument("invalid phenotype.");
-        }
-        par.useBar = par.phenotype_domain == Record::dichotomous;
 
         // Data
         if (vm.count("allelic")) {
