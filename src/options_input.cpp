@@ -5,7 +5,6 @@
 #include <fstream>
 
 
-#include "individual.hpp"
 #include "detail/config.hpp"
 #include "detail/enums.hpp"
 #include "detail/exception.hpp"
