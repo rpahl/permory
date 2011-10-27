@@ -67,9 +67,6 @@ namespace Permory { namespace gwas {
             // Dtor
             virtual ~Mpi_analyzer() { }
 
-            // Modifiers
-            template<uint K, uint L> void analyze_dichotom();
-
         protected:
             size_t nperm_per_process() const;
 
