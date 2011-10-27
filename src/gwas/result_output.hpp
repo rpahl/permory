@@ -35,7 +35,7 @@ namespace Permory { namespace gwas {
         }
         size_t sum = nbad + nmin + nmax;
 
-        myout << verbose << stdpre << "Markers excluded from analyis:" << endl;
+        myout << verbose << stdpre << "Markers excluded from analysis:" << endl;
         myout << indent(4) << nbad << " non-polymorphic" << endl; 
         if (par->min_maf > 0) {
             myout << indent(4) << nmin << " with maf < " << par->min_maf << endl; 
@@ -47,7 +47,7 @@ namespace Permory { namespace gwas {
         myout << indent(4) << sum << " in total" << endl;
         myout << normal << stdpre << m - sum << " (of " << m <<
             ") markers were used for analysis." << endl;
-        myout << normal << stdpre << "Effective number of tests (markers) = " <<
+        myout << normal << stdpre << "Effective number of independent tests (markers) = " <<
             study.meff() << endl;
     }
 
@@ -79,7 +79,7 @@ namespace Permory { namespace gwas {
         }
         File_out out(fn);
 
-        // Determine maximal widhts to be set for the different columns
+        // Determine maximal widths to be set for the different columns
         bool hasChr = false;
         size_t wrs = 0;     //max width for rsIDs
         size_t wgene = 0;   //max width of gene names
