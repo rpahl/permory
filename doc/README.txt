@@ -35,6 +35,12 @@ Getting started
     in the QUICKSTART.txt that came with the package.
 
 
+Note
+----
+The X and Y chromosome are not handled by PERMORY and must be removed from the
+data set before starting the analysis.
+
+
 ---
 Roman Pahl
 http://www.permory.org
