@@ -27,8 +27,14 @@ namespace Permory { namespace statistic {
         using namespace std;
         deque<size_t> cnts(t.size(), 0);
         for (size_t j=0; j<t.size(); ++j) {             //for each test statistic
-            deque<double>::const_iterator it = lower_bound(tperm.begin(), tperm.end(), t[j]);
-            cnts[j] = tperm.end() - it;
+            // Check most occurring case of p_j = 1,
+            // else count(T^k_max > T_j).
+            if (t[j] < tperm.front()) {
+                cnts[j] = tperm.size();
+            } else {
+                deque<double>::const_iterator it = lower_bound(tperm.begin(), tperm.end(), t[j]);
+                cnts[j] = tperm.end() - it;
+            }
         }
         return cnts;
     }
