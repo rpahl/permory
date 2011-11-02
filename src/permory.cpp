@@ -156,7 +156,7 @@ int main(int ac, char* av[])
     }    
     catch(const Missing_option& e) {
         myout << errpre << "Missing option - please specify " << e.what() << endl;
-        myout << errpre << "For more information try ./omd --help" << endl;
+        myout << errpre << "For more information try " << av[0] << " --help" << endl;
     }    
     catch(const Data_length_mismatch_error& e) {
         myout << errpre << "Data length mismatch: " << e.what() << endl;
