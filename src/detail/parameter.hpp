@@ -24,7 +24,7 @@ namespace Permory { namespace detail {
             static bool quiet;              //no output to console
             static bool verbose;            //verbose output 
             static bool debug;              //very verbose output
-            static double version;          //program version
+            static std::string version;     //program version
 
             //
             // Analysis
@@ -91,7 +91,7 @@ namespace Permory { namespace detail {
     bool Parameter::quiet = false;
     bool Parameter::verbose = false;
     bool Parameter::debug = false;
-    double Parameter::version = 1.1;
+    std::string Parameter::version = "1.1.0";
 
     //
     // Analysis

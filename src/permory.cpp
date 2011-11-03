@@ -25,13 +25,13 @@
 
 namespace Permory { 
 
-    void print_head(io::Myout& myout, double version) 
+    void print_head(io::Myout& myout, const std::string& version)
     {
         using namespace std;
         myout << endl;
         myout << "+-----------------+-----------------+------------------+" << endl;
-        myout << "|    PERMORY      |      v"<< fixed << setprecision(2) << 
-            version << "      |    6/Oct/2011    |" << endl;
+        myout << "|    PERMORY      |      v"
+              << version << "     |    3/Nov/2011    |" << endl;
         myout << "+-----------------+-----------------+------------------+" << endl;
         myout << "|          Copyright (c) 2010-2011 Roman Pahl          |" << endl;
         myout << "|                             2011 Volker Steiß        |" << endl;
