@@ -9,6 +9,7 @@ install sources
         : <location>release_src
           <install-source-root>.
         ;
+explicit sources ;
 
 # System specific installation
 
