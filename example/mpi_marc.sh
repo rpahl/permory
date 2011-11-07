@@ -5,10 +5,10 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 #
-# Example MPI submission script for use with Marburger Rechen Cluster (MaRC).
+# Example MPI submission script for use with Marburger RechenCluster (MaRC).
 #
 # Example submition to parallel queue starting 10 processes using MPI:
-# $ qsub -cwd -l h_rt=1:0:0 -pe orte 10 -q parallel@@nodes_ng -R y mpi_marc.sh
+# $ qsub -cwd -l h_rt=1:0:0 -pe orte 10 -q parallel@@nodes_ng mpi_marc.sh
 #
 
 #############################    Configuration    #############################
@@ -19,10 +19,11 @@
 # random seed
 SEED=123456789
 
-# permutations
+# number of permutations
 PERMS=50000
 
-## Path to PERMORY executable. The binary will be copied to $EXEC_DIR
+## Path to PERMORY executable. The binary will be copied to $EXEC_DIR (see
+## below)
 PERMORY_BIN=permory
 
 ## Data source path which contains the data files to use.
@@ -39,7 +40,8 @@ EXEC_DIR=/glusterfs/distrib/${USER}/${JOB_ID}
 ## processes to start
 PROCESSES=${NSLOTS}
 ## Workarround for missing -npernode option in mpirun before version 1.3.
-## Uncomment this line to start two processes per node.
+## Uncomment this line to start two processes per node. Use this only if you
+## have more than two processors per node.
 # PROCESSES=$((${NSLOTS}*2))
 
 ## Prefix for output filenames.

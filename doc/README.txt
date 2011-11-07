@@ -21,6 +21,8 @@ Package content
         tiny.tped       # marker data (transposed fileset PLINK format)
         tinyA.slide     # allelic marker data (SLIDE format)
         tinyG.slide     # genotype marker data (SLIDE format)
+    - example (folder)  # example scripts
+        mpi_marc.sh     # example MPI submission script
     compactor           # data compactor executable
     LICENSE_1_0.txt     # license information
     permory             # permory executable

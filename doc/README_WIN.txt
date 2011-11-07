@@ -21,6 +21,8 @@ Package content
         tiny.tped       # marker data (transposed fileset PLINK format)
         tinyA.slide     # allelic marker data (SLIDE format)
         tinyG.slide     # genotype marker data (SLIDE format)
+    - example (folder)  # example scripts
+        mpi_marc.sh     # example MPI submission script
     compactor.exe       # data compactor executable
     cyggcc_s-1.dll      # helper library needed to run permory.exe
     cygstdc++-6.dll     # another helper library 
@@ -36,6 +38,12 @@ Getting started
 ---------------
     For a quick start and to see PERMORY in action, try the application examples
     in the QUICKSTART_WIN.txt that came with the package.
+
+
+Note
+----
+The X and Y chromosome are not handled by PERMORY and must be removed from the
+data set before starting the analysis.
 
 
 ---
