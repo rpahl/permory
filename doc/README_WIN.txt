@@ -23,7 +23,6 @@ Package content
         tinyG.slide     # genotype marker data (SLIDE format)
     - example (folder)  # example scripts
         mpi_marc.sh     # example MPI submission script
-    compactor.exe       # data compactor executable
     cyggcc_s-1.dll      # helper library needed to run permory.exe
     cygstdc++-6.dll     # another helper library 
     cygwin1.dll         # yet another helper library 

@@ -23,7 +23,6 @@ Package content
         tinyG.slide     # genotype marker data (SLIDE format)
     - example (folder)  # example scripts
         mpi_marc.sh     # example MPI submission script
-    compactor           # data compactor executable
     LICENSE_1_0.txt     # license information
     permory             # permory executable
     permory.cfg         # example configuration file 

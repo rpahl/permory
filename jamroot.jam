@@ -41,11 +41,6 @@ exe permory
     : $(flags)
     ;
 
-exe compactor  
-    : src/util/data_compactor.cpp /libs
-    : $(flags)
-    ;
-
 # unit testing
 build-project test ;
 

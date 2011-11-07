@@ -17,7 +17,6 @@ import os ;
 if ( [ os.name ] = LINUX )
 {
     # Binaries
-    install compactor-bin : compactor : <location>release ;
     install permory-bin : permory : <location>release ;
 
     # Documentation
@@ -29,17 +28,14 @@ if ( [ os.name ] = LINUX )
     install example : example/mpi_marc.sh : <location>release/example ;
 
     # Install
-    alias install : compactor-bin permory-bin quickstart quickstart-mpi readme
-                    example ;
-    explicit install compactor-bin permory-bin quickstart quickstart-mpi readme
-                     example ;
+    alias install : permory-bin quickstart quickstart-mpi readme example ;
+    explicit install permory-bin quickstart quickstart-mpi readme example ;
 }
 
 if ( [ os.name ] = CYGWIN )
 {
     # Binaries
     install permory-bin : permory : <location>release ;
-    install compactor-bin : compactor : <location>release ;
 
     # Documentation
     install quickstart : doc/QUICKSTART.txt : <location>release ;
@@ -54,8 +50,6 @@ if ( [ os.name ] = CYGWIN )
     install cygwin1 : /bin/cygwin1.dll : <location>release ;
 
     # Install
-    alias install : compactor-bin permory-bin quickstart readme cyggcc cygstdc cygwin1
-                    example ;
-    explicit install compactor-bin permory-bin quickstart readme cyggcc cygstdc cygwin1
-                     example ;
+    alias install : permory-bin quickstart readme cyggcc cygstdc cygwin1 example ;
+    explicit install permory-bin quickstart readme cyggcc cygstdc cygwin1 example ;
 }
