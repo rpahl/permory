@@ -1,4 +1,4 @@
-PERMORY version 1.0 -- Oct 6, 2010
+PERMORY version 1.1 -- Nov 7, 2010
 ------------------------------------
     PERMORY is a free, open-source software, designed to perform efficient 
     permutation tests for large-scale genetic data sets (e.g. genome-wide
@@ -7,7 +7,8 @@ PERMORY version 1.0 -- Oct 6, 2010
 
 License notes
 -------------
-    PERMORY Copyright (c) 2010 Roman Pahl
+    PERMORY Copyright (c) 2010-2011 Roman Pahl, IMBE Marburg
+                               2011 Volker Steiß
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 

@@ -31,10 +31,10 @@ namespace Permory {
         myout << endl;
         myout << "+-----------------+-----------------+------------------+" << endl;
         myout << "|    PERMORY      |      v"
-              << version << "     |    3/Nov/2011    |" << endl;
+              << version << "     |    7/Nov/2011    |" << endl;
         myout << "+-----------------+-----------------+------------------+" << endl;
-        myout << "|          Copyright (c) 2010-2011 Roman Pahl          |" << endl;
-        myout << "|                             2011 Volker Steiß        |" << endl;
+        myout << "|    Copyright (c) 2010-2011 Roman Pahl, IMBE Marburg  |" << endl;
+        myout << "|                       2011 Volker Steiß              |" << endl;
         myout << "|  Distributed under the Boost Software License, v1.0  |" << endl;
         myout << "+------------------------------------------------------+" << endl;
         myout << "|                   www.permory.org                    |" << endl;
