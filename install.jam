@@ -5,7 +5,7 @@
 
 install sources
         : [ glob-tree *.jam *.cpp *.hpp *.c *.h : release release_src ]
-          [ glob test/data/* test/results/* ]
+          [ glob test/data/* test/results/* doc/* ]
         : <location>release_src
           <install-source-root>.
         ;
