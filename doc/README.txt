@@ -13,24 +13,6 @@ License notes
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 
-Package content
----------------
-    - data (folder)     # example data of different formats
-        tiny.bgl.gz     # marker data (Beagle format as used by PRESTO)
-        tiny.tfam       # trait data (transposed fileset PLINK format)
-        tiny.tped       # marker data (transposed fileset PLINK format)
-        tinyA.slide     # allelic marker data (SLIDE format)
-        tinyG.slide     # genotype marker data (SLIDE format)
-    - example (folder)  # example scripts
-        mpi_marc.sh     # example MPI submission script
-    LICENSE_1_0.txt     # license information
-    permory             # permory executable
-    permory.cfg         # example configuration file 
-    QUICKSTART.txt      # general usage and application examples
-    QUICKSTART_MPI.txt  # parallel computing using message passing interface
-    README.txt          # this file
-
-
 Getting started
 ---------------
     For a quick start and to see PERMORY in action, try the application examples

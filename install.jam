@@ -11,25 +11,32 @@ install sources
         ;
 explicit sources ;
 
-# System specific installation
+# Docs
+install common_docs : doc/README.txt doc/LICENSE_1_0.txt doc/permory.cfg : <location>release ;
+if ( [ mpi.configured ] )
+{
+    install quickstart : doc/QUICKSTART_MPI.txt doc/QUICKSTART.txt : <location>release ;
+    install example : example/mpi_marc.sh : <location>release/example ;
+}
+else 
+{
+    install quickstart : doc/QUICKSTART.txt : <location>release ;
+    alias example : ;
+}
+install data : [ glob test/data/* ] : <location>release/data ;
+alias install_common : common_docs quickstart example data ;
+explicit install_common common_docs quickstart example data ;
 
+# System specific installation
 import os ;
 if ( [ os.name ] = LINUX )
 {
     # Binaries
     install permory-bin : permory : <location>release ;
 
-    # Documentation
-    install quickstart : doc/QUICKSTART.txt : <location>release ;
-    install quickstart-mpi : doc/QUICKSTART_MPI.txt : <location>release ;
-    install readme : doc/README.txt : <location>release ;
-
-    # Examples
-    install example : example/mpi_marc.sh : <location>release/example ;
-
     # Install
-    alias install : permory-bin quickstart quickstart-mpi readme example ;
-    explicit install permory-bin quickstart quickstart-mpi readme example ;
+    alias install : install_common permory-bin common_docs ;
+    explicit install permory-bin common_docs ;
 }
 
 if ( [ os.name ] = CYGWIN )
@@ -37,19 +44,11 @@ if ( [ os.name ] = CYGWIN )
     # Binaries
     install permory-bin : permory : <location>release ;
 
-    # Documentation
-    install quickstart : doc/QUICKSTART.txt : <location>release ;
-    install readme : doc/README_WIN.txt : <location>release ;
-
-    # Examples
-    install example : example/mpi_marc.sh : <location>release/example ;
-
     # Cygwin runtime libraries
-    install cyggcc : /bin/cyggcc_s-1.dll : <location>release ;
-    install cygstdc : /bin/cygstdc++-6.dll : <location>release ;
-    install cygwin1 : /bin/cygwin1.dll : <location>release ;
+    install cyglibs : /bin/cyggcc_s-1.dll /bin/cygstdc++-6.dll /bin/cygwin1.dll : <location>release ;
 
     # Install
-    alias install : permory-bin quickstart readme cyggcc cygstdc cygwin1 example ;
-    explicit install permory-bin quickstart readme cyggcc cygstdc cygwin1 example ;
+    alias install: install_common permory-bin common_docs cyglibs ;
+    explicit install permory-bin common_docs cyglibs ;
 }
+
