@@ -48,7 +48,7 @@ if ( [ os.name ] = CYGWIN )
     install cyglibs : /bin/cyggcc_s-1.dll /bin/cygstdc++-6.dll /bin/cygwin1.dll : <location>release ;
 
     # Install
-    alias install: install_common permory-bin common_docs cyglibs ;
+    alias install : install_common permory-bin common_docs cyglibs ;
     explicit install permory-bin common_docs cyglibs ;
 }
 
