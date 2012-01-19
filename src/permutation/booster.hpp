@@ -147,10 +147,11 @@ namespace Permory { namespace permutation {
 
             // Conversion
             int find_most_similar(const Bitset2&, size_t&) const; //searches in dataBuf_
+
         private:
             boost::shared_ptr<Perm_matrix<T> > permMatrix_;
             size_t tradeOff_;
-            //partial memoization uses data and results buffer:
+            //reconstruction memoization uses data and results buffer:
             boost::circular_buffer<Bitset2> dataBuf_;        
             boost::circular_buffer<std::valarray<T> > resultBuf_;
     };
@@ -175,6 +176,10 @@ namespace Permory { namespace permutation {
         resultBuf_.push_back(v);            
     }
 
+    //
+    // Takes a bitset b and searches for a bitset x in the buffer such that 
+    // the hamming distance between b and x is smaller than the value specified
+    // by 'toBeat'
     template<class T> inline int Perm_boost<T>::find_most_similar(
             const Bitset2& b, size_t& toBeat) const
     {
@@ -185,19 +190,22 @@ namespace Permory { namespace permutation {
         }
         bool haveImproved = false;
         bufferator itmin = dataBuf_.rbegin();
-        for (bufferator i=dataBuf_.rbegin(); i!=dataBuf_.rend(); i++) {
+        for (bufferator itBuf=dataBuf_.rbegin(); itBuf!=dataBuf_.rend(); itBuf++) {
             if (toBeat == 0) break; //cannot improve anymore 
-            //bit count is a lower bound for the hamming distance, thus 
-            //providing a first guess in constant time
+
+            // bit count is a lower bound for the hamming distance, thus 
+            // providing a quick estimate whether it is worth to compute the 
+            // hamming distance 
             size_t x = b.count();   
-            size_t y = (*i).count();
-            bool isPromising = (std::max (x, y) - std::min (x, y)) < toBeat;
-            if (isPromising) { 
-                size_t hd = hamming_dist(b, *i);
+            size_t y = (*itBuf).count();
+            bool isWorth = (std::max (x, y) - std::min (x, y)) < toBeat;
+
+            if (isWorth) { 
+                size_t hd = hamming_dist(b, *itBuf);
                 if (hd < toBeat) { //more similar bitset found?
                     haveImproved = true;
                     toBeat = hd;
-                    itmin = i;
+                    itmin = itBuf;
                 }
             }
         }
@@ -217,12 +225,12 @@ namespace Permory { namespace permutation {
     {
         // tradeoff threshold regarding bit arithmetics vs indexing methods
         bool noBAR = !(permMatrix_->hasBitmat()); //no bit arithmetics anyway?
-        bool usePAM = imin >= 0;                  //partial memoization
-        bool useGIT = !usePAM && (dix.size() < tradeOff_); //genotype indexing
+        bool useREM = imin >= 0;                  //reconstruction memoization
+        bool useGIT = !useREM && (dix.size() < tradeOff_); //genotype indexing
         bool isBufferEmpty = resultBuf_.size() == 0;
 
-        if (usePAM || useGIT || noBAR) {
-            if (usePAM && !isBufferEmpty) { 
+        if (useREM || useGIT || noBAR) {
+            if (useREM && !isBufferEmpty) { 
                 *result = resultBuf_[imin];   //memorize previous results
                 rem(*permMatrix_, dummy.get(), dataBuf_[imin].get(), *result);
             }

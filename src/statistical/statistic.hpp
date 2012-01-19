@@ -76,6 +76,8 @@ namespace Permory { namespace statistic {
         typename gwas::Locus_data<D>::unique_iterator
             it = data.unique_begin();
         for (uint i=0; i < L+1; i++) {
+            // Prepare the raw data in different formats (index code and dummy 
+            // code), which are later used for boosting the permutation 
             size_t cnt = (size_t) it->second; //#occurences of the code
             D allelic_code = it->first;
             index_[i].clear();
@@ -113,9 +115,9 @@ namespace Permory { namespace statistic {
                 extension_[worst_idx] -= extension_[i];
             }
         }
-        // Since it was left out, the dummy code and the resulting case
-        // frequencies of the skipped code are added post hoc "by hand"
-        // to the buffer of the booster.
+        // Since it was left out, the dummy code and the resulting case 
+        // frequencies of the code belonging to the "worst index" must be added 
+        // post hoc "by hand" to the buffer of the booster.
         boosters_[worst_idx].add_to_buffer(dummy_[worst_idx]);
         boosters_[worst_idx].add_to_buffer(extension_[worst_idx]);
     }

@@ -11,8 +11,12 @@ install sources
         ;
 explicit sources ;
 
-# Docs
-install common_docs : doc/README.txt doc/LICENSE_1_0.txt doc/permory.cfg : <location>release ;
+#######################
+# Common installation #
+#######################
+
+# Documentation
+install doc : doc/README.txt doc/LICENSE_1_0.txt doc/permory.cfg : <location>release ;
 if ( [ mpi.configured ] )
 {
     install quickstart : doc/QUICKSTART_MPI.txt doc/QUICKSTART.txt : <location>release ;
@@ -24,10 +28,12 @@ else
     alias example : ;
 }
 install data : [ glob test/data/* ] : <location>release/data ;
-alias install_common : common_docs quickstart example data ;
-explicit install_common common_docs quickstart example data ;
+alias install_common : doc quickstart example data ;
+explicit install_common doc quickstart example data ;
 
-# System specific installation
+################################
+# System specific installation #
+################################
 import os ;
 if ( [ os.name ] = LINUX )
 {
@@ -35,8 +41,8 @@ if ( [ os.name ] = LINUX )
     install permory-bin : permory : <location>release ;
 
     # Install
-    alias install : install_common permory-bin common_docs ;
-    explicit install permory-bin common_docs ;
+    alias install : install_common permory-bin ;
+    explicit install permory-bin ;
 }
 
 if ( [ os.name ] = CYGWIN )
@@ -48,7 +54,7 @@ if ( [ os.name ] = CYGWIN )
     install cyglibs : /bin/cyggcc_s-1.dll /bin/cygstdc++-6.dll /bin/cygwin1.dll : <location>release ;
 
     # Install
-    alias install : install_common permory-bin common_docs cyglibs ;
-    explicit install permory-bin common_docs cyglibs ;
+    alias install : install_common permory-bin cyglibs ;
+    explicit install permory-bin cyglibs ;
 }
 

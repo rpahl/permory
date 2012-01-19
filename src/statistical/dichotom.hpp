@@ -204,7 +204,6 @@ namespace Permory { namespace statistic {
             // table) compute the max over all test statistics, say max(i), and
             // then update tMax_[i] = max(tMax_[i], max(i))
             for_each_test_and_tab(this->tabs_, this->testPool_, this->tMax_.begin());
-            //con_tabs_[0].print();//XXX
         }
 
     template<uint K, uint L, class T> std::vector<T>
