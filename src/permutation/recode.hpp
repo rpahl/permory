@@ -11,7 +11,7 @@
 
 namespace Permory { namespace permutation {
     
-    // Index code (return by value)
+    // Index code 
     template<class T> std::vector<int> index_code(
             typename std::vector<T>::const_iterator start, 
             typename std::vector<T>::const_iterator end, 
@@ -27,22 +27,6 @@ namespace Permory { namespace permutation {
             i++;
         }
         return v;
-    }
-
-    // Index code (by reference)
-    template<class T> void index_code(
-            std::vector<int>& v,
-            typename std::vector<T>::const_iterator start, 
-            typename std::vector<T>::const_iterator end, 
-            const T& val)
-    {
-        int i=0;
-        while (start != end) {
-            if (*start++ == val) { 
-                v.push_back(i); //store index
-            }
-            i++;
-        }
     }
 
     // Bitset dummy code

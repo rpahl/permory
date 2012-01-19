@@ -30,66 +30,57 @@ namespace Permory { namespace statistic {
     //
     // Base class for all classes analyzing genotype data.
     //
-    template<class T, class E, uint L> class Statistic {
+    template<class T> class Statistic {
         public:
             // Iterator pass through
             typedef typename std::vector<double>::const_iterator const_iterator;
             const_iterator tmax_begin() const { return tMax_.begin(); }
             const_iterator tmax_end() const { return tMax_.end(); }
 
-            // Inspection
-            size_t size() const { return testPool_.size(); }
 
         protected:
             // This function does the "permutation work"
             template<class D> void do_permutation(const gwas::Locus_data<D>&);
 
-            Test_pool<T> testPool_;
-            E marginal_sum_;       // sum of all nomdenom_buf_ elements
-            boost::ptr_vector<Perm_boost<E> > boosters_;
+            T marginal_sum_;       // sum of all nomdenom_buf_ elements
+            boost::ptr_vector<Perm_boost<T> > boosters_;
 
             // contains the intermediate result as contingency table in
             // dichotom and extension of the nominator and denominator in
             // quantitative.
-            Matrix<E> extension_;
+            Matrix<T> extension_;
 
             std::vector<double> tMax_;  //max test statistics
-
-            // For caching purpose
-            std::vector<T> tabs_;
-            std::vector<int> index_[L+1];   //L+1 integer vectors
-            Bitset_with_count dummy_[L+1];  //L+1 bitsets with cached bit counts
     };
     // ========================================================================
     // Statistic implementations
 
-    template<class T, class E, uint L> template<class D> inline void
-        Statistic<T, E, L>::do_permutation(const gwas::Locus_data<D>& data)
+    template<class T> template<class D> inline void
+        Statistic<T>::do_permutation(const gwas::Locus_data<D>& data)
     {
-        if (not (data.domain_cardinality() == L+1)) {
-            throw std::runtime_error("Bad domain cardinality in permutation test.");
-        }
-        uint boost_index[L+1];  // see below
-        size_t worst_idx = 0;
         size_t maxcnt = 0;
+        size_t worst_idx = 0;
+        size_t card = data.domain_cardinality();
+        std::vector<uint> boost_index(card);    //indices of applied booster
+        std::vector<std::vector<int> > index_codes(card);
+        std::vector<Bitset_with_count> dummy_codes(card);
 
-        typename gwas::Locus_data<D>::unique_iterator
-            it = data.unique_begin();
-        for (uint i=0; i < L+1; i++) {
+        // the unique_iterator is defined in discretedata.hpp:
+        // std::map<elem_type, count_type> unique_;//unique elements with counts
+        typename gwas::Locus_data<D>::unique_iterator it = data.unique_begin();
+        for (uint i=0; i < card; i++) {
             // Prepare the raw data in different formats (index code and dummy 
             // code), which are later used for boosting the permutation 
-            size_t cnt = (size_t) it->second; //#occurences of the code
-            D allelic_code = it->first;
-            index_[i].clear();
-            index_[i].reserve(cnt);
-            index_code<D>(index_[i], data.begin(), data.end(), allelic_code);
-            dummy_[i] = dummy_code<D>(data.begin(), data.end(), allelic_code);
+            D code_value = it->first;         
+            size_t cnt = (size_t) it->second;   //#occurences of the code value
+            index_codes[i] = index_code<D>(data.begin(), data.end(), code_value);
+            dummy_codes[i] = dummy_code<D>(data.begin(), data.end(), code_value);
 
             // Determine index of most similar dummy code in the
             // booster's buffer. If the smallest distance between this
             // dummy code and the most similar one is smaller than 'cnt',
             // 'cnt' will contain this distance after the call.
-            boost_index[i] = boosters_[i].find_most_similar(dummy_[i], cnt);
+            boost_index[i] = boosters_[i].find_most_similar(dummy_codes[i], cnt);
 
             // Keep track of the worst boostable element, which is the one
             // that shows both highest occurences of the code and the
@@ -105,11 +96,11 @@ namespace Permory { namespace statistic {
         // optimized/boosted for permutation. For this, the frequency is
         // simply derived via the marginal sum.
         extension_[worst_idx] = marginal_sum_; //init with marginal sum
-        for (uint i=0; i < L+1; i++) {
+        for (uint i=0; i < card; i++) {
             if (i != worst_idx) {
                 boosters_[i].permute(
-                        index_[i],          //index coded data
-                        dummy_[i],          //dummy coded data
+                        index_codes[i],     //index coded data
+                        dummy_codes[i],     //dummy coded data
                         boost_index[i],     //index into booster's buffer
                         &extension_[i]);    //resulting sums
                 extension_[worst_idx] -= extension_[i];
@@ -118,7 +109,7 @@ namespace Permory { namespace statistic {
         // Since it was left out, the dummy code and the resulting case 
         // frequencies of the code belonging to the "worst index" must be added 
         // post hoc "by hand" to the buffer of the booster.
-        boosters_[worst_idx].add_to_buffer(dummy_[worst_idx]);
+        boosters_[worst_idx].add_to_buffer(dummy_codes[worst_idx]);
         boosters_[worst_idx].add_to_buffer(extension_[worst_idx]);
     }
 
