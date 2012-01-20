@@ -23,7 +23,7 @@
 #include "locusdata.hpp"
 #include "locus_filter.hpp"
 #include "io/output.hpp"
-#include "permutation/perm.hpp"
+#include "permutation/permutation.hpp"
 #include "read_phenotype_data.hpp"
 #include "read_locus_data.hpp"
 #include "result_output.hpp"

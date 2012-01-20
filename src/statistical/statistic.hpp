@@ -14,13 +14,9 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 
 #include "detail/config.hpp"
-//#include "contab.hpp"
-//#include "detail/functors.hpp" //pair_comp_2nd
 #include "detail/parameter.hpp"
 #include "gwas/locusdata.hpp"
-//#include "gwas/gwas.hpp"
 #include "permutation/booster.hpp"  //Bitset_with_count,
-#include "permutation/perm.hpp"
 #include "statistical/testpool.hpp"
 
 namespace Permory { namespace statistic {
@@ -48,7 +44,7 @@ namespace Permory { namespace statistic {
             // contains the intermediate result as contingency table in
             // dichotom and extension of the nominator and denominator in
             // quantitative.
-            Matrix<T> extension_;
+            Matrix<T> extension_;   //intermediate results
 
             std::vector<double> tMax_;  //max test statistics
     };

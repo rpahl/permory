@@ -11,7 +11,7 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include "detail/config.hpp"
-#include "permutation/perm.hpp"
+#include "permutation/permutation.hpp"
 
 namespace Permory { namespace permutation {
 

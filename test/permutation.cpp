@@ -5,7 +5,7 @@
 
 #define PERMORY_TEST permutation_test
 #include "detail/config.hpp"
-#include "permutation/perm.hpp"
+#include "permutation/permutation.hpp"
 #include "permutation/booster.hpp"
 #include "test.hpp"
 

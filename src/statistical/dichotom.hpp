@@ -20,7 +20,7 @@
 #include "detail/parameter.hpp"
 #include "gwas/locusdata.hpp"
 #include "permutation/booster.hpp"  //Bitset_with_count,
-#include "permutation/perm.hpp"
+#include "permutation/permutation.hpp"
 #include "statistical/testpool.hpp"
 #include "statistical/statistic.hpp"
 
@@ -213,7 +213,7 @@ namespace Permory { namespace statistic {
             // For each permutation i (i.e. for each obtained contingency
             // table) compute the max over all test statistics, say max(i), and
             // then update tMax_[i] = max(tMax_[i], max(i))
-            for_each_test_and_tab(this->tabs_, this->testPool_, this->tMax_.begin());
+            each_test_for_each_element(this->tabs_, this->testPool_, this->tMax_.begin());
         }
 
     template<uint K, uint L, class T> std::vector<T>

@@ -2,8 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
-#ifndef permory_permutation_perm_hpp
-#define permory_permutation_perm_hpp
+#ifndef permory_permutation_permutation_hpp
+#define permory_permutation_permutation_hpp
 
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
@@ -14,6 +14,11 @@
 
 namespace Permory { namespace permutation {
 
+    //
+    //  Providing permutating/shuffling function. Here we prefer the GSL over 
+    //  the boost random generator interface as (at the time of implementation) 
+    //  it was considerably more efficient
+    //
     class Permutation {
         public:
             // Ctor

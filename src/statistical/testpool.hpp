@@ -107,36 +107,36 @@ namespace Permory { namespace statistic {
     }
     template<class T> inline typename std::vector<double>::iterator
         for_each_test(
-            const T& tab,
+            const T& elem,
             typename Test_pool<T>::const_iterator start,
             typename Test_pool<T>::const_iterator end,
             typename std::vector<double>::iterator itResult)
     {
         while (start != end) {
-            *itResult++ = (*start++)(tab);
+            *itResult++ = (*start++)(elem);
         }
         return itResult;
     }
     template<class T> inline typename std::vector<double>::iterator
-        for_each_test_and_tab(
-            const typename std::vector<T>& tab,
+        each_test_for_each_element(
+            const typename std::vector<T>& elem,
             const Test_pool<T>& pool,
             typename std::vector<double>::iterator itResult)
         {
-            //vector<double> v(tab.size());
+            //vector<double> v(elem.size());
             typename std::vector<double>::iterator result_begin = itResult;
             for (typename Test_pool<T>::const_iterator
                     itTest = pool.begin(); itTest!=pool.end(); itTest++)
             {
                 itResult = result_begin; //for each test start from beginning
                 for (typename std::vector<T>::const_iterator
-                        itTab=tab.begin(); itTab!=tab.end(); itTab++)
+                        itElem=elem.begin(); itElem!=elem.end(); itElem++)
                 {
-                    double d = std::max(*itResult, (*itTest)(*itTab));
+                    double d = std::max(*itResult, (*itTest)(*itElem));
                     *itResult++ = d;    //Tmax
                 }
                 // "STL-version" requires temporary vector v, and hence is slower:
-                //for_each_tab<T>(tab.begin(), tab.end(), i, v.begin());
+                //for_each_tab<T>(elem.begin(), elem.end(), i, v.begin());
                 //transform(v.begin(), v.end(), itResult, itResult, op_max<double>());
             }
             return itResult;

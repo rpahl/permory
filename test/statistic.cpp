@@ -10,7 +10,7 @@
 
 #include "individual.hpp"
 #include "detail/parameter.hpp"
-#include "permutation/perm.hpp"
+#include "permutation/permutation.hpp"
 #include "gwas/locusdata.hpp"
 
 #include <vector>
@@ -183,12 +183,7 @@ void do_quantitative_test(const D (&marker1)[S], const D (&marker2)[S]) {
     vector<Pair<double> > trait_pair = create_trait<Pair<double> >();
     Permory::permutation::Permutation perm;
 
-    par.useBar = true;
-    typedef Quantitative<3> check_throw_t;
-    BOOST_CHECK_THROW( check_throw_t(par, trait.begin(), trait.end(), &perm), invalid_argument );
-
     par.useBar = false;
-
     Locus_data<D> locus_data_1 = create_locus_data(marker1, par);
     Locus_data<D> locus_data_2 = create_locus_data(marker2, par);
 

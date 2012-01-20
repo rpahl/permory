@@ -22,7 +22,7 @@
 #include "gwas/locusdata.hpp"
 #include "gwas/gwas.hpp"
 #include "permutation/booster.hpp"  //Bitset_with_count,
-#include "permutation/perm.hpp"
+#include "permutation/permutation.hpp"
 #include "statistical/testpool.hpp"
 #include "statistical/statistic.hpp"
 
@@ -66,7 +66,7 @@ namespace Permory { namespace statistic {
 
             private:
                 Test_pool<std::vector<pair_t> > testPool_; 
-                std::vector<std::vector<pair_t> > tabs_;   //TODO rename tabs_ into ...
+                std::vector<std::vector<pair_t> > pairs_;   
 
                 std::vector<double> prepare_trait(gwas::Gwas::const_inderator begin,
                         gwas::Gwas::const_inderator end);
@@ -82,9 +82,6 @@ namespace Permory { namespace statistic {
                 // nominator-denominator buffer:
                 //   first  = \sum_{i=1}^{N} (Y_i - \mu_y)
                 //   second = \sum_{i=1}^{N} (Y_i - \mu_y)^2
-
-                // For caching purpose
-                bool useBitarithmetic_;
         };
     // ========================================================================
     // Quantitative implementations
@@ -95,14 +92,8 @@ namespace Permory { namespace statistic {
                 const Permutation* pp)
         : trait_(prepare_trait(ind_begin, ind_end)),
         test_stat_(new Trend_continuous(trait_)),
-        nomdenom_buf_(test_stat_->get_buffer()),
-        useBitarithmetic_(par.useBar)
+        nomdenom_buf_(test_stat_->get_buffer())
     {
-        if (useBitarithmetic_) {
-            throw std::invalid_argument(
-                    "Bit arithmetics not allowed for quantitative phenotypes!");
-        }
-
         this->marginal_sum_ = test_stat_->get_sum();
 
         this->testPool_.add(test_stat_); // NOTE: Pointer will be deleted by
@@ -118,16 +109,16 @@ namespace Permory { namespace statistic {
         void Quantitative<L>::renew_permutations(const Permutation* pp, size_t nperm,
                 size_t tail_size)
         {
-            this->tabs_.resize(nperm);
-            for (size_t i = 0; i < this->tabs_.size(); ++i) {
-                this->tabs_[i].resize(L+1);
+            this->pairs_.resize(nperm);
+            for (size_t i = 0; i < this->pairs_.size(); ++i) {
+                this->pairs_[i].resize(L+1);
             }
 
             this->tMax_.clear();
             this->tMax_.resize(nperm);
 
             boost::shared_ptr<Perm_matrix<pair_t> > pmat(
-                    new Perm_matrix<pair_t>(nperm, *pp, nomdenom_buf_, useBitarithmetic_));
+                    new Perm_matrix<pair_t>(nperm, *pp, nomdenom_buf_, false));
 
             // Prepare permutation booster
             this->boosters_.clear();
@@ -219,8 +210,8 @@ namespace Permory { namespace statistic {
             for (; uniques!=data.unique_end(); uniques++) {
                 bool ok = not (uniques->first == data.get_undef());
                 if (ok) {
-                    for (uint t=0; t < this->tabs_.size(); ++t) {
-                        this->tabs_[t][c] = this->extension_[j][t];
+                    for (uint t=0; t < this->pairs_.size(); ++t) {
+                        this->pairs_[t][c] = this->extension_[j][t];
                     }
                     c++;
                 }
@@ -229,7 +220,7 @@ namespace Permory { namespace statistic {
             // For each permutation i (i.e. for each obtained contingency
             // table) compute the max over all test statistics, say max(i), and
             // then update tMax_[i] = max(tMax_[i], max(i))
-            for_each_test_and_tab(this->tabs_, this->testPool_, this->tMax_.begin());
+            each_test_for_each_element(this->pairs_, this->testPool_, this->tMax_.begin());
         }
 
     template<uint L> std::vector<double>
