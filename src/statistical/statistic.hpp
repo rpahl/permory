@@ -39,7 +39,7 @@ namespace Permory { namespace statistic {
             template<class D> void do_permutation(const gwas::Locus_data<D>&);
 
             T marginal_sum_;       // sum of all nomdenom_buf_ elements
-            boost::ptr_vector<Perm_boost<T> > boosters_;
+            boost::ptr_vector<Fast_count<T> > boosters_;
 
             // contains the intermediate result as contingency table in
             // dichotom and extension of the nominator and denominator in
@@ -54,8 +54,6 @@ namespace Permory { namespace statistic {
     template<class T> template<class D> inline void
         Statistic<T>::do_permutation(const gwas::Locus_data<D>& data)
     {
-        size_t maxcnt = 0;
-        size_t worst_idx = 0;
         size_t card = data.domain_cardinality();
         std::vector<uint> boost_index(card);    //indices of applied booster
         std::vector<std::vector<int> > index_codes(card);
@@ -64,13 +62,15 @@ namespace Permory { namespace statistic {
         // the unique_iterator is defined in discretedata.hpp:
         // std::map<elem_type, count_type> unique_;//unique elements with counts
         typename gwas::Locus_data<D>::unique_iterator it = data.unique_begin();
+        size_t maxcnt = 0;
+        size_t worst_idx = 0;
         for (uint i=0; i < card; i++) {
             // Prepare the raw data in different formats (index code and dummy 
             // code), which are later used for boosting the permutation 
-            D code_value = it->first;         
+            D val = it->first;         
             size_t cnt = (size_t) it->second;   //#occurences of the code value
-            index_codes[i] = index_code<D>(data.begin(), data.end(), code_value);
-            dummy_codes[i] = dummy_code<D>(data.begin(), data.end(), code_value);
+            index_codes[i] = index_code<D>(data.begin(), data.end(), val);
+            dummy_codes[i] = dummy_code<D>(data.begin(), data.end(), val);
 
             // Determine index of most similar dummy code in the
             // booster's buffer. If the smallest distance between this
@@ -88,17 +88,17 @@ namespace Permory { namespace statistic {
             it++;
         }
 
-        // Permute for each allelic code, except the one that can be least
+        // Permute for each genotype code, except the one that can be least
         // optimized/boosted for permutation. For this, the frequency is
         // simply derived via the marginal sum.
         extension_[worst_idx] = marginal_sum_; //init with marginal sum
         for (uint i=0; i < card; i++) {
             if (i != worst_idx) {
-                boosters_[i].permute(
+                extension_[i] = boosters_[i].permute(
                         index_codes[i],     //index coded data
                         dummy_codes[i],     //dummy coded data
-                        boost_index[i],     //index into booster's buffer
-                        &extension_[i]);    //resulting sums
+                        boost_index[i]);    //index into booster's buffer
+                        //&extension_[i]);    //resulting sums
                 extension_[worst_idx] -= extension_[i];
             }
         }

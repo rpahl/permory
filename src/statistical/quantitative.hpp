@@ -124,7 +124,7 @@ namespace Permory { namespace statistic {
             this->boosters_.clear();
             this->boosters_.reserve(L+1);
             for (uint i=0; i<L+1; i++) {
-                this->boosters_.push_back(new Perm_boost<pair_t>(pmat, tail_size));
+                this->boosters_.push_back(new Fast_count<pair_t>(pmat, tail_size));
             }
         }
 
@@ -195,8 +195,8 @@ namespace Permory { namespace statistic {
             test_stat_->update(data);
             this->extension_.resize(L+1, this->tMax_.size());  // one extra row for missings
 
-            bool yesPermutation = (not this->boosters_.empty());
-            if (yesPermutation) {
+            bool useBooster = (not this->boosters_.empty());
+            if (useBooster) {
                 this->do_permutation(data);
             }
 

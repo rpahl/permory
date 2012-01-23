@@ -11,7 +11,15 @@
 
 namespace Permory { namespace permutation {
     
-    // Index code 
+    //
+    // For an input sequence s and some value x, this function returns a vector
+    // v of indices such that for i=0,1,...,v.size()-1 : v[i] = x;
+    // Example: 
+    // s = 1 2 0 1 1 2 0 0 1 0
+    // x = 0
+    // v = index_code(s.start(), s.end(), x)
+    // v = 2 6 7 9
+    //
     template<class T> std::vector<int> index_code(
             typename std::vector<T>::const_iterator start, 
             typename std::vector<T>::const_iterator end, 
@@ -29,7 +37,15 @@ namespace Permory { namespace permutation {
         return v;
     }
 
-    // Bitset dummy code
+    //
+    // For an input sequence s and some value x, this function returns a bitset
+    // b such that for i=0,1,...,b.size()-1 : b[i] = 1 iff v[i] = x;
+    // Example: 
+    // s = 1 2 0 1 1 2 0 0 1 0
+    // x = 0
+    // b = dummy_code(s.start(), s.end(), x)
+    // b = 0 0 1 0 0 0 1 1 0 1
+    //
     template<class T> boost::dynamic_bitset<> dummy_code(
             typename std::vector<T>::const_iterator start, 
             typename std::vector<T>::const_iterator end, 
