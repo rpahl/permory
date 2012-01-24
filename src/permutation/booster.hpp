@@ -120,20 +120,19 @@ namespace Permory { namespace permutation {
     };
 
     // Helper function
-    typedef Bitset_with_count Bitset2;
+    typedef Bitset_with_count Bitset_wc;
     inline size_t hamming_dist(
-            const Bitset2& b1, 
-            const Bitset2& b2) {
+            const Bitset_wc& b1, 
+            const Bitset_wc& b2) {
         return (b1.get() ^ b2.get()).count();
     }
 
     // Permutation booster
     template<class T> class Fast_count {
         public:
-            typedef boost::circular_buffer<Bitset2> bitset_buffer;
-            typedef bitset_buffer::const_reverse_iterator bitbufferator;
-            typedef boost::circular_buffer<std::valarray<T> > result_buffer;
-            typedef typename result_buffer::const_reverse_iterator resbufferator;
+            typedef std::pair<Bitset_with_count, std::valarray<T> > elem_t;
+            typedef boost::circular_buffer<elem_t> buffer_t;
+            typedef typename buffer_t::const_reverse_iterator buf_iterator;
 
             // Ctor + Dtor
             Fast_count(
@@ -143,40 +142,36 @@ namespace Permory { namespace permutation {
 
             // Inspector
             size_t get_tradeOff() const { return tradeOff_; }
-            bool empty_buffer() const { return resultBuf_.size() == 0; }
-            bool is_using_buffer() const { return resultBuf_.size() > 0 && itDat_ != dataBuf_.rend(); }
-            size_t min_hamming_distance(const Bitset2& b) { 
-                return empty_buffer() ? b.count() : hamming_dist(b, *itDat_); 
+            bool empty_buffer() const { return buf_.empty(); }
+            bool hasMemoized() const { return (!empty_buffer()) && (itMem_ != buf_.rend()); }
+            size_t current_hamming_distance(const Bitset_wc& b) { 
+                return empty_buffer() ? b.count() : hamming_dist(b, buf_->first); 
             }
 
             // Modifier
-            void add_to_buffer(const Bitset2&);
-            void add_to_buffer(const std::valarray<T>&);
+            void add_to_buffer(const Bitset_wc& b, const std::valarray<T>& v) {
+                buf_.push_back(std::make_pair(b, v)); 
+            }
             std::valarray<T> permute(
                     const std::vector<int>&,    //index-coded data
-                    const Bitset2&,             //dummy-coded data
-                    int);                       //index into buffers
+                    const Bitset_wc&,           //dummy-coded data
+                    int);                       //index into buffer
             template<class D> std::valarray<T> count_fast(
                     const D val, 
                     typename std::vector<D>::const_iterator start, 
                     typename std::vector<D>::const_iterator end);
-                    //boost::shared_ptr<Perm_matrix<T> > permMat);
 
             // Conversion
-            int find_most_similar(const Bitset2&, size_t&) const; //searches in dataBuf_
-            bitbufferator find_most_similar2(const Bitset2&, size_t&) const; //searches in dataBuf_
+            int find_most_similar(const Bitset_wc&, size_t&) const; //searches in buffer
             void find_similar_bitset_in_buffer(const Bitset_with_count&, size_t);
 
         private:
             boost::shared_ptr<Perm_matrix<T> > permMatrix_;
             size_t tradeOff_;
 
-            //reconstruction memoization uses data and results buffer:
-            boost::circular_buffer<Bitset2> dataBuf_;        
-            bitbufferator itDat_;
-            boost::circular_buffer<std::valarray<T> > resultBuf_;
-            resbufferator itRes_;
-
+            // reconstruction memoization requires buffering input with results 
+            buffer_t buf_;
+            buf_iterator itMem_;    //Memorize position in buffer
     };
 
     // =====================================================================
@@ -184,19 +179,10 @@ namespace Permory { namespace permutation {
     template<class T> inline Fast_count<T>::Fast_count(
             boost::shared_ptr<Perm_matrix<T> > pmat, 
             size_t buffer_sz) 
-        : permMatrix_(pmat), dataBuf_(buffer_sz), resultBuf_(buffer_sz)
+        : permMatrix_(pmat), buf_(buffer_sz)
     { 
         tradeOff_ = (size_t)(double(pmat->nsubject())/6.0); 
-    }
-
-    template<class T> inline void Fast_count<T>::add_to_buffer(
-            const Bitset2& b) {
-        dataBuf_.push_back(b);                  
-    }
-
-    template<class T> inline void Fast_count<T>::add_to_buffer(
-            const std::valarray<T>& v) {
-        resultBuf_.push_back(v);            
+        itMem_ = buf_.rend();
     }
 
     //
@@ -204,25 +190,25 @@ namespace Permory { namespace permutation {
     // the hamming distance between b and x is smaller than the value specified
     // by 'toBeat'
     template<class T> inline int Fast_count<T>::find_most_similar(
-            const Bitset2& b, size_t& toBeat) const
+            const Bitset_wc& b, size_t& toBeat) const
     {
         if (permMatrix_->hasBitmat()) {
             toBeat = std::min(toBeat, this->tradeOff_);
         }
         bool hasFound = false;
-        bitbufferator itmin = dataBuf_.rend();
-        for (bitbufferator itBuf=dataBuf_.rbegin(); itBuf!=dataBuf_.rend(); itBuf++) {
+        buf_iterator itmin = buf_.rend();
+        for (buf_iterator itBuf=buf_.rbegin(); itBuf!=buf_.rend(); itBuf++) {
             if (toBeat == 0) break; //cannot improve anymore 
 
             // bit count is a lower bound for the hamming distance, thus 
             // providing a quick estimate whether it is worth to compute the 
             // hamming distance 
             size_t x = b.count();   
-            size_t y = (*itBuf).count();
+            size_t y = (itBuf->first).count();
             bool isWorth = (std::max (x, y) - std::min (x, y)) < toBeat;
 
             if (isWorth) { 
-                size_t hd = hamming_dist(b, *itBuf);
+                size_t hd = hamming_dist(b, itBuf->first);
                 if (hd < toBeat) { //more similar bitset found?
                     hasFound = true;
                     toBeat = hd;
@@ -231,89 +217,55 @@ namespace Permory { namespace permutation {
             }
         }
         // If we have found a very similar bitset in buffer, return its index
-        return hasFound ? std::distance(itmin, dataBuf_.rend()) - 1 : -1;
+        return hasFound ? std::distance(itmin, buf_.rend()) - 1 : -1;
     }
 
-    template<class T> inline typename Fast_count<T>::bitbufferator 
-        Fast_count<T>::find_most_similar2(const Bitset2& b, size_t& toBeat) const
-    {
-        //if (permMatrix_->hasBitmat()) { toBeat = std::min(toBeat, this->tradeOff_); } //TODO auslagern mittels get_tradeOff()
-        bool hasFound = false;
-        bitbufferator itmin = dataBuf_.rend();
-        for (bitbufferator itBuf=dataBuf_.rbegin(); itBuf!=dataBuf_.rend(); itBuf++) {
-            if (toBeat == 0) break; //cannot improve anymore 
-
-            // bit count is a lower bound for the hamming distance, thus 
-            // providing a quick estimate whether it is worth to compute the 
-            // hamming distance 
-            size_t x = b.count();   
-            size_t y = (*itBuf).count();
-            bool isWorth = (std::max (x, y) - std::min (x, y)) < toBeat;
-
-            if (isWorth) { 
-                size_t hd = hamming_dist(b, *itBuf);
-                if (hd < toBeat) { //more similar bitset found?
-                    hasFound = true;
-                    toBeat = hd;
-                    itmin = itBuf;
-                }
-            }
-        }
-        return itmin;
-    }
-
+    /*
     template<class T> inline void Fast_count<T>::find_similar_bitset_in_buffer(
             const Bitset_with_count& b, size_t toBeat)
     {
-        itDat_ = dataBuf_.rend();
-        itRes_ = resultBuf_.rend();
-        for (bitbufferator itBuf=dataBuf_.rbegin(); itBuf!=dataBuf_.rend(); itBuf++) {
+        //if (permMatrix_->hasBitmat()) { toBeat = std::min(toBeat, this->tradeOff_); } //TODO auslagern mittels get_tradeOff()
+        itMem_ = buf_.rend();
+        for (buf_iterator itBuf=buf_.rbegin(); itBuf!=buf_.rend(); itBuf++) {
             if (toBeat == 0) break; //cannot improve anymore 
 
             // bit count is a lower bound for the hamming distance, thus 
             // providing a quick estimate whether it is worth to compute the 
             // hamming distance 
             size_t x = b.count();   
-            size_t y = (*itBuf).count();
+            size_t y = (itBuf->first).count();
             bool isWorth = (std::max (x, y) - std::min (x, y)) < toBeat;
 
             if (isWorth) { 
-                size_t hd = hamming_dist(b, *itBuf);
-                if (hd < toBeat) { //more similar bitset found?
+                size_t hd = hamming_dist(b, itBuf->first);
+                if (hd < toBeat) {  //more similar bitset found?
                     toBeat = hd;
-                    itDat_ = itBuf;
+                    itMem_ = itBuf; //remember this position
                 }
             }
         }
-
-        if (not this->empty_buffer()) {
-            // Advance iterator of result buffer 
-            for (bitbufferator itBuf=dataBuf_.rbegin(); itBuf!=itDat_; itBuf++) {
-                itRes_++;
-            }
-        }
     }
+    */
 
     template<class T> inline std::valarray<T> Fast_count<T>::permute(
             const std::vector<int>& index_code, //index-coded data
-            const Bitset2& dummy,               //dummy-coded data
+            const Bitset_wc& dummy,               //dummy-coded data
             int imin)                           //index into result buffer
     {
         // First determine, which of the boosting methods are available
-        bool isBufferEmpty = resultBuf_.size() == 0;
+        bool useREM = imin >= 0 && hasMemoized();  //reconstruction memoization
         bool noBAR = !(permMatrix_->hasBitmat());   //bit arithmetics available?
-        bool useREM = imin >= 0 && !isBufferEmpty;  //reconstruction memoization
         bool useGIT = index_code.size() < tradeOff_;//genotype indexing
 
         std::valarray<T> res(T(0), permMatrix_->nperm());
         if (useREM) {
             // recall/memoize previous results and update them using rem method
-            res = resultBuf_[imin];   
-            rem(*permMatrix_, dummy.get(), dataBuf_[imin].get(), res);
+            res = buf_[imin].second; 
+            rem(*permMatrix_, dummy.get(), buf_[imin].first.get(), res);
         }
         // if BAR method is NOT used, we will use GIT in any case
         else if(useGIT || noBAR) {    
-            res = 0;    //sets *all* the arrays's entries to 0
+            res = 0;        //init *all* valarray entries with 0
             git(*permMatrix_, index_code, res); 
         }
         else {
@@ -321,11 +273,11 @@ namespace Permory { namespace permutation {
         }
 
         // update buffers
-        dataBuf_.push_back(dummy);                  
-        resultBuf_.push_back(res);            
+        this->add_to_buffer(dummy, res);
         return res;
     }
 
+    /*
     template<class T> template<class D> inline 
         std::valarray<T> Fast_count<T>::count_fast(
                     const D val, 
@@ -337,20 +289,19 @@ namespace Permory { namespace permutation {
         Bitset_with_count dummy = dummy_code(start, end, val);
 
         // First determine, which of the accelerating methods are available
-        bool useREM = not this->empty_buffer();     //reconstruction memoization
+        bool useREM = this->hasMemoized();          //reconstruction memoization
         bool noBAR = !(permMatrix_->hasBitmat());   //bit arithmetics available?
         bool useGIT = indices.size() < tradeOff_;   //genotype indexing
 
         std::valarray<T> res(T(0), permMatrix_->nperm());
         if (useREM) {
             // recall/memoize previous results and update them using rem method
-            bitbufferator endBuf = dataBuf_.rend();
             res = *itRes_;
             rem(*permMatrix_, dummy.get(), itDat_->get(), res);
         }
-        // if BAR method is NOT used, we will use GIT in any case
-        else if(useGIT || noBAR) {    
-            res = 0;    //sets *all* the arrays's entries to 0
+        else if(useGIT 
+                || noBAR) { //if BAR method NOT available, we use GIT anyway 
+            res = 0;        //init *all* valarray entries with 0
             git(*permMatrix_, indices, res); 
         }
         else {
@@ -358,10 +309,9 @@ namespace Permory { namespace permutation {
         }
 
         // update buffers
-        dataBuf_.push_back(dummy);                  
-        resultBuf_.push_back(res);            
         return res;
     }
+    */
 
 } // namespace permutation
 } // namespace Permory

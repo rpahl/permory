@@ -105,8 +105,7 @@ namespace Permory { namespace statistic {
         // Since it was left out, the dummy code and the resulting case 
         // frequencies of the code belonging to the "worst index" must be added 
         // post hoc "by hand" to the buffer of the booster.
-        boosters_[worst_idx].add_to_buffer(dummy_codes[worst_idx]);
-        boosters_[worst_idx].add_to_buffer(extension_[worst_idx]);
+        boosters_[worst_idx].add_to_buffer(dummy_codes[worst_idx], extension_[worst_idx]);
     }
 
 
