@@ -21,7 +21,7 @@
 #include "detail/pair.hpp"
 #include "gwas/locusdata.hpp"
 #include "gwas/gwas.hpp"
-#include "permutation/booster.hpp"  //Bitset_with_count,
+#include "permutation/fast_count.hpp"  
 #include "permutation/permutation.hpp"
 #include "statistical/testpool.hpp"
 #include "statistical/statistic.hpp"
@@ -193,7 +193,7 @@ namespace Permory { namespace statistic {
                 throw std::runtime_error("Bad domain cardinality in permutation test.");
             }
             test_stat_->update(data);
-            this->extension_.resize(L+1, this->tMax_.size());  // one extra row for missings
+            this->res_.resize(L+1, this->tMax_.size());  // one extra row for missings
 
             bool useBooster = (not this->boosters_.empty());
             if (useBooster) {
@@ -211,7 +211,7 @@ namespace Permory { namespace statistic {
                 bool ok = not (uniques->first == data.get_undef());
                 if (ok) {
                     for (uint t=0; t < this->pairs_.size(); ++t) {
-                        this->pairs_[t][c] = this->extension_[j][t];
+                        this->pairs_[t][c] = this->res_[j][t];
                     }
                     c++;
                 }

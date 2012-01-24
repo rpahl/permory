@@ -19,7 +19,7 @@
 #include "detail/functors.hpp" //pair_comp_2nd
 #include "detail/parameter.hpp"
 #include "gwas/locusdata.hpp"
-#include "permutation/booster.hpp"  //Bitset_with_count,
+#include "permutation/fast_count.hpp"  
 #include "permutation/permutation.hpp"
 #include "statistical/testpool.hpp"
 #include "statistical/statistic.hpp"
@@ -97,7 +97,7 @@ namespace Permory { namespace statistic {
             this->tabs_.resize(nperm);
             this->tMax_.clear();
             this->tMax_.resize(nperm);
-            this->extension_.resize(L+1, nperm); //one extra row to account for missings
+            this->res_.resize(L+1, nperm); //one extra row to account for missings
 
             // Create and store permutations in matrix
             boost::shared_ptr<Perm_matrix<T> > pmat(
@@ -203,8 +203,8 @@ namespace Permory { namespace statistic {
                 if (ok) {
                     uint n = uniques->second; //frequency of both (cases + controls)
                     for (uint t=0; t<this->tabs_.size(); ++t) {
-                        this->tabs_[t][0][c] = this->extension_[j][t];     //cases r[j]
-                        this->tabs_[t][1][c] = n - this->extension_[j][t]; //controls s[j]
+                        this->tabs_[t][0][c] = this->res_[j][t];     //cases r[j]
+                        this->tabs_[t][1][c] = n - this->res_[j][t]; //controls s[j]
                     }
                     c++;
                 }

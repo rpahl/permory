@@ -38,6 +38,22 @@ namespace Permory { namespace permutation {
     }
 
     //
+    // Derive index code from a bitset, that is, return a vector of all indices
+    // that are set in the bitset
+    //
+    std::vector<int> index_code(const boost::dynamic_bitset<>& b)
+    {
+        std::vector<int> v;
+        v.reserve(b.count());
+        for (int i=0; i<int(b.size()); ++i) {
+            if (b.test(i)) {    //if (b[i] == 1)
+                v.push_back(i);
+            }
+        }
+        return v;
+    }
+
+    //
     // For an input sequence s and some value x, this function returns a bitset
     // b such that for i=0,1,...,b.size()-1 : b[i] = 1 iff v[i] = x;
     // Example: 
