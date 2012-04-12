@@ -28,7 +28,7 @@ namespace Permory { namespace gwas {
         Gwas::const_iterator itLocus = study.begin(); 
         for (; itLocus!=study.end(); ++itLocus) {
             bool isPoly = itLocus->isPolymorph();
-            double maf = itLocus->maf();
+            double maf = itLocus->maf("pooled");
             nbad += not isPoly;
             nmin += maf < par->min_maf && isPoly;
             nmax += maf > par->max_maf && isPoly;
@@ -45,10 +45,11 @@ namespace Permory { namespace gwas {
         }
         sum > m ? sum = m : sum;
         myout << indent(4) << sum << " in total" << endl;
-        myout << normal << stdpre << m - sum << " (of " << m <<
+        size_t num_analyzed_markers = m - sum;
+        myout << normal << stdpre << num_analyzed_markers << " (of " << m <<
             ") markers were used for analysis." << endl;
         myout << normal << stdpre << "Effective number of independent tests (markers) = " <<
-            study.meff() << endl;
+            study.meff(num_analyzed_markers) << endl;
     }
 
     void result_to_file(
@@ -91,39 +92,33 @@ namespace Permory { namespace gwas {
         }
 
         // Write header 
-        std::string s = "Serial_no";
         size_t w = max(int(ceil(log10(m))), 9)+4;
-        out << right << setw(w) << s;
-        s = "rsID";
+        out << right << setw(w) << "Serial_no";
         if (wrs > 0) {
-            out << right << setw(wrs+4) << s;
+            out << right << setw(wrs+4) << "rsID";
         }
-        s = "chr";
         if (hasChr) {
-            out << right << setw(7) << s;
+            out << right << setw(7) << "chr";
         }
-        s = "gene";
         if (wgene > 0) {
-            out << right << setw(wgene+4) << s;
+            out << right << setw(wgene+4) << "gene";
         }
-        s = "maf";
-        out << right << setw(9) << s;
+        out << right << setw(13) << "MAF_pooled";
 
         size_t ntest = par->tests.size();
         Enum_converter ec;
         for (std::set<Test_type>::const_iterator it=par->tests.begin();
                 it!=par->tests.end(); ++it)
         {
-            s = ec.key_to_string<Test_type>(*it);
-            out << right << setw(13) << s;
+            out << right << setw(13) << ec.key_to_string<Test_type>(*it);
         }
         if (ntest > 1) {
             out << right << setw(10) << "T_max";
         }
-        out << right << setw(14) << "p_raw" << 
-            right << setw(12) << "p_adjusted";
+        out << right << setw(14) << "P_raw" << 
+            right << setw(12) << "P_adjusted";
         if (par->pval_counts) {
-            out << right << setw(10) << "p.counts";
+            out << right << setw(10) << "P.counts";
         }
         out << endl;
 
@@ -136,15 +131,13 @@ namespace Permory { namespace gwas {
             if (wrs > 0) {
                 out << right << setw(wrs+4) << itLoc->rs();
             }
-            s = "chr";
             if (hasChr) {
                 out << right << setw(7) << itLoc->chr();
             }
-            s = "gene";
             if (wgene > 0) {
                 out << right << setw(wgene+4) << itLoc->gene();
             }
-            out << right << setw(9) << setprecision(3) << itLoc->maf();
+            out << right << setw(13) << setprecision(3) << itLoc->maf("pooled");
 
 
             if (itLoc->hasTeststat()) {

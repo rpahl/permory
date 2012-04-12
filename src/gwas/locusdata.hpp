@@ -42,6 +42,7 @@ namespace Permory { namespace gwas {
             size_t nValid() const { return this->size() - count_elem(undef_); }
             size_t nMiss() const { return count_elem(undef_); }
             double maf(detail::Marker_type) const; //*m*inor *a*llele *f*requency
+            //double maf(detail::Marker_type, bool) const; 
             void get_data_without_missings(std::vector<T>*) const;
 
             // Modifiers

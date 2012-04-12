@@ -1,3 +1,4 @@
+- for case-control sample provide MAF estimated separately from cases and controls, resp.
 - ommit Parameter class and instead solely use variables map of boost program options lib
 - improve result printing (e.g. general printer class where columns to print can be added successively, probably using function overloading for different types of data, e.g.: add(string colname, std::deque<double>), add(string colname, std::deque<string>) and so on ...)
 - revise enums.hpp as done in groupseq++ project

@@ -42,7 +42,7 @@ namespace Permory { namespace gwas {
 
             // Inspection
             size_t m() const { return loci_.size(); }
-            size_t meff() const { return meff_; }
+            size_t meff(size_t maxval) const { return std::min(maxval, meff_); }
             size_t ncase() const;
             size_t ncontrol() const { return (sample_size() - ncase()); }
             size_t sample_size() const { return ind_.size(); }

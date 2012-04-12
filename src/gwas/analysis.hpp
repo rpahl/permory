@@ -175,7 +175,7 @@ namespace Permory { namespace gwas {
                     // The non-permutation stuff needs only to be done once 
                     if (isFirstRound) { 
                         itLocus->set_polymorph(data.isPolymorph()); 
-                        itLocus->set_maf(data.maf(par_->marker_type)); 
+                        itLocus->set_maf("pooled", data.maf(par_->marker_type)); 
 
                         bool hasPassed = true;
                         ptr_vector<Locus_filter>::iterator itFilter = 
@@ -263,7 +263,7 @@ namespace Permory { namespace gwas {
 
     void Analyzer::init_filters()
     {
-        locus_filters_.push_back(new Maf_filter(par_->min_maf, par_->max_maf));
+        locus_filters_.push_back(new Maf_filter("pooled", par_->min_maf, par_->max_maf));
         locus_filters_.push_back(new Polymorph_filter());
     }
 
