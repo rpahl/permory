@@ -11,6 +11,7 @@
 
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/deque.hpp>
+#include <gsl/gsl_cdf.h>
 
 #include "detail/config.hpp"
 #include "individual.hpp"
@@ -52,7 +53,7 @@ namespace Permory { namespace gwas {
             std::deque<Locus>* pointer_to_loci() { return &loci_; }
             void add_loci(const_iterator start, const_iterator end);
             void resize_loci(size_t n) { if (n < this->m()) loci_.resize(n); }
-            void set_meff(double, double alpha=0.05, bool Bonf=true);
+            void set_meff(const std::deque<double>&, double alpha=0.05, bool Bonf=true);
 
         private:
             std::vector<Individual> ind_;   //recruited individuals
@@ -91,17 +92,25 @@ namespace Permory { namespace gwas {
     }
 
     //
-    // Effective number of tests (or markers, or hypotheses)
+    // Effective number of independent tests (or markers, or hypotheses)
     inline void Gwas::set_meff(
-            double p_adjusted,  //adjusted p-value
+            const std::deque<double>& tperm,//*sorted* permutation max test 
+                                            //statistics, i.e. the permutation
+                                            //distribution
             double alpha,       //significance threshold
             bool Bonf)          //Bonferroni (true) or Sidak (false) correction
     {
+        // We derive an estimate of the raw p-value threshold from the
+        // permutation distribution of t-max statistics. Since vector of test 
+        // statistic is sorted in ascending order, take the 1-alpha percentile.
+        double tperm_alpha = tperm[round((1.0-alpha)*tperm.size())];
+        double p_raw_estimate = 1.0 - gsl_cdf_chisq_P(tperm_alpha, 1);
+
         if (Bonf) { //Bonferroni
-            meff_ = alpha/p_adjusted;
+            meff_ = alpha/p_raw_estimate;
         }
         else {      // Sidak
-            meff_ = log(1-alpha)/log(1-p_adjusted);
+            meff_ = log(1-alpha)/log(1-p_raw_estimate);
         }
     }
 
