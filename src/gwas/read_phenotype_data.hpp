@@ -103,11 +103,6 @@ namespace Permory { namespace gwas {
         set<double> values; // different values of phenotypes for plink_tfam
 
         switch (par.phenotype_data_format) {
-            case compact:
-                // Compact format only supports dichotomous phenotypes.
-                result = Record::dichotomous;
-                break;
-
             case plink_tfam:
                 while (not lr.eof()) {
                     lr.next();
@@ -166,27 +161,6 @@ namespace Permory { namespace gwas {
             id = individuals->back().id() + 1;
         }
         switch (par.phenotype_data_format) {
-            case compact:
-                while (not lr.eof()) {
-                    lr.next();  //read next line
-                    if (lr.empty()) {
-                        continue;
-                    }
-                    if (*lr.begin() != "#") { //skip comments
-                        vector<string> vs(lr.begin(), lr.end());  
-
-                        for (size_t i=0; i<vs.size(); i++) {
-                            Individual ind(id++);
-                            double val = //0 means unaffected and 1 affected
-                                boost::lexical_cast<double>(vs[i]);
-                            Record r(val, par.phenotype_domain);
-                            ind.add_measurement(r);
-                            individuals->push_back(ind);
-                        }
-                        break;
-                    }
-                }
-                break;
             case plink_tfam:
                 read_individuals_from_tfam(par, fn, individuals);
                 break;

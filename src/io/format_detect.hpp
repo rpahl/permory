@@ -81,37 +81,36 @@ namespace Permory { namespace io {
     }
 
     // 
-    // Again, the detection works very rudimentary and can be easily fooled to
-    // given false positives but should do the job unless if not abused.
+    // The detection probably is not safe at this moment //TODO: improve
     //
     detail::datafile_format detect_phenotype_data_format(
             const std::string& fn)  //file name
     {
         using namespace detail;
+        using boost::lexical_cast;
         try {
-            Line_reader<char> lr(fn);
-            while (!lr.eof()) {
-                lr.next();
-                Line_reader<char>::const_iterator il = lr.begin();
-                char c1 = *il++;
-                char c2 = *il++;
-
-                if (c1 == '#') //ignore lines starting with '#' 
+            Line_reader<std::string> line(fn);   
+            while (!line.eof()) {
+                line.next();
+                char c1 = line.begin()->at(0);
+                if (c1 == '#') {    //lines starting with '#' are ignored
                     continue;
+                }
 
-                if (isInt(c1)) {
-                    if (c2 == ' ') {
-                        return plink_tfam;   
-                    }
-                    else {
-                        return compact;
+                try {
+                    if (lexical_cast<int>(*line.begin())) {  //castable to int?
+                        if (line.size() >= 6) {  //*.tfam has at least 6 entries
+                            return plink_tfam;   
+                        }
+                        else return unknown;
                     }
                 }
-                else {
-                    // presto
-                    if ((c1 == 'M' || c1 == 'A' || c1 == 'S') && c2 == ' ') {
+                catch(...) {    // not a number - check for Presto format
+                    bool startsWithChar = line.begin()->size() == 1;
+                    if (startsWithChar && (c1 == 'M' || c1 == 'A' || c1 == 'S')) {
                         return presto;
                     }
+                    else return unknown;
                 }
             }
         }
