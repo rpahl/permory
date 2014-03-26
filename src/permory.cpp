@@ -152,17 +152,17 @@ int main(int ac, char* av[])
         myout << stdpre << "User runtime: " << t.elapsed() << " s" << endl;
     }
     catch(const Ambigous_option& e) {
-        myout << errpre << "Ambigous option: " << e.what() << endl;
+        myout << normal << errpre << "Ambigous option: " << e.what() << endl;
     }    
     catch(const Missing_option& e) {
-        myout << errpre << "Missing option - please specify " << e.what() << endl;
-        myout << errpre << "For more information try " << av[0] << " --help" << endl;
+        myout << normal << errpre << "Missing option - please specify " << e.what() << endl;
+        myout << normal << errpre << "For more information try " << av[0] << " --help" << endl;
     }    
     catch(const Data_length_mismatch_error& e) {
-        myout << errpre << "Data length mismatch: " << e.what() << endl;
+        myout << normal << errpre << "Data length mismatch: " << e.what() << endl;
     }
     catch(const std::exception& e) {
-        myout << errpre << "Error: " << e.what() << endl;
+        myout << normal << errpre << "Error: " << e.what() << endl;
     }    
 }
 
