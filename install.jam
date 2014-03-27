@@ -16,7 +16,7 @@ explicit sources ;
 #######################
 
 # Documentation
-install doc : doc/README.txt doc/LICENSE_1_0.txt doc/permory.cfg : <location>release ;
+install doc : doc/README.txt doc/LICENSE_1_0.txt doc/permory.cfg doc/CHANGELOG.txt : <location>release ;
 if ( [ mpi.configured ] )
 {
     install quickstart : doc/QUICKSTART_MPI.txt doc/QUICKSTART.txt : <location>release ;
