@@ -12,6 +12,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "detail/config.hpp"
+#include "detail/functors.hpp"  //comp_second
 
 namespace Permory { namespace detail {
 
@@ -22,21 +23,14 @@ namespace Permory { namespace detail {
             {}
     };
 
-    class File_not_found : public File_exception {
+    class Missing_option : public std::runtime_error {
         public:
-            explicit File_not_found(const std::string& s) 
-                : File_exception(s)
-            {}
+            explicit Missing_option(const std::string& s) : std::runtime_error(s) {}
     };
-
-    class Dimension_error : public std::out_of_range { 
+    
+    class Ambigous_option : public std::runtime_error {
         public:
-            explicit Dimension_error(const std::string& s) 
-                : std::out_of_range(s)
-            {}
-    };
-
-    class Math_error {
+            explicit Ambigous_option(const std::string& s) : std::runtime_error(s) {}
     };
 
     //
@@ -49,7 +43,7 @@ namespace Permory { namespace detail {
             Data_length_mismatch_error(size_t id, size_t pheno_length, size_t marker_length)
                 : runtime_error(
                             std::string("")
-                            .append( "At marker no ")
+                            .append("At marker no ")
                             .append(boost::lexical_cast<std::string>(id))
                             .append(": length of phenotype data (")
                             .append(boost::lexical_cast<std::string>(pheno_length))
@@ -64,15 +58,6 @@ namespace Permory { namespace detail {
                 { }
     };
 
-    class Missing_option : public std::runtime_error {
-        public:
-            explicit Missing_option(const std::string& s) : std::runtime_error(s) {}
-    };
-    
-    class Ambigous_option : public std::runtime_error {
-        public:
-            explicit Ambigous_option(const std::string& s) : std::runtime_error(s) {}
-    };
 } //namespace detail
 } //namespace Permory
 

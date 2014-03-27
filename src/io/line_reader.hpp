@@ -74,7 +74,7 @@ namespace Permory { namespace io {
             throw std::runtime_error("not a regular file.");
         }
         if (not bfs::exists(*file_)) { 
-            throw File_not_found("not found.");
+            throw File_exception("File not found.");
         }
 
         ext_ =  (*file_).extension().string(); 
