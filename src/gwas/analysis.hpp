@@ -118,7 +118,7 @@ namespace Permory { namespace gwas {
         bool show_progress = not par_->quiet;
         if (show_progress) {
             double d = ceil(double(perm_todo)/double(par_->nperm_block));
-            pprogress.reset(new progress_display(study_->m()*size_t(d), 
+            pprogress.reset(new progress_display(study_->m()*size_t(d),
                         std::cout, "","",""));
         }
 
@@ -145,19 +145,19 @@ namespace Permory { namespace gwas {
                 while (loc_reader.hasData()) {
                     std::vector<char> v;
                     loc_reader.get_next(v);
-                    Locus_data<char> data(v, par_->undef_allele_code);
-                    this->check_locus_data(itLocus, data, trait.size());
+                    Locus_data<char> locdat(v, par_->undef_allele_code);
+                    this->check_locus_data(itLocus, locdat, trait.size());
 
                     // The non-permutation stuff needs only to be done once
                     if (isFirstRound) {
-                        bool ok = this->check_locus(itLocus, data);
+                        bool ok = this->check_locus(itLocus, locdat);
                         if (ok) {
-                            itLocus->add_test_stats(stat.test(data));
+                            itLocus->add_test_stats(stat.test(locdat));
                         }
                     }
 
                     if (itLocus->hasTeststat()) {
-                        stat.permutation_test(data);
+                        stat.permutation_test(locdat);
                     }
                     if (show_progress) {
                         ++(*pprogress);
@@ -192,23 +192,36 @@ namespace Permory { namespace gwas {
         return ok;
     }
 
-    void Analyzer::check_locus_data(Gwas::iterator itLocus, Locus_data<char>& data,
+    void Analyzer::check_locus_data(Gwas::iterator itLocus, Locus_data<char>& locdat,
             size_t trait_size)
     {
         using namespace Permory::detail;
-        if (par_->marker_type == genotype) {
-            if (data.size() == 2*trait_size) {
-                data = data.condense_alleles_to_genotypes(2);
+        using std::string;
+        if (par_->marker_type == allelic) {
+            if (locdat.data_cardinality() > 2 && locdat.hasMissings() == 0) {
+                // Here most probably the character for undefined (or missing or 
+                // NA) values was not set (correctly).
+                string msg;
+                char na_set = par_-> undef_allele_code; //Assumed NA and the ...
+                char na_real = locdat.get_minor();      //... probably real one
+
+                throw Wrong_missing_value_error(itLocus->id(), na_set, na_real);
             }
-            // Ensure that all possible genotypes appear in the domain
-            data.add_to_domain(domain_);
         }
 
-        if (data.size() != trait_size) {
+        if (par_->marker_type == genotype) {
+            if (locdat.size() == 2*trait_size) {
+                locdat = locdat.condense_alleles_to_genotypes(2);
+            }
+            // Ensure that all possible genotypes appear in the domain
+            locdat.add_to_domain(domain_);
+        }
+
+        if (locdat.size() != trait_size) {
             // Provide some more information in case of this error
             // as it may be hard to spot in large data sets
             throw Data_length_mismatch_error(
-                    itLocus->id(), trait_size, data.size());
+                    itLocus->id(), trait_size, locdat.size());
         }
     }
 

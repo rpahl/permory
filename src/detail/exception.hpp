@@ -58,6 +58,29 @@ namespace Permory { namespace detail {
                 { }
     };
 
+    class Wrong_missing_value_error : public std::runtime_error
+    {
+        public:
+            // Ctor
+            Wrong_missing_value_error(size_t id, char na_set, char na_real)
+                : runtime_error(
+                            std::string("\n")
+                            .append("At marker no ")
+                            .append(boost::lexical_cast<std::string>(id))
+                            .append(": found more than 2 alleles.\nIf '")
+                            .append(std::string(1, na_real))
+                            .append("' represents missing values in your ")
+                            .append("data set, then it differs from what ")
+                            .append("Permory assumes ('")
+                            .append(std::string(1, na_set))
+                            .append("'), and you probably forgot to set ")
+                            .append("option'--missing ")
+                            .append(std::string(1, na_real))
+                            .append("'.\n")
+                        )
+                { }
+    };
+
 } //namespace detail
 } //namespace Permory
 
