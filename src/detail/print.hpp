@@ -59,11 +59,10 @@ namespace Permory { namespace detail {
             const std::string del="", 
             int len=-1)
     {
-        if (v.size() == 0) 
-            throw Dimension_error("Error in print_vec: vector is empty!\n");
         if(len < 0 || len > v.size()) len = v.size();
-        for (size_t i=0; i<v.size(); ++i)
+        for (size_t i=0; i<len; ++i) {
             std::cout << v[i] << del;
+        }
     }
 
     template<class C> void print_mat( 
@@ -72,14 +71,12 @@ namespace Permory { namespace detail {
             int r=-1, 
             int c=-1)
     {
-        if (m.size() == 0) 
-            throw Dimension_error("Error in print_mat: matrix is empty!\n");
-
         if(r < 0 || r > m.nrow()) r = m.nrow();
         if(c < 0 || c > m.ncol()) c = m.ncol();
         for (int i=0; i<r; ++i) {
-            for (int j=0; j<c; ++j) 
+            for (int j=0; j<c; ++j) {
                 std::cout << m[i][j] << del;
+            }
             std::cout << std::endl;
         }
     }

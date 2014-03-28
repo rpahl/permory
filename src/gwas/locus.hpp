@@ -35,7 +35,7 @@ namespace Permory { namespace gwas {
                     bool isPolymorph=true   //polymorph yes/no
                  ) 
                 : id_(id), rs_(rs), gene_(gene), chr_(chr), bp_(bp), cm_(cm),
-                isPolymorph_(isPolymorph), tsMax_(0.0), maf_(0.0)
+                isPolymorph_(isPolymorph), tsMax_(0.0)
             { }
 
             // Inspection 
@@ -47,7 +47,7 @@ namespace Permory { namespace gwas {
             Chr chr() const { return chr_; }
             size_t bp() const { return bp_; }
             double cm() const { return cm_; }
-            double maf() const { return maf_; }
+            double maf(const std::string& s) const; 
             double tmax() const { return tsMax_; }
             bool operator<(const Locus& x) const;
             bool operator==(const Locus& x) const; 
@@ -56,7 +56,7 @@ namespace Permory { namespace gwas {
             // Modification
             void set_polymorph(bool x) { isPolymorph_ = x; }
             void set_gene(const std::string& s) { gene_ = s; }
-            void set_maf(double x) { maf_ = x; }
+            void set_maf(const std::string& s, double x) { maf_[s] = x; }
             void set_rs(const std::string& s) { rs_ = s; }
             void add_test_stats(const std::vector<double>&);
         private:
@@ -70,7 +70,7 @@ namespace Permory { namespace gwas {
             std::vector<double> ts_;    //test statistics for the locus
             bool isPolymorph_;          //polymorph yes/no
             double tsMax_;              //max of ts_
-            double maf_;                //minor allele frequency
+            std::map<std::string, double> maf_;
 
             // serialization stuff
             friend class boost::serialization::access;
@@ -88,6 +88,12 @@ namespace Permory { namespace gwas {
 
     // Locus implementation
     // ========================================================================
+    inline double Locus::maf(const std::string& s) const { 
+        std::map<std::string,double>::const_iterator it = maf_.find(s);
+        bool hasElem = it != maf_.end();
+        return hasElem ? it->second : -1.0;
+    }
+
     inline bool Locus::operator<(const Locus& x) const
     {
         if (chr_ != none && bp_ > 0) {
@@ -99,6 +105,7 @@ namespace Permory { namespace gwas {
         else
             return id_ < x.id();
     }
+
     inline bool Locus::operator==(const Locus& x) const
     {
         if (chr_ != none && bp_ > 0) {

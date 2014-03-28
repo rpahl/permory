@@ -1,4 +1,4 @@
-// Copyright (c) 2010-2011 Roman Pahl
+// Copyright (c) 2010-2014 Roman Pahl
 //               2011 Volker Steiß
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
@@ -31,9 +31,9 @@ namespace Permory {
         myout << endl;
         myout << "+-----------------+-----------------+------------------+" << endl;
         myout << "|    PERMORY      |      v"
-              << version << "     |    7/Nov/2011    |" << endl;
+              << version << "     |    28/Mar/2014    |" << endl;
         myout << "+-----------------+-----------------+------------------+" << endl;
-        myout << "|    Copyright (c) 2010-2011 Roman Pahl, IMBE Marburg  |" << endl;
+        myout << "|    Copyright (c) 2010-2014 Roman Pahl, IMBE Marburg  |" << endl;
         myout << "|                       2011 Volker Steiß              |" << endl;
         myout << "|  Distributed under the Boost Software License, v1.0  |" << endl;
         myout << "+------------------------------------------------------+" << endl;
@@ -152,17 +152,17 @@ int main(int ac, char* av[])
         myout << stdpre << "User runtime: " << t.elapsed() << " s" << endl;
     }
     catch(const Ambigous_option& e) {
-        myout << errpre << "Ambigous option: " << e.what() << endl;
+        myout << normal << errpre << "Ambigous option: " << e.what() << endl;
     }    
     catch(const Missing_option& e) {
-        myout << errpre << "Missing option - please specify " << e.what() << endl;
-        myout << errpre << "For more information try " << av[0] << " --help" << endl;
+        myout << normal << errpre << "Missing option - please specify " << e.what() << endl;
+        myout << normal << errpre << "For more information try " << av[0] << " --help" << endl;
     }    
     catch(const Data_length_mismatch_error& e) {
-        myout << errpre << "Data length mismatch: " << e.what() << endl;
+        myout << normal << errpre << "Data length mismatch: " << e.what() << endl;
     }
     catch(const std::exception& e) {
-        myout << errpre << "Error: " << e.what() << endl;
+        myout << normal << errpre << "Error: " << e.what() << endl;
     }    
 }
 

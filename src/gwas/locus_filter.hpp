@@ -21,14 +21,15 @@ namespace Permory { namespace gwas {
 
     struct Maf_filter : public Locus_filter {
         public:
-            Maf_filter(double min=0.0, double max=0.5)
-                : min_maf(min), max_maf(max)
+            Maf_filter(const std::string& s, double min=0.0, double max=0.5)
+                : type_(s), min_maf(min), max_maf(max)
             {}
         private:
             bool do_operator(const Locus& loc) {
-                double maf = loc.maf();
+                double maf = loc.maf(type_);
                 return (maf > min_maf && maf < max_maf);
             }
+            const std::string type_;
             double min_maf;
             double max_maf;
     };

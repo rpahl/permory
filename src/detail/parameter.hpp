@@ -91,7 +91,7 @@ namespace Permory { namespace detail {
     bool Parameter::quiet = false;
     bool Parameter::verbose = false;
     bool Parameter::debug = false;
-    std::string Parameter::version = "1.1.0";
+    std::string Parameter::version = "1.1.1";
 
     //
     // Analysis

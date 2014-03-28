@@ -1,0 +1,19 @@
+Changes in 1.1.1 (2014-03-26)
+-----------------------------
+
+Bugfixes:
+- In result file out.all, p-values were not correctly displayed if test 
+  statistics for some markers were not defined. This has been corrected and
+    non-tested markers are now dislayed in the out.all file with "NA"-values
+    along the lines of PLINK output.
+
+- Fixed format detection bug, which occured with *.tfam files, starting with 
+  ID numbers greater than 9, in which case Permory wrongly assumed the file
+  format 'compact'.
+
+
+General:
+- Added this file ('CHANGELOG.txt')
+- Deprecated file format 'compact' for phenotype data
+- Added/improved error messages
+

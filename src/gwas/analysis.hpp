@@ -1,4 +1,4 @@
-// Copyright (c) 2010 Roman Pahl
+// Copyright (c) 2010-2014 Roman Pahl
 //               2011 Volker Steiß
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
@@ -51,13 +51,17 @@ namespace Permory { namespace gwas {
         protected:
             virtual void output_results(const std::deque<double>& tperm);
             virtual void init_filters(); // Define locus filter (e.g. maf filter)
-
             detail::Parameter* par_;
             io::Myout& out_;
             Gwas* study_;
             std::set<char> domain_;
 
             boost::ptr_vector<Locus_filter> locus_filters_;
+
+        private:
+            bool check_locus(Gwas::iterator, const Locus_data<char>&);
+            void check_locus_data(Gwas::iterator, Locus_data<char>&, size_t);
+            std::vector<Individual> make_trait() const;
     };
 
     // Factories
@@ -109,33 +113,22 @@ namespace Permory { namespace gwas {
         using namespace Permory::detail;
 
         // Prepare progress bar
-        size_t m = study_->m();
         size_t perm_todo = par_->nperm_total;        //remaining permutations
         scoped_ptr<progress_display> pprogress;
         bool show_progress = not par_->quiet;
         if (show_progress) {
             double d = ceil(double(perm_todo)/double(par_->nperm_block));
-            pprogress.reset(new progress_display(m*size_t(d), std::cout, "","",""));
+            pprogress.reset(new progress_display(study_->m()*size_t(d),
+                        std::cout, "","",""));
         }
 
-        vector<Individual> trait(study_->ind_begin(), study_->ind_end());
-        // If allelic analyis, double trait status for each of the two alleles
-        if (par_->marker_type == allelic) {
-            vector<Individual> tmp;
-            tmp.reserve(trait.size()*2);
-            BOOST_FOREACH(Individual b, trait) {
-                tmp.push_back(b);
-                tmp.push_back(b);
-            }
-            trait.swap(tmp);
-        }
-
-        deque<double> tperm;    //holds the maximum test statistic per permutation
+        vector<Individual> trait(this->make_trait());
         S stat(*par_, trait.begin(), trait.end());   //computes all statistic stuff
         permutation::Permutation pp(par_->seed);     //does the shuffling/permutation
         Gwas::iterator itLocus = study_->begin();    //points to current locus
 
         bool isFirstRound = true;
+        deque<double> tperm;    //holds the maximum test statistic per permutation
         while (perm_todo > 0) {
             // By default analysis is done in blocks of 10000 permutations. In
             // each block each marker is analyzed one by one
@@ -144,55 +137,27 @@ namespace Permory { namespace gwas {
                 nperm = perm_todo;
             }
             stat.renew_permutations(&pp, nperm, par_->tail_size); //fresh random numbers
-            itLocus = study_->begin(); 
+            itLocus = study_->begin();
 
-            BOOST_FOREACH(string fn, par_->fn_marker_data) { 
+            BOOST_FOREACH(string fn, par_->fn_marker_data) {
                 Locus_data_reader<char> loc_reader(fn, par_->undef_allele_code);
 
                 while (loc_reader.hasData()) {
                     std::vector<char> v;
                     loc_reader.get_next(v);
-                    Locus_data<char> data(v, par_->undef_allele_code);
-                    if (data.size() == 0) {
-                        continue;
-                    }
+                    Locus_data<char> locdat(v, par_->undef_allele_code);
+                    this->check_locus_data(itLocus, locdat, trait.size());
 
-                    if (par_->marker_type == genotype) {
-                        if (data.size() == 2*trait.size()) {
-                            data = data.condense_alleles_to_genotypes(2);
-                        }
-                        // Ensure that all possible genotypes appear in the domain
-                        data.add_to_domain(domain_);
-                    }
-
-                    if (data.size() != trait.size()) {
-                        // Provide some more information in case of this error
-                        // as it may be hard to spot in large data sets
-                        throw Data_length_mismatch_error(
-                                itLocus->id(), trait.size(), data.size());
-                    }
-
-                    // The non-permutation stuff needs only to be done once 
-                    if (isFirstRound) { 
-                        itLocus->set_polymorph(data.isPolymorph()); 
-                        itLocus->set_maf(data.maf(par_->marker_type)); 
-
-                        bool hasPassed = true;
-                        ptr_vector<Locus_filter>::iterator itFilter = 
-                            locus_filters_.begin();
-                        for (; itFilter != locus_filters_.end(); ++itFilter) {
-                            if (not (*itFilter)(*itLocus)) {
-                                hasPassed = false;
-                                break;
-                            }
-                        }
-
-                        if (hasPassed) {
-                            itLocus->add_test_stats(stat.test(data)); 
+                    // The non-permutation stuff needs only to be done once
+                    if (isFirstRound) {
+                        bool ok = this->check_locus(itLocus, locdat);
+                        if (ok) {
+                            itLocus->add_test_stats(stat.test(locdat));
                         }
                     }
+
                     if (itLocus->hasTeststat()) {
-                        stat.permutation_test(data);   
+                        stat.permutation_test(locdat);
                     }
                     if (show_progress) {
                         ++(*pprogress);
@@ -206,8 +171,77 @@ namespace Permory { namespace gwas {
         }
 
         sort(tperm.begin(), tperm.end());
-
+        study_ -> set_meff(tperm, par_->alpha); //effective number of independent tests
         output_results(tperm);
+    }
+
+    bool Analyzer::check_locus(Gwas::iterator itLocus,
+            const Locus_data<char>& locusData)
+    {
+        itLocus->set_polymorph(locusData.isPolymorph());
+        itLocus->set_maf("pooled", locusData.maf(par_->marker_type));
+
+        bool ok = true;
+        boost::ptr_vector<Locus_filter>::iterator itFi = locus_filters_.begin();
+        for (; itFi != locus_filters_.end(); ++itFi) {
+            if (not (*itFi)(*itLocus)) {
+                ok = false;
+                break;
+            }
+        }
+        return ok;
+    }
+
+    void Analyzer::check_locus_data(Gwas::iterator itLocus, Locus_data<char>& locdat,
+            size_t trait_size)
+    {
+        using namespace Permory::detail;
+        using std::string;
+        if (par_->marker_type == allelic) {
+            if (locdat.data_cardinality() > 2 && locdat.hasMissings() == 0) {
+                // Here most probably the character for undefined (or missing or 
+                // NA) values was not set (correctly).
+                string msg;
+                char na_set = par_-> undef_allele_code; //Assumed NA and the ...
+                char na_real = locdat.get_minor();      //... probably real one
+
+                throw Wrong_missing_value_error(itLocus->id(), na_set, na_real);
+            }
+        }
+
+        if (par_->marker_type == genotype) {
+            if (locdat.size() == 2*trait_size) {
+                locdat = locdat.condense_alleles_to_genotypes(2);
+            }
+            // Ensure that all possible genotypes appear in the domain
+            locdat.add_to_domain(domain_);
+        }
+
+        if (locdat.size() != trait_size) {
+            // Provide some more information in case of this error
+            // as it may be hard to spot in large data sets
+            throw Data_length_mismatch_error(
+                    itLocus->id(), trait_size, locdat.size());
+        }
+    }
+
+    std::vector<Individual> Analyzer::make_trait() const
+    {
+        using namespace boost;
+        using namespace Permory::detail;
+
+        std::vector<Individual> trait(study_->ind_begin(), study_->ind_end());
+        // If allelic analyis, double trait status for each of the two alleles
+        if (par_->marker_type == allelic) {
+            std::vector<Individual> tmp;
+            tmp.reserve(trait.size()*2);
+            BOOST_FOREACH(Individual b, trait) {
+                tmp.push_back(b);
+                tmp.push_back(b);
+            }
+            trait.swap(tmp);
+        }
+        return trait;
     }
 
     //
@@ -220,13 +254,8 @@ namespace Permory { namespace gwas {
         using namespace io;
         using namespace statistic;
 
-        #define TIME(X, Y) t.restart(); Y; out_ << all << stdpre << X << t.elapsed() << " s" << endl;
+#define TIME(X, Y) t.restart(); Y; out_ << all << stdpre << X << t.elapsed() << " s" << endl;
         boost::timer t;
-
-        // Effective number of tests
-        double tperm_alpha = tperm[round((1.0-par_->alpha)*tperm.size())];
-        double p = 1.0 - gsl_cdf_chisq_P(tperm_alpha, 1);
-        study_ -> set_meff(p, par_->alpha);
 
         out_ << endl;
         result_to_console(par_, out_, *study_);
@@ -236,34 +265,34 @@ namespace Permory { namespace gwas {
         deque<double> t_orig(study_->m());
 
         TIME("Runtime transform all: ",
-            transform(study_->begin(), study_->end(),
+                transform(study_->begin(), study_->end(),
                     t_orig.begin(), mem_fun_ref(&Locus::tmax)));
 
         TIME("Runtime single_step_counts all: ",
-            deque<size_t> counts = single_step_counts(t_orig, tperm));
+                deque<size_t> counts = single_step_counts(t_orig, tperm));
         std::string fn = par_->out_prefix;
         fn.append(".all");
         TIME("Runtime result_to_file all: ",
-            result_to_file(par_, *study_, counts, fn));
+                result_to_file(par_, *study_, counts, fn));
 
         // The same but this time just for the top p-values
         TIME("Runtime sort top: ",
-            sort(study_->begin(), study_->end(), Locus_tmax_greater()));
+                sort(study_->begin(), study_->end(), Locus_tmax_greater()));
         t_orig.resize(par_->ntop);
         TIME("Runtime transform top: ",
-            transform(study_->begin(), study_->begin()+par_->ntop,
+                transform(study_->begin(), study_->begin()+par_->ntop,
                     t_orig.begin(), mem_fun_ref(&Locus::tmax)));
         TIME("Runtime single_step_counts top: ",
-            counts = single_step_counts(t_orig, tperm));
+                counts = single_step_counts(t_orig, tperm));
         fn = par_->out_prefix;
         fn.append(".top");
         TIME("Runtime result_to_file top: ",
-            result_to_file(par_, *study_, counts, fn));
+                result_to_file(par_, *study_, counts, fn));
     }
 
     void Analyzer::init_filters()
     {
-        locus_filters_.push_back(new Maf_filter(par_->min_maf, par_->max_maf));
+        locus_filters_.push_back(new Maf_filter("pooled", par_->min_maf, par_->max_maf));
         locus_filters_.push_back(new Polymorph_filter());
     }
 
@@ -355,7 +384,7 @@ namespace Permory { namespace gwas {
         using namespace Permory::detail;
 
         // Phenotype data (either read in or create)
-        Gwas study(create_study_sample(par, myout)); 
+        Gwas study(create_study_sample(par, myout));
         if (par->phenotype_domain == Record::dichotomous) {
             if (not par->fn_trait.empty()) {
                 myout << normal << stdpre << "Found ";
@@ -368,7 +397,7 @@ namespace Permory { namespace gwas {
         }
         else {
             myout << normal << stdpre << "Found " << study.sample_size()
-                  << " quantitative phenotypes." << endl;
+                << " quantitative phenotypes." << endl;
         }
 
         // Loci information read in
@@ -380,7 +409,7 @@ namespace Permory { namespace gwas {
         if (m < par->ntop) {
             par->ntop = m;
         }
-        myout << normal << stdpre << m << " markers found." << endl << endl; 
+        myout << normal << stdpre << m << " markers found." << endl << endl;
 
         myout << normal << stdpre << "Starting analysis..." << endl;
         std::set<char> data_domain;

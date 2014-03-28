@@ -29,6 +29,8 @@
 // Enables large files (> 2GB) at 32-bit architectures
 #define _FILE_OFFSET_BITS  64
 
+// Ensure locale independence using boost::lexical_cast
+#define BOOST_LEXICAL_CAST_ASSUME_C_LOCALE 1
 
 namespace Permory 
 {

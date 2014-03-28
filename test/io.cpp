@@ -55,15 +55,6 @@ void read_individuals_test() {
 }
 
 void determine_phenotype_domain_test() {
-    { // test compact format with dichotomous phenotypes
-        const string filename = "test/data/pheno_binary_test.compact";
-        Parameter par;
-        par.phenotype_data_format = compact;
-        Record::Value_type expected = Record::dichotomous;
-
-        BOOST_CHECK_EQUAL(determine_phenotype_domain(par, filename), expected);
-    }
-
     { // test plink_tfam format with quantitative phenotypes
         const string filename = "test/data/pheno_quant_test.tfam";
         Parameter par;

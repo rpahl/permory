@@ -19,7 +19,7 @@
 #include "detail/functors.hpp" //pair_comp_2nd
 #include "detail/parameter.hpp"
 #include "gwas/locusdata.hpp"
-#include "permutation/booster.hpp"  //Bitset_with_count,
+#include "permutation/fast_count.hpp"  
 #include "permutation/permutation.hpp"
 #include "statistical/testpool.hpp"
 #include "statistical/statistic.hpp"
@@ -97,7 +97,7 @@ namespace Permory { namespace statistic {
             this->tabs_.resize(nperm);
             this->tMax_.clear();
             this->tMax_.resize(nperm);
-            this->extension_.resize(L+1, nperm); //one extra row to account for missings
+            this->res_.resize(L+1, nperm); //one extra row to account for missings
 
             // Create and store permutations in matrix
             boost::shared_ptr<Perm_matrix<T> > pmat(
@@ -107,7 +107,7 @@ namespace Permory { namespace statistic {
             this->boosters_.clear();
             this->boosters_.reserve(L+1);
             for (uint i=0; i<L+1; i++) {
-                this->boosters_.push_back(new Perm_boost<T>(pmat, tail_size));
+                this->boosters_.push_back(new Fast_count<T>(pmat, tail_size));
             }
         }
 
@@ -186,8 +186,8 @@ namespace Permory { namespace statistic {
                 throw std::runtime_error("Bad domain cardinality in permutation test.");
             }
             assert (trait_.size() == data.size());
-            bool yesPermutation = (not this->boosters_.empty());
-            if (yesPermutation) {
+            bool useBooster = (not this->boosters_.empty());
+            if (useBooster) {
                 this->do_permutation(data);
             }
 
@@ -199,12 +199,12 @@ namespace Permory { namespace statistic {
             // std::map<elem_type, count_type> unique_;//unique elements with counts
             typename gwas::Locus_data<D>::unique_iterator uniques = data.unique_begin();
             for (; uniques!=data.unique_end(); uniques++) {
-                bool ok = not (uniques->first == data.get_undef());
+                bool ok = not (uniques->first == data.get_undef()); //catch undefined (i.e. missing)
                 if (ok) {
                     uint n = uniques->second; //frequency of both (cases + controls)
                     for (uint t=0; t<this->tabs_.size(); ++t) {
-                        this->tabs_[t][0][c] = this->extension_[j][t];     //cases r[j]
-                        this->tabs_[t][1][c] = n - this->extension_[j][t]; //controls s[j]
+                        this->tabs_[t][0][c] = this->res_[j][t];     //cases r[j]
+                        this->tabs_[t][1][c] = n - this->res_[j][t]; //controls s[j]
                     }
                     c++;
                 }
