@@ -13,4 +13,7 @@ Bugfixes:
 
 
 General:
+- Added this file ('CHANGELOG.txt')
 - Deprecated file format 'compact' for phenotype data
+- Added/improved error messages
+
